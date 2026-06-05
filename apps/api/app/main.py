@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import mimetypes
+import os
 import sys
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -210,18 +211,19 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(data)
 
 
-def run_server(port: int) -> None:
+def run_server(host: str, port: int) -> None:
     STATE.seed_history()
-    server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
-    print(f"Community Notes Ops Copilot running at http://127.0.0.1:{port}")
+    server = ThreadingHTTPServer((host, port), Handler)
+    print(f"Community Notes Ops Copilot running at http://{host}:{port}")
     server.serve_forever()
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--host", default=os.getenv("HOST", "127.0.0.1"))
+    parser.add_argument("--port", type=int, default=int(os.getenv("PORT", "8000")))
     args = parser.parse_args(argv)
-    run_server(args.port)
+    run_server(args.host, args.port)
     return 0
 
 

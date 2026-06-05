@@ -13,6 +13,24 @@ make dev
 
 The local server runs at `http://localhost:8000` and serves both API and UI.
 
+## Render Web Service
+
+Use the Python 3 runtime, leave the root directory blank, and deploy from `main`.
+
+Build command:
+
+```bash
+python3 -m compileall apps/api/app
+```
+
+Start command:
+
+```bash
+PYTHONPATH=apps/api python3 apps/api/app/main.py --host 0.0.0.0 --port $PORT
+```
+
+The app is a dependency-light Python HTTP server for the fixture build. Do not use `uvicorn app.main:app` unless the backend is later upgraded to an ASGI/FastAPI application.
+
 ## Staging Production Stack
 
 Recommended production upgrade:
