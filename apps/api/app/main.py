@@ -71,6 +71,21 @@ class Handler(BaseHTTPRequestHandler):
             return
         self._serve_static(parsed.path)
 
+    def do_HEAD(self) -> None:
+        parsed = urlparse(self.path)
+        if parsed.path == "/api/health":
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "application/json")
+            self.end_headers()
+            return
+        if parsed.path in {"", "/"}:
+            self.send_response(HTTPStatus.OK)
+            self.send_header("Content-Type", "text/html")
+            self.end_headers()
+            return
+        self.send_response(HTTPStatus.NOT_FOUND)
+        self.end_headers()
+
     def do_POST(self) -> None:
         parsed = urlparse(self.path)
         if not parsed.path.startswith("/api/"):
@@ -220,7 +235,8 @@ def run_server(host: str, port: int) -> None:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--host", default=os.getenv("HOST", "127.0.0.1"))
+    default_host = os.getenv("HOST") or ("0.0.0.0" if os.getenv("PORT") else "127.0.0.1")
+    parser.add_argument("--host", default=default_host)
     parser.add_argument("--port", type=int, default=int(os.getenv("PORT", "8000")))
     args = parser.parse_args(argv)
     run_server(args.host, args.port)

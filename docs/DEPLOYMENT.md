@@ -29,6 +29,12 @@ Start command:
 PYTHONPATH=apps/api python3 apps/api/app/main.py --host 0.0.0.0 --port $PORT
 ```
 
+If Render is still configured with the older command below, it will now also work because the app defaults to `0.0.0.0` whenever Render provides `PORT`:
+
+```bash
+PYTHONPATH=apps/api python3 apps/api/app/main.py --port $PORT
+```
+
 The app is a dependency-light Python HTTP server for the fixture build. Do not use `uvicorn app.main:app` unless the backend is later upgraded to an ASGI/FastAPI application.
 
 ## Staging Production Stack
