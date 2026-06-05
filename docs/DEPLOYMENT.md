@@ -15,6 +15,10 @@ The local server runs at `http://localhost:8000` and serves both API and UI.
 
 ## Render Web Service
 
+The repo now includes a root-level `render.yaml` Blueprint. For a new Render setup, use **New -> Blueprint**, select this GitHub repo, and Render will create/update the Python web service and Postgres settings from the checked-in config.
+
+For an existing manually created Web Service, either sync the Blueprint or use these settings:
+
 Use the Python 3 runtime, leave the root directory blank, and deploy from `main`.
 
 Build command:
@@ -38,6 +42,8 @@ PYTHONPATH=apps/api python3 apps/api/app/main.py --port $PORT
 The app is a dependency-light Python HTTP server for the fixture build. Do not use `uvicorn app.main:app` unless the backend is later upgraded to an ASGI/FastAPI application.
 
 Set `PERSISTENCE_PROVIDER=postgres` and `DATABASE_URL` to the Render Postgres internal database URL to persist app records. The app creates the required JSONB record-store table at startup.
+
+If the deploy log shows `ModuleNotFoundError: No module named 'psycopg'`, the service is still using an old build command. Update the build command to install `requirements.txt` or sync the root `render.yaml` Blueprint.
 
 ## Staging Production Stack
 

@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: community-notes-ops-api
+    name: Community-Notes-Copilot
     runtime: python
     plan: free
     region: virginia
