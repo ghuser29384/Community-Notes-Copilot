@@ -1,0 +1,25 @@
+{
+  "name": "claim_extraction_fixture",
+  "strict_json": true,
+  "schema": {
+    "type": "object",
+    "required": ["claims"],
+    "properties": {
+      "claims": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "required": ["text", "checkability_score", "sourceability_hint", "opinion_sarcasm_flag"],
+          "properties": {
+            "text": {"type": "string"},
+            "checkability_score": {"type": "number"},
+            "sourceability_hint": {"type": "string"},
+            "opinion_sarcasm_flag": {"type": "boolean"},
+            "abstain_reasons": {"type": "array", "items": {"type": "string"}}
+          }
+        }
+      }
+    }
+  }
+}
+

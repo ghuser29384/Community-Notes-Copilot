@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.local/community-notes-ai-writer-ops.schema.json",
+  "title": "Community Notes AI Writer Ops Contract",
+  "type": "object",
+  "required": ["CandidatePost", "DraftNote", "SubmissionGate", "PolicyScope", "BotIdentity"],
+  "properties": {
+    "CandidatePost": {
+      "type": "object",
+      "required": ["id", "x_post_id", "text", "status", "canonical_hash"],
+      "properties": {
+        "id": {"type": "string", "format": "uuid"},
+        "x_post_id": {"type": "string"},
+        "text": {"type": "string"},
+        "status": {"type": "string"},
+        "canonical_hash": {"type": "string"}
+      }
+    },
+    "DraftNote": {
+      "type": "object",
+      "required": ["id", "candidate_id", "text", "exact_text_hash", "support_map_json"],
+      "properties": {
+        "id": {"type": "string", "format": "uuid"},
+        "candidate_id": {"type": "string", "format": "uuid"},
+        "text": {"type": "string"},
+        "exact_text_hash": {"type": "string"},
+        "support_map_json": {"type": "object"}
+      }
+    },
+    "SubmissionGate": {
+      "type": "object",
+      "required": ["can_submit", "blockers", "checks"],
+      "properties": {
+        "can_submit": {"type": "boolean"},
+        "blockers": {"type": "array", "items": {"type": "string"}},
+        "checks": {"type": "object"}
+      }
+    },
+    "PolicyScope": {
+      "type": "object",
+      "required": ["data_use_purpose", "data_use_scope_allowed", "operational_evals_directly_necessary", "operational_evals_scope_allowed"],
+      "properties": {
+        "data_use_purpose": {"type": "string", "const": "community_notes_ai_note_writing"},
+        "data_use_scope_allowed": {"type": "boolean"},
+        "operational_evals_directly_necessary": {"type": "boolean"},
+        "operational_evals_scope_allowed": {"type": "boolean"},
+        "policy_text": {"type": "string"}
+      }
+    },
+    "BotIdentity": {
+      "type": "object",
+      "required": ["disclosure_required", "configured", "profile_disclosure", "responsible_party"],
+      "properties": {
+        "disclosure_required": {"type": "boolean"},
+        "configured": {"type": "boolean"},
+        "profile_disclosure": {"type": "string"},
+        "responsible_party": {"type": "string"}
+      }
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "norway_energy_mix_false_claim",
+  "expected": {
+    "claim_status": "CHECKABLE",
+    "approved_evidence_min": 2,
+    "draft_status": "DRAFTED",
+    "submit_test_mode": true
+  }
+}
+
