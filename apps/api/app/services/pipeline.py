@@ -3,6 +3,7 @@ from __future__ import annotations
 from collections import defaultdict
 
 from app.models.records import Claim, DraftNote, EvidenceCard, EvidenceSource, InternalScore, new_id, stable_id
+from app.services.providers import BraveSearchClient, OpenAIResponsesClient, ProviderError
 from app.settings import Settings
 
 
@@ -15,11 +16,40 @@ def _fixture_for(candidate: dict, key: str) -> list[dict]:
 
 
 class ClaimExtractor:
+    def __init__(self, settings: Settings | None = None):
+        self.settings = settings or Settings()
+
     def extract(self, candidate, raw_fixture: dict) -> list[Claim]:
+        if not raw_fixture.get("fixture_claims") and self.settings.llm_provider == "openai" and self.settings.allow_live_llm:
+            return self._extract_with_openai(candidate)
         claims = []
         for item in raw_fixture.get("fixture_claims", []):
             if not isinstance(item, dict) or "text" not in item:
                 raise StrictJSONFailure("Fixture LLM output failed strict claim schema")
+            claims.append(
+                Claim(
+                    id=new_id(),
+                    candidate_id=candidate.id,
+                    text=item["text"],
+                    checkability_score=float(item.get("checkability_score", 0.0)),
+                    sourceability_hint=item.get("sourceability_hint", ""),
+                    opinion_sarcasm_flag=bool(item.get("opinion_sarcasm_flag", False)),
+                    abstain_reasons=list(item.get("abstain_reasons", [])),
+                    status="ABSTAIN" if item.get("opinion_sarcasm_flag") or item.get("abstain_reasons") else "CHECKABLE",
+                )
+            )
+        return claims
+
+    def _extract_with_openai(self, candidate) -> list[Claim]:
+        client = OpenAIResponsesClient(self.settings)
+        result = client.generate_json(
+            "Extract externally checkable claims for Community Notes drafting. Return only JSON: "
+            '{"claims":[{"text":"...","checkability_score":0.0,"sourceability_hint":"...",'
+            '"opinion_sarcasm_flag":false,"abstain_reasons":[]}]}',
+            candidate.text,
+        )
+        claims = []
+        for item in result.get("claims", []):
             claims.append(
                 Claim(
                     id=new_id(),
@@ -123,7 +153,51 @@ class EvidenceRetriever:
                     coverage_score=float(item.get("coverage_score", 0.0)),
                 )
             )
+        if not cards and self.settings.search_provider == "brave" and self.settings.allow_live_search:
+            cards.extend(self._retrieve_with_brave(candidate, claims, sources))
         return cards[: self.settings.per_candidate_search_budget]
+
+    def _retrieve_with_brave(self, candidate, claims: list[Claim], sources: list[EvidenceSource]) -> list[EvidenceCard]:
+        client = BraveSearchClient(self.settings)
+        cards: list[EvidenceCard] = []
+        for claim in claims:
+            if claim.status != "CHECKABLE":
+                continue
+            query = claim.sourceability_hint or claim.text
+            for item in client.search(query, count=3):
+                url = item.get("url") or item.get("profile", {}).get("url") or ""
+                if not url:
+                    continue
+                source = EvidenceSource(
+                    id=stable_id(candidate.id, url),
+                    candidate_id=candidate.id,
+                    url=url,
+                    title=item.get("title", url),
+                    publisher=item.get("profile", {}).get("name", "") or item.get("meta_url", {}).get("hostname", ""),
+                    source_type="search_result",
+                    reliability_score=0.55,
+                    relevance_score=0.60,
+                )
+                sources.append(source)
+                cards.append(
+                    EvidenceCard(
+                        id=new_id(),
+                        candidate_id=candidate.id,
+                        claim_id=claim.id,
+                        source_id=source.id,
+                        url=source.url,
+                        title=source.title,
+                        publisher=source.publisher,
+                        source_type=source.source_type,
+                        date="",
+                        snippet=item.get("description", ""),
+                        reliability_score=source.reliability_score,
+                        directness_score=0.60,
+                        timeliness_score=0.50,
+                        coverage_score=0.60,
+                    )
+                )
+        return cards
 
 
 class EvidenceAuditor:
@@ -144,6 +218,9 @@ class EvidenceAuditor:
 
 
 class DraftGenerator:
+    def __init__(self, settings: Settings | None = None):
+        self.settings = settings or Settings()
+
     def generate(self, candidate, raw_fixture: dict, claims: list[Claim], cards: list[EvidenceCard]) -> list[DraftNote]:
         approved = [card for card in cards if card.approved]
         if not approved or any(claim.status == "ABSTAIN" for claim in claims):
@@ -163,7 +240,10 @@ class DraftGenerator:
             cards_by_claim[card.claim_id].append(card)
         all_source_ids = [card.source_id for card in approved]
         drafts = []
-        for item in raw_fixture.get("fixture_drafts", [])[:3]:
+        source_items = raw_fixture.get("fixture_drafts", [])
+        if not source_items and self.settings.llm_provider == "openai" and self.settings.allow_live_llm:
+            source_items = self._generate_with_openai(candidate, claims, approved)
+        for item in source_items[:3]:
             support = {}
             for sentence in item.get("factual_sentences", []):
                 support[sentence] = all_source_ids
@@ -179,6 +259,21 @@ class DraftGenerator:
                 )
             )
         return drafts
+
+    def _generate_with_openai(self, candidate, claims: list[Claim], cards: list[EvidenceCard]) -> list[dict]:
+        client = OpenAIResponsesClient(self.settings)
+        evidence = "\n".join(f"- {card.publisher}: {card.snippet} ({card.url})" for card in cards)
+        claims_text = "\n".join(f"- {claim.text}" for claim in claims if claim.status == "CHECKABLE")
+        try:
+            result = client.generate_json(
+                "Draft 1-3 concise Community Notes from provided claims and evidence. "
+                "Every factual sentence must be supported by the evidence. Return only JSON: "
+                '{"drafts":[{"text":"...","factual_sentences":["..."]}]}',
+                f"Post:\n{candidate.text}\n\nClaims:\n{claims_text}\n\nEvidence:\n{evidence}",
+            )
+        except (ProviderError, ValueError):
+            return []
+        return list(result.get("drafts", []))
 
 
 class InternalCritic:

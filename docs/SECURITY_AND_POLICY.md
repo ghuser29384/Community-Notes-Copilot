@@ -5,6 +5,7 @@
 - Do not train or fine-tune a foundation/frontier model on X API data or X Content.
 - Do not submit unless `SubmissionGate` passes.
 - Live X calls are disabled by default.
+- Live search and live LLM calls are disabled by default.
 - Non-test writes are disabled by default.
 - Operator approval is required by default.
 - Process X Community Notes API data solely for Community Notes AI note writing.
@@ -41,6 +42,10 @@ Candidate normalization computes `canonical_hash` from the post context to dedup
 Every fixture X call logs an estimated cost. `CostLedger` blocks submission when daily or monthly budgets are exceeded.
 
 The local ledger is reconciled against fixture `get_usage()` output that models X Usage API telemetry. Developer Console reconciliation is represented as a separate tracked status because pricing and 24-hour deduplication should be treated as soft operational telemetry, not a sole source of truth.
+
+## Provider Gates
+
+Real providers are opt-in and independently gated. `X_PROVIDER=live` still cannot call X unless `ALLOW_LIVE_X_API=true` and credentials are present. `SEARCH_PROVIDER=brave` requires `ALLOW_LIVE_SEARCH=true`. `LLM_PROVIDER=openai` requires `ALLOW_LIVE_LLM=true`, `OPENAI_API_KEY`, and `LLM_MODEL`. Keep `ALLOW_NON_TEST_MODE_WRITE=false` until Postgres persistence, read-only X calls, cost reconciliation, and operator workflows are verified.
 
 ## External Sharing
 

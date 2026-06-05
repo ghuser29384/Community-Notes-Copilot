@@ -17,6 +17,13 @@
 4. Confirm Track A manual/export workflows require express and informed contributor consent.
 5. Re-run fixture E2E and offline evals before restoring any live read-only API path.
 
+## Persistence Regression
+
+1. Confirm `/api/health` reports `persistence_provider` as `postgres`.
+2. Sync fixtures, create a draft, then manually redeploy or restart the Render service.
+3. Reopen the UI and confirm the candidate, draft, audit events, and cost entries remain.
+4. If state disappears, verify `PERSISTENCE_PROVIDER=postgres`, `DATABASE_URL`, and the Render build command installs `requirements.txt`.
+
 ## Low Evaluator Scores
 
 1. Open `/admission`.
@@ -34,7 +41,7 @@
 ## API Failure
 
 1. Confirm `/api/health`.
-2. Switch providers to fixture.
+2. Switch providers to fixture: `X_PROVIDER=fixture`, `SEARCH_PROVIDER=fixture`, `LLM_PROVIDER=fixture`, and set live flags false.
 3. Retry `POST /api/x/sync-eligible-posts`.
 4. Check env flags and X credentials in the deployment secret store.
 

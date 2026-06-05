@@ -5,7 +5,15 @@ services:
     envVars:
       - key: APP_ENV
         value: staging
+      - key: PERSISTENCE_PROVIDER
+        value: postgres
+      - key: X_PROVIDER
+        value: fixture
       - key: ALLOW_LIVE_X_API
+        value: "false"
+      - key: ALLOW_LIVE_SEARCH
+        value: "false"
+      - key: ALLOW_LIVE_LLM
         value: "false"
       - key: ALLOW_NON_TEST_MODE_WRITE
         value: "false"

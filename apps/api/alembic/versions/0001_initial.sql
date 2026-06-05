@@ -21,3 +21,20 @@ create table if not exists draft_notes (
   created_at timestamptz not null default now()
 );
 
+create table if not exists app_records (
+  record_type text not null,
+  id text not null,
+  parent_id text,
+  canonical_hash text,
+  payload jsonb not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  primary key (record_type, id)
+);
+
+create index if not exists app_records_parent_idx
+  on app_records (record_type, parent_id);
+
+create unique index if not exists app_records_candidate_hash_idx
+  on app_records (canonical_hash)
+  where record_type = 'candidate' and canonical_hash is not null;

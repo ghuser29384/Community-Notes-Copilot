@@ -20,7 +20,7 @@ Use the Python 3 runtime, leave the root directory blank, and deploy from `main`
 Build command:
 
 ```bash
-python3 -m compileall apps/api/app
+pip install -r requirements.txt && python3 -m compileall apps/api/app
 ```
 
 Start command:
@@ -36,6 +36,8 @@ PYTHONPATH=apps/api python3 apps/api/app/main.py --port $PORT
 ```
 
 The app is a dependency-light Python HTTP server for the fixture build. Do not use `uvicorn app.main:app` unless the backend is later upgraded to an ASGI/FastAPI application.
+
+Set `PERSISTENCE_PROVIDER=postgres` and `DATABASE_URL` to the Render Postgres internal database URL to persist app records. The app creates the required JSONB record-store table at startup.
 
 ## Staging Production Stack
 
@@ -54,9 +56,10 @@ Recommended production upgrade:
 2. Run offline evals and fixture E2E.
 3. Verify `COMMUNITY_NOTES_DATA_USE_PURPOSE=community_notes_ai_note_writing` and `OPERATIONAL_EVALS_DIRECTLY_NECESSARY=true`.
 4. Configure Track B bot-profile disclosure and responsible-party identity before any write path is considered.
-5. Enable live read-only X calls only after scopes, rate limits, local cost ledger, Usage API reconciliation, and Developer Console reconciliation are verified.
-6. Keep `ALLOW_NON_TEST_MODE_WRITE=false` through staging.
-7. Enable non-test writes only after admission readiness, operator workflow, audit logging, Track A consent handling, and rollback are validated.
+5. Enable Postgres persistence first and confirm `/api/health` reports `persistence_provider=postgres`.
+6. Enable live read-only X calls only after scopes, rate limits, local cost ledger, Usage API reconciliation, and Developer Console reconciliation are verified.
+7. Keep `ALLOW_NON_TEST_MODE_WRITE=false` through staging.
+8. Enable non-test writes only after admission readiness, operator workflow, audit logging, Track A consent handling, and rollback are validated.
 
 ## Rollback
 

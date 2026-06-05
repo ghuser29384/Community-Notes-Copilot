@@ -101,6 +101,7 @@ class Handler(BaseHTTPRequestHandler):
                     {
                         "status": "ok",
                         "app_env": STATE.settings.app_env,
+                        "persistence_provider": "postgres" if STATE.record_store.enabled else "memory",
                         "live_x_api_enabled": STATE.settings.allow_live_x_api,
                         "non_test_writes_enabled": STATE.settings.allow_non_test_mode_write,
                     }
@@ -140,7 +141,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if path.startswith("/api/evals/runs/"):
                 run_id = path.split("/")[-1]
-                result = STATE.eval_harness.get(run_id)
+                result = STATE.get_eval_run(run_id)
                 if result:
                     self._send_json(result)
                 else:
@@ -197,7 +198,7 @@ class Handler(BaseHTTPRequestHandler):
                 self._send_json({"notes": [note.to_dict() for note in notes], "count": len(notes)})
                 return
             if path == "/api/evals/run":
-                self._send_json(STATE.eval_harness.run())
+                self._send_json(STATE.run_evals())
                 return
         except KeyError as exc:
             self._send_json({"error": "missing entity", "id": str(exc)}, HTTPStatus.NOT_FOUND)

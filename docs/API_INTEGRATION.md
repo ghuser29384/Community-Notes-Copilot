@@ -10,7 +10,7 @@
 - `notes_written(since_id, max_results)`
 - `get_usage()`
 
-The fixture implementation simulates eligible posts, suggested sources, note request suggestions, evaluator responses, usage, and notes written feedback. The live implementation raises unless `ALLOW_LIVE_X_API=true`.
+The fixture implementation simulates eligible posts, suggested sources, note request suggestions, evaluator responses, usage, and notes written feedback. The live implementation is selected with `X_PROVIDER=live` and raises unless `ALLOW_LIVE_X_API=true` and `X_BEARER_TOKEN` is configured.
 
 ## Route Mapping
 
@@ -25,7 +25,17 @@ The fixture implementation simulates eligible posts, suggested sources, note req
 
 The local demo never requires credentials. Live credentials are read only from environment variables and are never displayed in `/settings`.
 
+Live provider envs:
+
+- `X_PROVIDER=live`, `ALLOW_LIVE_X_API=true`, `X_BEARER_TOKEN=...`
+- `SEARCH_PROVIDER=brave`, `ALLOW_LIVE_SEARCH=true`, `BRAVE_SEARCH_API_KEY=...`
+- `LLM_PROVIDER=openai`, `ALLOW_LIVE_LLM=true`, `OPENAI_API_KEY=...`, `LLM_MODEL=...`
+
 Required future scopes depend on X's current AI Note Writer API requirements. Confirm exact scopes from X before staging live mode.
+
+## Persistence
+
+Set `PERSISTENCE_PROVIDER=postgres` and `DATABASE_URL` to the Render Postgres internal URL. The app creates `app_records`, a JSONB record store keyed by record type and ID, and persists candidates, raw candidate payloads, claims, sources, evidence cards, drafts, internal scores, X evaluations, submissions, notes-written snapshots, audit events, cost entries, Usage API reconciliation state, and eval runs.
 
 ## Test And Live Modes
 

@@ -47,6 +47,8 @@ class CostLedger:
         self.entries: list[CostLedgerEntry] = []
         self.usage_api_snapshot: dict | None = None
         self.developer_console_checked_at: str | None = None
+        self.on_entry = None
+        self.on_state_change = None
 
     def log(self, provider: str, action: str, estimated_cost_usd: float, entity_id: str, metadata: dict | None = None) -> CostLedgerEntry:
         entry = CostLedgerEntry(
@@ -58,6 +60,8 @@ class CostLedger:
             metadata=metadata or {},
         )
         self.entries.append(entry)
+        if self.on_entry:
+            self.on_entry(entry)
         return entry
 
     def reconcile_usage_api(self, snapshot: dict) -> None:
@@ -68,9 +72,13 @@ class CostLedger:
             "deduplication_soft_guarantee": bool(snapshot.get("deduplication_soft_guarantee", True)),
             "received_at": datetime.now(UTC).isoformat(),
         }
+        if self.on_state_change:
+            self.on_state_change()
 
     def mark_developer_console_reconciled(self, checked_at: str | None = None) -> None:
         self.developer_console_checked_at = checked_at or datetime.now(UTC).isoformat()
+        if self.on_state_change:
+            self.on_state_change()
 
     def summary(self) -> CostSummary:
         now = datetime.now(UTC)

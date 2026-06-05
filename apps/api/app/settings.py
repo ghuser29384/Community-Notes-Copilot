@@ -28,8 +28,12 @@ def env_int(name: str, default: int) -> int:
 @dataclass(frozen=True)
 class Settings:
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/cn_ops"
+    persistence_provider: str = "auto"
     app_env: str = "local"
+    x_provider: str = "fixture"
     allow_live_x_api: bool = False
+    allow_live_search: bool = False
+    allow_live_llm: bool = False
     allow_non_test_mode_write: bool = False
     require_operator_approval: bool = True
     monthly_x_api_budget_usd: float = 1950.0
@@ -38,6 +42,9 @@ class Settings:
     search_provider: str = "fixture"
     llm_provider: str = "fixture"
     llm_model: str = ""
+    x_bearer_token: str = ""
+    brave_search_api_key: str = ""
+    openai_api_key: str = ""
     secret_key: str = "dev-only-change-me"
     min_neutrality_score: float = 0.75
     min_helpfulness_probability: float = 0.60
@@ -59,8 +66,12 @@ class Settings:
     def from_env(cls) -> "Settings":
         return cls(
             database_url=os.getenv("DATABASE_URL", cls.database_url),
+            persistence_provider=os.getenv("PERSISTENCE_PROVIDER", cls.persistence_provider),
             app_env=os.getenv("APP_ENV", cls.app_env),
+            x_provider=os.getenv("X_PROVIDER", cls.x_provider),
             allow_live_x_api=env_bool("ALLOW_LIVE_X_API", cls.allow_live_x_api),
+            allow_live_search=env_bool("ALLOW_LIVE_SEARCH", cls.allow_live_search),
+            allow_live_llm=env_bool("ALLOW_LIVE_LLM", cls.allow_live_llm),
             allow_non_test_mode_write=env_bool("ALLOW_NON_TEST_MODE_WRITE", cls.allow_non_test_mode_write),
             require_operator_approval=env_bool("REQUIRE_OPERATOR_APPROVAL", cls.require_operator_approval),
             monthly_x_api_budget_usd=env_float("MONTHLY_X_API_BUDGET_USD", cls.monthly_x_api_budget_usd),
@@ -69,6 +80,9 @@ class Settings:
             search_provider=os.getenv("SEARCH_PROVIDER", cls.search_provider),
             llm_provider=os.getenv("LLM_PROVIDER", cls.llm_provider),
             llm_model=os.getenv("LLM_MODEL", cls.llm_model),
+            x_bearer_token=os.getenv("X_BEARER_TOKEN", cls.x_bearer_token),
+            brave_search_api_key=os.getenv("BRAVE_SEARCH_API_KEY", cls.brave_search_api_key),
+            openai_api_key=os.getenv("OPENAI_API_KEY", cls.openai_api_key),
             secret_key=os.getenv("SECRET_KEY", cls.secret_key),
             min_neutrality_score=env_float("MIN_NEUTRALITY_SCORE", cls.min_neutrality_score),
             min_helpfulness_probability=env_float("MIN_HELPFULNESS_PROBABILITY", cls.min_helpfulness_probability),
@@ -88,6 +102,13 @@ class Settings:
                 cls.developer_console_reconciliation_required,
             ),
         )
+
+    def postgres_persistence_enabled(self) -> bool:
+        if self.persistence_provider == "postgres":
+            return True
+        if self.persistence_provider == "memory":
+            return False
+        return self.app_env != "local" and bool(self.database_url)
 
     def data_use_scope_allowed(self) -> bool:
         return self.community_notes_data_use_purpose == "community_notes_ai_note_writing"
@@ -123,7 +144,11 @@ class Settings:
     def public_dict(self) -> dict:
         return {
             "app_env": self.app_env,
+            "persistence_provider": "postgres" if self.postgres_persistence_enabled() else "memory",
+            "x_provider": self.x_provider,
             "allow_live_x_api": self.allow_live_x_api,
+            "allow_live_search": self.allow_live_search,
+            "allow_live_llm": self.allow_live_llm,
             "allow_non_test_mode_write": self.allow_non_test_mode_write,
             "require_operator_approval": self.require_operator_approval,
             "monthly_x_api_budget_usd": self.monthly_x_api_budget_usd,
@@ -132,6 +157,9 @@ class Settings:
             "search_provider": self.search_provider,
             "llm_provider": self.llm_provider,
             "llm_model_configured": bool(self.llm_model),
+            "x_credentials_configured": bool(self.x_bearer_token),
+            "search_credentials_configured": bool(self.brave_search_api_key),
+            "llm_credentials_configured": bool(self.openai_api_key),
             "min_neutrality_score": self.min_neutrality_score,
             "min_helpfulness_probability": self.min_helpfulness_probability,
             "min_claim_opinion_score": self.min_claim_opinion_score,

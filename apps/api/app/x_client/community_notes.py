@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from typing import Protocol
+from urllib.parse import urlencode
 
 from app.fixtures import fixture_eligible_posts, fixture_notes_written
 from app.models.records import XEvaluationResult, new_id, sha256_text
 from app.services.costs import CostLedger
+from app.services.providers import request_json
 from app.settings import Settings
 
 
@@ -102,25 +104,143 @@ class LiveXCommunityNotesClient:
     def _disabled(self) -> None:
         if not self.settings.allow_live_x_api:
             raise PermissionError("Live X API calls are disabled by default. Set ALLOW_LIVE_X_API=true to enable.")
+        if not self.settings.x_bearer_token:
+            raise PermissionError("X_BEARER_TOKEN is required for live X API calls.")
+
+    def _headers(self) -> dict[str, str]:
+        return {"Authorization": f"Bearer {self.settings.x_bearer_token}"}
+
+    def _normalize_post(self, item: dict) -> dict:
+        return {
+            "x_post_id": str(item.get("id") or item.get("x_post_id")),
+            "text": item.get("text", ""),
+            "author_id": str(item.get("author_id", "unknown")),
+            "lang": item.get("lang", "en"),
+            "note_tweet": item.get("note_tweet", {}),
+            "referenced_posts": item.get("referenced_posts", []),
+            "quoted_posts": item.get("quoted_posts", []),
+            "replied_to_posts": item.get("replied_to_posts", []),
+            "media_metadata": item.get("media_metadata", []),
+            "suggested_source_links_with_counts": item.get("suggested_source_links_with_counts", []),
+            "note_request_suggestions": item.get("note_request_suggestions", []),
+            "raw_x_api": item,
+        }
 
     def search_posts_eligible_for_notes(self, test_mode: bool, max_results: int, feed_lang: str = "en", feed_size: str = "small") -> dict:
         self._disabled()
-        raise NotImplementedError("Live X API integration is intentionally behind the safety flag.")
+        params = urlencode(
+            {
+                "test_mode": str(test_mode).lower(),
+                "max_results": max(1, min(max_results, 100)),
+                "post_selection": f"feed_size: {feed_size}, feed_lang: {feed_lang}",
+                "tweet.fields": "author_id,created_at,lang,note_tweet,media_metadata,note_request_suggestions,suggested_source_links_with_counts,text,referenced_tweets",
+            }
+        )
+        payload = request_json(
+            "GET",
+            f"https://api.x.com/2/notes/search/posts_eligible_for_notes?{params}",
+            headers=self._headers(),
+        )
+        self.cost_ledger.log("x_live", "posts_eligible_for_notes", 0.0, "eligible-feed", {"test_mode": test_mode, "feed_size": feed_size})
+        return {
+            "test_mode": test_mode,
+            "feed_lang": feed_lang,
+            "feed_size": feed_size,
+            "posts": [self._normalize_post(item) for item in payload.get("data", [])],
+            "meta": payload.get("meta", {}),
+            "errors": payload.get("errors", []),
+        }
 
     def evaluate_note(self, post_id: str, note_text: str) -> XEvaluationResult:
         self._disabled()
-        raise NotImplementedError("Live X evaluate_note is intentionally behind the safety flag.")
+        payload = request_json(
+            "POST",
+            "https://api.x.com/2/evaluate_note",
+            headers=self._headers(),
+            body={"post_id": post_id, "note_text": note_text},
+        )
+        data = payload.get("data", {})
+        score = float(data.get("claim_opinion_score", 0.0))
+        self.cost_ledger.log("x_live", "evaluate_note", 0.0, post_id)
+        return XEvaluationResult(
+            id=new_id(),
+            draft_id="",
+            candidate_id="",
+            post_id=post_id,
+            exact_text_hash=sha256_text(note_text),
+            claim_opinion_score=score,
+            url_validity_score=float(data.get("url_validity_score", 0.0) or 0.0),
+            harassment_abuse_score=float(data.get("harassment_abuse_score", 0.0) or 0.0),
+            helpfulness_score=float(data.get("helpfulness_score", score) or score),
+            raw=payload,
+        )
 
     def write_note(self, post_id: str, note_text: str, test_mode: bool, info: dict | None = None) -> dict:
         self._disabled()
         if not test_mode and not self.settings.allow_non_test_mode_write:
             raise PermissionError("Non-test write blocked by ALLOW_NON_TEST_MODE_WRITE=false")
-        raise NotImplementedError("Live X write_note is intentionally behind the safety flag.")
+        payload = request_json(
+            "POST",
+            "https://api.x.com/2/notes",
+            headers=self._headers(),
+            body={
+                "post_id": post_id,
+                "test_mode": test_mode,
+                "info": {
+                    "text": note_text,
+                    "trustworthy_sources": True,
+                    "misleading_tags": list((info or {}).get("misleading_tags", [])),
+                    "is_media_note": bool((info or {}).get("is_media_note", False)),
+                },
+            },
+        )
+        self.cost_ledger.log("x_live", "write_note", 0.0, post_id, {"test_mode": test_mode})
+        return payload
 
     def notes_written(self, since_id: str | None = None, max_results: int = 100) -> dict:
         self._disabled()
-        raise NotImplementedError("Live X notes_written is intentionally behind the safety flag.")
+        params = {"max_results": max(1, min(max_results, 100))}
+        if since_id:
+            params["since_id"] = since_id
+        payload = request_json(
+            "GET",
+            f"https://api.x.com/2/notes/search/notes_written?{urlencode(params)}",
+            headers=self._headers(),
+        )
+        self.cost_ledger.log("x_live", "notes_written", 0.0, "notes-written", {"since_id": since_id})
+        notes = []
+        for item in payload.get("data", []):
+            scoring = item.get("scoring_status", {})
+            notes.append(
+                {
+                    "id": new_id(),
+                    "note_id": str(item.get("id", "")),
+                    "candidate_id": str(item.get("post_id", "")),
+                    "created_at": item.get("created_at", ""),
+                    "crh": False,
+                    "crnh": False,
+                    "nmr": False,
+                    "claim_opinion": "unknown",
+                    "url_validity": "unknown",
+                    "harassment_abuse": "unknown",
+                    "helpfulness": "unknown",
+                    "test_result": item.get("test_result", "unknown"),
+                    "scoring_status": "has_access" if scoring.get("has_access") else "unknown",
+                }
+            )
+        return {"notes": notes, "meta": payload.get("meta", {}), "errors": payload.get("errors", [])}
 
     def get_usage(self) -> dict:
         self._disabled()
-        return {"usage_api": {}}
+        payload = request_json("GET", "https://api.x.com/2/usage/tweets?days=7", headers=self._headers())
+        data = payload.get("data", {})
+        project_usage = int(data.get("project_usage") or 0)
+        return {
+            "usage_api": {
+                "source": "x_usage_api",
+                "daily_post_consumption": project_usage,
+                "monthly_post_consumption": project_usage,
+                "deduplication_soft_guarantee": True,
+                "raw": payload,
+            }
+        }
