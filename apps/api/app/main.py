@@ -105,6 +105,7 @@ class Handler(BaseHTTPRequestHandler):
                         "live_x_api_enabled": STATE.settings.allow_live_x_api,
                         "live_x_write_enabled": STATE.settings.allow_live_x_write,
                         "non_test_writes_enabled": STATE.settings.allow_non_test_mode_write,
+                        "emergency_stop_external_writes": STATE.settings.emergency_stop_external_writes,
                     }
                 )
                 return
@@ -139,6 +140,9 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if path == "/api/settings":
                 self._send_json(STATE.settings.public_dict())
+                return
+            if path == "/api/governance":
+                self._send_json(STATE.governance_status(public=True))
                 return
             if path.startswith("/api/evals/runs/"):
                 run_id = path.split("/")[-1]

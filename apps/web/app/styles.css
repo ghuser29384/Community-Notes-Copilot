@@ -332,6 +332,27 @@ p {
   gap: 8px;
 }
 
+.governance-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.governance-grid.compact {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.governance-grid > div {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.governance-grid .codebox {
+  max-height: 240px;
+  overflow: auto;
+}
+
 .consent-row {
   display: flex;
   gap: 8px;
@@ -419,7 +440,9 @@ p {
   }
 
   .grid.two,
-  .grid.three {
+  .grid.three,
+  .governance-grid,
+  .governance-grid.compact {
     grid-template-columns: 1fr;
   }
 

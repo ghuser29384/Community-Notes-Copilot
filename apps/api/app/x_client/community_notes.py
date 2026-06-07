@@ -70,6 +70,8 @@ class FixtureXCommunityNotesClient:
         )
 
     def write_note(self, post_id: str, note_text: str, test_mode: bool, info: dict | None = None) -> dict:
+        if self.settings.emergency_stop_external_writes:
+            raise PermissionError("Emergency stop blocks all external writes")
         self.cost_ledger.log("x_fixture", "write_note", 0.003, post_id, {"test_mode": test_mode})
         if not test_mode and not self.settings.allow_non_test_mode_write:
             raise PermissionError("Non-test write blocked by ALLOW_NON_TEST_MODE_WRITE=false")
@@ -177,6 +179,8 @@ class LiveXCommunityNotesClient:
 
     def write_note(self, post_id: str, note_text: str, test_mode: bool, info: dict | None = None) -> dict:
         self._disabled()
+        if self.settings.emergency_stop_external_writes:
+            raise PermissionError("Emergency stop blocks all external writes")
         if not self.settings.allow_live_x_write:
             raise PermissionError("Live X write_note is blocked by ALLOW_LIVE_X_WRITE=false")
         if not test_mode and not self.settings.allow_non_test_mode_write:

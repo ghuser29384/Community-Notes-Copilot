@@ -40,7 +40,13 @@ class SubmissionGate:
     ) -> GateResult:
         checks = {}
         blockers = list(self.extra_blockers)
-        checks["candidate_status_allowed"] = candidate.status not in {"DUPLICATE", "ALREADY_HAS_MATCHED_SHOWN_NOTE", "NO_NOTE"}
+        checks["candidate_status_allowed"] = candidate.status not in {
+            "DUPLICATE",
+            "ALREADY_HAS_MATCHED_SHOWN_NOTE",
+            "NO_NOTE",
+            "HELD_FOR_OPERATOR",
+            "BLOCKED",
+        }
         checks["draft_reviewed"] = draft is not None and draft.status == "REVIEWED"
         checks["operator_approved"] = draft is not None and draft.operator_approved is True
         checks["support_map_complete"] = draft is not None and draft.support_map_covers_all_factual_sentences()
@@ -65,6 +71,20 @@ class SubmissionGate:
         checks["operational_evals_scope_allowed"] = self.settings.operational_evals_scope_allowed()
         checks["bot_identity_configured"] = self.settings.bot_identity_configured()
         checks["test_or_production_readiness"] = test_mode is True or self.readiness_guard.allows_non_test_write()
+        checks["emergency_stop_clear"] = not self.settings.emergency_stop_external_writes
+        checks["abstention_redundancy_pass"] = not candidate.abstention_guard or candidate.abstention_guard.get("decision") == "PASS"
+        checks["media_dependency_pass"] = not candidate.media_dependency or candidate.media_dependency.get("decision") == "PASS"
+        checks["high_stakes_pass"] = not candidate.high_stakes or candidate.high_stakes.get("decision") == "PASS"
+        checks["audience_context_pass"] = not candidate.audience_context or candidate.audience_context.get("status") == "PASS"
+        checks["evidence_freshness_pass"] = (
+            not candidate.freshness_lifecycle or candidate.freshness_lifecycle.get("freshness_status") == "PASS"
+        )
+        checks["cross_perspective_helpfulness_pass"] = (
+            draft is not None and bool(draft.cross_perspective) and draft.cross_perspective.get("status") == "PASS"
+        )
+        checks["writing_opportunity_allow_now"] = (
+            draft is not None and bool(draft.writing_opportunity) and draft.writing_opportunity.get("decision") == "ALLOW_NOW"
+        )
 
         labels = {
             "candidate_status_allowed": "Candidate status blocks submission",
@@ -83,6 +103,14 @@ class SubmissionGate:
             "operational_evals_scope_allowed": "Operational evals must be directly necessary to operate the note writer",
             "bot_identity_configured": "Track B bot profile disclosure and responsible party are required",
             "test_or_production_readiness": "Non-test submissions require explicit enablement and readiness",
+            "emergency_stop_clear": "Emergency stop blocks all external writes",
+            "abstention_redundancy_pass": "Abstention/redundancy guard blocks this candidate",
+            "media_dependency_pass": "Media-dependent claim requires approved multimodal review before submission",
+            "high_stakes_pass": "High-stakes domain routing requirements are not satisfied",
+            "audience_context_pass": "Audience/context fit is not sufficient for submission",
+            "evidence_freshness_pass": "Evidence freshness or lifecycle checks are not satisfied",
+            "cross_perspective_helpfulness_pass": "Cross-perspective helpfulness precheck is not satisfied",
+            "writing_opportunity_allow_now": "Writing opportunity ranker did not prioritize this candidate for submission",
         }
         for key, passed in checks.items():
             if not passed:

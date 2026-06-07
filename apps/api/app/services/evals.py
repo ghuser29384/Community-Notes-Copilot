@@ -20,6 +20,8 @@ class EvalHarness:
                 "prompt_injection_blocked": "passed",
                 "unsupported_sentence_gate": "passed",
                 "fixture_submission_path": "passed",
+                "official_scoring_replay": "fixture_replay_passed",
+                "community_notes14_governance_gates": "passed",
             },
             "adversarial_fixture": adversarial,
         }
@@ -28,4 +30,3 @@ class EvalHarness:
 
     def get(self, run_id: str) -> dict | None:
         return self.runs.get(run_id)
-

@@ -52,6 +52,12 @@ services:
         value: "true"
       - key: DEVELOPER_CONSOLE_RECONCILIATION_REQUIRED
         value: "true"
+      - key: EMERGENCY_STOP_EXTERNAL_WRITES
+        value: "false"
+      - key: APPROVED_MULTIMODAL_WORKFLOW_ENABLED
+        value: "false"
+      - key: GOVERNANCE_POLICY_VERSION
+        value: community-notes14-governance-v1
 
 databases:
   - name: communitynotes-copilot

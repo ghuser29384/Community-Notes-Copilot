@@ -77,6 +77,14 @@ class CandidatePost(ModelMixin):
     suggested_source_links_with_counts: list[dict[str, Any]] = field(default_factory=list)
     note_request_suggestions: list[dict[str, Any]] = field(default_factory=list)
     normalized_context: dict[str, Any] = field(default_factory=dict)
+    platform_context: dict[str, Any] = field(default_factory=dict)
+    audience_context: dict[str, Any] = field(default_factory=dict)
+    media_dependency: dict[str, Any] = field(default_factory=dict)
+    high_stakes: dict[str, Any] = field(default_factory=dict)
+    abstention_guard: dict[str, Any] = field(default_factory=dict)
+    freshness_lifecycle: dict[str, Any] = field(default_factory=dict)
+    retention_policy: dict[str, Any] = field(default_factory=dict)
+    feed_strategy: dict[str, Any] = field(default_factory=dict)
     duplicate_of: str | None = None
     created_at: str = field(default_factory=now_iso)
 
@@ -146,6 +154,11 @@ class DraftNote(ModelMixin):
     factual_sentences: list[str] = field(default_factory=list)
     support_map_json: dict[str, list[str]] = field(default_factory=dict)
     evidence_brief: str = ""
+    evidence_report: dict[str, Any] = field(default_factory=dict)
+    cross_perspective: dict[str, Any] = field(default_factory=dict)
+    writing_opportunity: dict[str, Any] = field(default_factory=dict)
+    methodology: dict[str, Any] = field(default_factory=dict)
+    operator_feedback: list[dict[str, Any]] = field(default_factory=list)
     operator_approved: bool = False
     operator_override_reason: str | None = None
     created_at: str = field(default_factory=now_iso)
@@ -210,6 +223,8 @@ class Submission(ModelMixin):
     test_mode: bool
     status: str
     x_response: dict[str, Any] = field(default_factory=dict)
+    gate_snapshot: dict[str, Any] = field(default_factory=dict)
+    lifecycle_snapshot: dict[str, Any] = field(default_factory=dict)
     created_at: str = field(default_factory=now_iso)
 
 

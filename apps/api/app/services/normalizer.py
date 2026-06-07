@@ -11,7 +11,7 @@ def normalize_text(text: str) -> str:
 
 class CandidateNormalizer:
     def from_x_post(self, raw: dict) -> CandidatePost:
-        text = normalize_text(raw.get("text") or raw.get("note_tweet", {}).get("text", ""))
+        text = normalize_text(raw.get("note_tweet", {}).get("text") or raw.get("text", ""))
         referenced = raw.get("referenced_posts", [])
         quoted = raw.get("quoted_posts", [])
         replied = raw.get("replied_to_posts", [])
@@ -52,4 +52,3 @@ class CandidateNormalizer:
             note_request_suggestions=raw.get("note_request_suggestions", []),
             normalized_context=context,
         )
-

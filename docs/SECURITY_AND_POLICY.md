@@ -6,6 +6,7 @@
 - Do not submit unless `SubmissionGate` passes.
 - Live X calls are disabled by default.
 - Live X note writing is disabled behind a separate `ALLOW_LIVE_X_WRITE` flag.
+- `EMERGENCY_STOP_EXTERNAL_WRITES=true` blocks all fixture and live write paths regardless of ordinary gates.
 - Live search and live LLM calls are disabled by default.
 - Non-test writes are disabled by default.
 - Operator approval is required by default.
@@ -15,6 +16,9 @@
 - Track B API-based bot use requires bot-profile disclosure and a responsible-party identity.
 - Every factual sentence in a draft note must map to approved evidence source IDs.
 - High-severity hallucination, unsupported claim, weak source, overclaim, harassment/abuse risk, or policy issue blocks submission.
+- Media-dependent claims require an approved multimodal workflow or operator hold/abstention.
+- High-stakes health, civic, legal, financial, public-safety, war/crisis, and identity-sensitive claims require authoritative/current evidence and operator confirmation.
+- Cross-perspective helpfulness, writing-opportunity priority, freshness, audience/context fit, and abstention/redundancy checks must pass before submission.
 
 ## Prompt Injection
 
@@ -36,7 +40,25 @@ Track B requires `BOT_PROFILE_DISCLOSURE` and `BOT_RESPONSIBLE_PARTY`. The submi
 
 ## Duplicate And Spam Controls
 
-Candidate normalization computes `canonical_hash` from the post context to deduplicate intake. The gate blocks statuses including `DUPLICATE`, `ALREADY_HAS_MATCHED_SHOWN_NOTE`, and `NO_NOTE`.
+Candidate normalization computes `canonical_hash` from the full `note_tweet` text when present plus referenced, quoted, and replied-to context to deduplicate intake. The gate blocks statuses including `DUPLICATE`, `ALREADY_HAS_MATCHED_SHOWN_NOTE`, `NO_NOTE`, `HELD_FOR_OPERATOR`, and `BLOCKED`.
+
+## CommunityNotes14 Governance
+
+The governance layer persists candidate and draft decisions for:
+
+- Portable context schema and platform adapter output.
+- Audience/context sensitivity.
+- Media-dependency classification.
+- High-stakes domain routing.
+- Abstention and redundancy.
+- Evidence freshness and post-submission lifecycle monitoring.
+- Linkable evidence reports with public redactions.
+- Cross-perspective helpfulness.
+- Writing-opportunity ranking.
+- Retention/access-control classification.
+- Methodology transparency, policy drift, emergency stop, latency SLO, feed strategy, and official scoring replay status.
+
+The public-safe summary is available at `/api/governance`. It must not expose credentials, private X payloads, exact exploitable thresholds, or operator identifiers.
 
 ## Cost And Rate Limits
 

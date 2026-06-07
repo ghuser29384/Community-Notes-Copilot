@@ -45,6 +45,16 @@ Set `PERSISTENCE_PROVIDER=postgres` and `DATABASE_URL` to the Render Postgres in
 
 If the deploy log shows `ModuleNotFoundError: No module named 'psycopg'`, the service is still using an old build command. Update the build command to install `requirements.txt` or sync the root `render.yaml` Blueprint.
 
+The deployment exposes `/api/health` for Render health checks and `/api/governance` for the public-safe CommunityNotes14 governance summary.
+
+Keep these governance defaults in Render unless deliberately changing phase:
+
+```bash
+EMERGENCY_STOP_EXTERNAL_WRITES=false
+APPROVED_MULTIMODAL_WORKFLOW_ENABLED=false
+GOVERNANCE_POLICY_VERSION=community-notes14-governance-v1
+```
+
 ## Staging Production Stack
 
 Recommended production upgrade:
@@ -65,8 +75,9 @@ Recommended production upgrade:
 5. Enable Postgres persistence first and confirm `/api/health` reports `persistence_provider=postgres`.
 6. Enable live read-only X calls with `ALLOW_LIVE_X_API=true` only after scopes, rate limits, local cost ledger, Usage API reconciliation, and Developer Console reconciliation are verified.
 7. Keep `ALLOW_LIVE_X_WRITE=false` and `ALLOW_NON_TEST_MODE_WRITE=false` through read-only staging.
-8. Enable live test-mode writes only after deliberately setting `ALLOW_LIVE_X_WRITE=true`.
-9. Enable non-test writes only after admission readiness, operator workflow, audit logging, Track A consent handling, and rollback are validated.
+8. Confirm `/api/governance` shows emergency stop clear, methodology card present, policy drift requiring operator review before non-test writes, and official scoring replay available.
+9. Enable live test-mode writes only after deliberately setting `ALLOW_LIVE_X_WRITE=true`.
+10. Enable non-test writes only after admission readiness, operator workflow, audit logging, Track A consent handling, governance gates, policy drift review, and rollback are validated.
 
 ## Rollback
 
@@ -84,6 +95,8 @@ TRACK_A_REQUIRES_EXPRESS_CONSENT=true
 REQUIRE_BOT_IDENTITY_DISCLOSURE=true
 USAGE_API_RECONCILIATION_REQUIRED=true
 DEVELOPER_CONSOLE_RECONCILIATION_REQUIRED=true
+EMERGENCY_STOP_EXTERNAL_WRITES=true
+APPROVED_MULTIMODAL_WORKFLOW_ENABLED=false
 ```
 
 Then redeploy the API.

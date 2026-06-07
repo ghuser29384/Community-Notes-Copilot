@@ -39,8 +39,15 @@ function percent(value) {
 
 function statusTag(status) {
   const normalized = String(status || "NEW");
-  const cls = normalized.includes("SUBMITTED") || normalized === "REVIEWED" ? "ok" : normalized === "NO_NOTE" ? "warn" : "";
+  const cls = normalized.includes("SUBMITTED") || normalized === "REVIEWED" ? "ok" : normalized === "NO_NOTE" || normalized.includes("HELD") ? "warn" : "";
   return `<span class="tag ${cls}">${escapeHtml(normalized)}</span>`;
+}
+
+function jsonBlock(value, fallback = "Not available yet.") {
+  if (value === undefined || value === null || (typeof value === "object" && !Object.keys(value).length)) {
+    return `<div class="codebox">${escapeHtml(fallback)}</div>`;
+  }
+  return `<div class="codebox">${escapeHtml(JSON.stringify(value, null, 2))}</div>`;
 }
 
 function setHeader(pageTitle, pageSubtitle) {
@@ -131,9 +138,10 @@ async function renderDashboard() {
       </section>
       <section class="panel stack">
         <div class="row"><h2>Track B status</h2><span class="tag ok">test_mode=true</span></div>
-        <p>Submissions remain blocked until exact draft text passes internal critique, fixture X evaluate_note, operator approval, cost guard, policy scope, bot identity, and readiness checks.</p>
+        <p>Submissions remain blocked until exact draft text passes internal critique, X evaluate_note, operator approval, cost guard, policy scope, bot identity, governance checks, and readiness checks.</p>
         <div class="codebox">${escapeHtml(state.dashboard.policy_scope.policy_text)}</div>
         <div class="codebox">Bot disclosure: ${escapeHtml(state.dashboard.bot_identity.profile_disclosure)}\nResponsible party: ${escapeHtml(state.dashboard.bot_identity.responsible_party || "not configured")}</div>
+        <div class="codebox">Emergency stop: ${state.dashboard.governance.emergency_stop.external_writes_blocked ? "ACTIVE" : "clear"}\nMethodology: ${escapeHtml(state.dashboard.governance.methodology.methodology_version)}</div>
         <button class="button secondary" onclick="navigate('/candidates')">Open eligible queue</button>
       </section>
     </div>
@@ -169,6 +177,7 @@ async function renderCandidates() {
           <td><a data-spa href="/candidates/${candidate.id}" class="link-button">${escapeHtml(candidate.x_post_id)}</a></td>
           <td>${escapeHtml(candidate.text)}</td>
           <td>${statusTag(candidate.status)}</td>
+          <td>${escapeHtml(candidate.high_stakes?.risk_tier || "standard")}</td>
           <td>${candidate.suggested_source_links_with_counts.length}</td>
           <td>${candidate.note_request_suggestions.length}</td>
         </tr>
@@ -176,7 +185,7 @@ async function renderCandidates() {
       .join("");
     document.querySelector("#candidate-table").innerHTML = `
       <table class="table">
-        <thead><tr><th>Post ID</th><th>Post context</th><th>Status</th><th>Suggested sources</th><th>Requests</th></tr></thead>
+        <thead><tr><th>Post ID</th><th>Post context</th><th>Status</th><th>Risk</th><th>Suggested sources</th><th>Requests</th></tr></thead>
         <tbody>${rows}</tbody>
       </table>
     `;
@@ -228,6 +237,17 @@ async function renderCandidateDetail(candidateId) {
       </section>
     </div>
     <section class="panel stack" style="margin-top:16px">
+      <h2>CommunityNotes14 governance</h2>
+      <div class="governance-grid">
+        <div><h3>Audience</h3>${jsonBlock(candidate.audience_context)}</div>
+        <div><h3>Media dependency</h3>${jsonBlock(candidate.media_dependency)}</div>
+        <div><h3>High-stakes routing</h3>${jsonBlock(candidate.high_stakes)}</div>
+        <div><h3>Abstention/redundancy</h3>${jsonBlock(candidate.abstention_guard)}</div>
+        <div><h3>Freshness lifecycle</h3>${jsonBlock(candidate.freshness_lifecycle)}</div>
+        <div><h3>Retention/access</h3>${jsonBlock(candidate.retention_policy)}</div>
+      </div>
+    </section>
+    <section class="panel stack" style="margin-top:16px">
       <h2>Draft variants</h2>
       ${candidate.drafts.map(renderDraft).join("") || '<p class="muted">Run draft after approved evidence retrieval.</p>'}
     </section>
@@ -246,6 +266,12 @@ function renderDraft(draft) {
         ${Object.entries(draft.support_map_json).map(([sentence, sources]) => `<div>${escapeHtml(sentence)}<br><span class="muted">source_id: ${sources.map(escapeHtml).join(", ")}</span></div>`).join("") || '<p class="muted">No factual sentences mapped.</p>'}
       </div>
       <div class="codebox">${escapeHtml(draft.evidence_brief || "No evidence brief.")}</div>
+      <div class="governance-grid compact">
+        <div><h3>Cross-perspective</h3>${jsonBlock(draft.cross_perspective)}</div>
+        <div><h3>Writing opportunity</h3>${jsonBlock(draft.writing_opportunity)}</div>
+        <div><h3>Evidence report</h3>${jsonBlock(draft.evidence_report)}</div>
+        <div><h3>Operator feedback</h3>${jsonBlock(draft.operator_feedback)}</div>
+      </div>
     </div>
   `;
 }
@@ -337,6 +363,7 @@ async function renderSettings() {
   setHeader("Settings", "Thresholds, budgets, feature flags, and provider status without secrets.");
   const data = await api("/api/settings");
   const costs = await api("/api/costs");
+  const governance = await api("/api/governance");
   app.innerHTML = `
     <div class="grid two">
       <section class="panel stack">
@@ -351,6 +378,17 @@ async function renderSettings() {
     <section class="panel stack" style="margin-top:16px">
       <h2>Usage reconciliation</h2>
       <div class="codebox">${escapeHtml(JSON.stringify(costs.summary, null, 2))}</div>
+    </section>
+    <section class="panel stack" style="margin-top:16px">
+      <h2>CommunityNotes14 governance</h2>
+      <div class="governance-grid">
+        <div><h3>Phase</h3>${jsonBlock(governance.phase_and_complexity)}</div>
+        <div><h3>Latency SLO</h3>${jsonBlock(governance.latency_slo)}</div>
+        <div><h3>Methodology</h3>${jsonBlock(governance.methodology)}</div>
+        <div><h3>Policy drift</h3>${jsonBlock(governance.policy_drift)}</div>
+        <div><h3>Emergency stop</h3>${jsonBlock(governance.emergency_stop)}</div>
+        <div><h3>Scoring replay</h3>${jsonBlock(governance.official_scoring_replay)}</div>
+      </div>
     </section>
     <section class="panel stack" style="margin-top:16px">
       <h2>Public settings</h2>
