@@ -50,8 +50,8 @@ For this empty workspace, the checked-in runtime is dependency-light so it can p
 
 - Render/Postgres persistence is enabled with `PERSISTENCE_PROVIDER=postgres`; local fixtures default to memory.
 - Real providers are opt-in: `X_PROVIDER=live`, `ALLOW_LIVE_X_API=true`, `SEARCH_PROVIDER=brave` with `ALLOW_LIVE_SEARCH=true`, and `LLM_PROVIDER=openai` with `ALLOW_LIVE_LLM=true`.
-- Live X calls are disabled unless `ALLOW_LIVE_X_API=true`.
-- Non-test writes are blocked unless `ALLOW_NON_TEST_MODE_WRITE=true`, operator approval is present, and readiness checks pass.
+- Live X calls are disabled unless `ALLOW_LIVE_X_API=true`; live X note writing is separately blocked unless `ALLOW_LIVE_X_WRITE=true`.
+- Non-test writes are additionally blocked unless `ALLOW_NON_TEST_MODE_WRITE=true`, operator approval is present, and readiness checks pass.
 - X Community Notes API data scope is constrained to Community Notes AI note writing; operational evals must be directly necessary to run that workflow.
 - Track A export requires express informed consent; authentication alone is not treated as consent.
 - Track B requires a bot-profile disclosure and responsible-party identity.

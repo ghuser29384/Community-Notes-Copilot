@@ -63,9 +63,10 @@ Recommended production upgrade:
 3. Verify `COMMUNITY_NOTES_DATA_USE_PURPOSE=community_notes_ai_note_writing` and `OPERATIONAL_EVALS_DIRECTLY_NECESSARY=true`.
 4. Configure Track B bot-profile disclosure and responsible-party identity before any write path is considered.
 5. Enable Postgres persistence first and confirm `/api/health` reports `persistence_provider=postgres`.
-6. Enable live read-only X calls only after scopes, rate limits, local cost ledger, Usage API reconciliation, and Developer Console reconciliation are verified.
-7. Keep `ALLOW_NON_TEST_MODE_WRITE=false` through staging.
-8. Enable non-test writes only after admission readiness, operator workflow, audit logging, Track A consent handling, and rollback are validated.
+6. Enable live read-only X calls with `ALLOW_LIVE_X_API=true` only after scopes, rate limits, local cost ledger, Usage API reconciliation, and Developer Console reconciliation are verified.
+7. Keep `ALLOW_LIVE_X_WRITE=false` and `ALLOW_NON_TEST_MODE_WRITE=false` through read-only staging.
+8. Enable live test-mode writes only after deliberately setting `ALLOW_LIVE_X_WRITE=true`.
+9. Enable non-test writes only after admission readiness, operator workflow, audit logging, Track A consent handling, and rollback are validated.
 
 ## Rollback
 
@@ -73,6 +74,7 @@ Disable live calls by setting:
 
 ```bash
 ALLOW_LIVE_X_API=false
+ALLOW_LIVE_X_WRITE=false
 ALLOW_NON_TEST_MODE_WRITE=false
 SEARCH_PROVIDER=fixture
 LLM_PROVIDER=fixture

@@ -177,6 +177,8 @@ class LiveXCommunityNotesClient:
 
     def write_note(self, post_id: str, note_text: str, test_mode: bool, info: dict | None = None) -> dict:
         self._disabled()
+        if not self.settings.allow_live_x_write:
+            raise PermissionError("Live X write_note is blocked by ALLOW_LIVE_X_WRITE=false")
         if not test_mode and not self.settings.allow_non_test_mode_write:
             raise PermissionError("Non-test write blocked by ALLOW_NON_TEST_MODE_WRITE=false")
         payload = request_json(

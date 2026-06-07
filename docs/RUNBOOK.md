@@ -3,11 +3,12 @@
 ## Budget Cap Breach
 
 1. Set `ALLOW_LIVE_X_API=false`.
-2. Confirm `/api/costs` local ledger daily and monthly totals.
-3. Confirm the latest Usage API snapshot and treat 24-hour deduplication as a soft guarantee, not the only source of truth.
-4. Check the Developer Console separately before raising budgets.
-5. Review recent `CostLedgerEntry` actions.
-6. Lower `DAILY_X_API_BUDGET_USD` or provider budgets if needed.
+2. Set `ALLOW_LIVE_X_WRITE=false`.
+3. Confirm `/api/costs` local ledger daily and monthly totals.
+4. Confirm the latest Usage API snapshot and treat 24-hour deduplication as a soft guarantee, not the only source of truth.
+5. Check the Developer Console separately before raising budgets.
+6. Review recent `CostLedgerEntry` actions.
+7. Lower `DAILY_X_API_BUDGET_USD` or provider budgets if needed.
 
 ## Policy Scope Regression
 
@@ -41,7 +42,7 @@
 ## API Failure
 
 1. Confirm `/api/health`.
-2. Switch providers to fixture: `X_PROVIDER=fixture`, `SEARCH_PROVIDER=fixture`, `LLM_PROVIDER=fixture`, and set live flags false.
+2. Switch providers to fixture: `X_PROVIDER=fixture`, `SEARCH_PROVIDER=fixture`, `LLM_PROVIDER=fixture`, and set live flags false, including `ALLOW_LIVE_X_WRITE=false`.
 3. Retry `POST /api/x/sync-eligible-posts`.
 4. Check env flags and X credentials in the deployment secret store.
 

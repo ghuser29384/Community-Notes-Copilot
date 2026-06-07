@@ -5,6 +5,7 @@
 - Do not train or fine-tune a foundation/frontier model on X API data or X Content.
 - Do not submit unless `SubmissionGate` passes.
 - Live X calls are disabled by default.
+- Live X note writing is disabled behind a separate `ALLOW_LIVE_X_WRITE` flag.
 - Live search and live LLM calls are disabled by default.
 - Non-test writes are disabled by default.
 - Operator approval is required by default.
@@ -45,7 +46,7 @@ The local ledger is reconciled against fixture `get_usage()` output that models 
 
 ## Provider Gates
 
-Real providers are opt-in and independently gated. `X_PROVIDER=live` still cannot call X unless `ALLOW_LIVE_X_API=true` and credentials are present. `SEARCH_PROVIDER=brave` requires `ALLOW_LIVE_SEARCH=true`. `LLM_PROVIDER=openai` requires `ALLOW_LIVE_LLM=true`, `OPENAI_API_KEY`, and `LLM_MODEL`. Keep `ALLOW_NON_TEST_MODE_WRITE=false` until Postgres persistence, read-only X calls, cost reconciliation, and operator workflows are verified.
+Real providers are opt-in and independently gated. `X_PROVIDER=live` still cannot call X unless `ALLOW_LIVE_X_API=true` and credentials are present, and it cannot call `write_note` unless `ALLOW_LIVE_X_WRITE=true`. `SEARCH_PROVIDER=brave` requires `ALLOW_LIVE_SEARCH=true`. `LLM_PROVIDER=openai` requires `ALLOW_LIVE_LLM=true`, `OPENAI_API_KEY`, and `LLM_MODEL`. Keep `ALLOW_LIVE_X_WRITE=false` and `ALLOW_NON_TEST_MODE_WRITE=false` until Postgres persistence, read-only X calls, cost reconciliation, and operator workflows are verified.
 
 ## External Sharing
 

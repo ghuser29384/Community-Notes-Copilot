@@ -29,6 +29,12 @@ class PersistenceAndProviderTests(unittest.TestCase):
         with self.assertRaises(PermissionError):
             missing_token.get_usage()
 
+    def test_live_x_write_requires_separate_write_flag(self) -> None:
+        settings = Settings(x_provider="live", allow_live_x_api=True, x_bearer_token="token")
+        client = LiveXCommunityNotesClient(settings, CostLedger(settings))
+        with self.assertRaisesRegex(PermissionError, "ALLOW_LIVE_X_WRITE=false"):
+            client.write_note("post", "note", test_mode=True)
+
     def test_openai_provider_requires_explicit_live_llm_flag(self) -> None:
         with self.assertRaises(PermissionError):
             OpenAIResponsesClient(Settings(llm_provider="openai", llm_model="example", openai_api_key="sk-test"))

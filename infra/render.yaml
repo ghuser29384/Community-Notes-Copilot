@@ -22,6 +22,8 @@ services:
         value: fixture
       - key: ALLOW_LIVE_X_API
         value: "false"
+      - key: ALLOW_LIVE_X_WRITE
+        value: "false"
       - key: ALLOW_LIVE_SEARCH
         value: "false"
       - key: ALLOW_LIVE_LLM

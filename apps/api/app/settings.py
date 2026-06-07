@@ -32,6 +32,7 @@ class Settings:
     app_env: str = "local"
     x_provider: str = "fixture"
     allow_live_x_api: bool = False
+    allow_live_x_write: bool = False
     allow_live_search: bool = False
     allow_live_llm: bool = False
     allow_non_test_mode_write: bool = False
@@ -70,6 +71,7 @@ class Settings:
             app_env=os.getenv("APP_ENV", cls.app_env),
             x_provider=os.getenv("X_PROVIDER", cls.x_provider),
             allow_live_x_api=env_bool("ALLOW_LIVE_X_API", cls.allow_live_x_api),
+            allow_live_x_write=env_bool("ALLOW_LIVE_X_WRITE", cls.allow_live_x_write),
             allow_live_search=env_bool("ALLOW_LIVE_SEARCH", cls.allow_live_search),
             allow_live_llm=env_bool("ALLOW_LIVE_LLM", cls.allow_live_llm),
             allow_non_test_mode_write=env_bool("ALLOW_NON_TEST_MODE_WRITE", cls.allow_non_test_mode_write),
@@ -147,6 +149,7 @@ class Settings:
             "persistence_provider": "postgres" if self.postgres_persistence_enabled() else "memory",
             "x_provider": self.x_provider,
             "allow_live_x_api": self.allow_live_x_api,
+            "allow_live_x_write": self.allow_live_x_write,
             "allow_live_search": self.allow_live_search,
             "allow_live_llm": self.allow_live_llm,
             "allow_non_test_mode_write": self.allow_non_test_mode_write,

@@ -103,6 +103,7 @@ class Handler(BaseHTTPRequestHandler):
                         "app_env": STATE.settings.app_env,
                         "persistence_provider": "postgres" if STATE.record_store.enabled else "memory",
                         "live_x_api_enabled": STATE.settings.allow_live_x_api,
+                        "live_x_write_enabled": STATE.settings.allow_live_x_write,
                         "non_test_writes_enabled": STATE.settings.allow_non_test_mode_write,
                     }
                 )
