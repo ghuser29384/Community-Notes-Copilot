@@ -100,6 +100,14 @@ class GovernanceTests(unittest.TestCase):
         self.assertTrue(status["policy_drift"]["material_change_freezes_writes"])
         self.assertIn("redactions", status["methodology"])
 
+    def test_dashboard_degrades_when_live_x_token_missing(self) -> None:
+        state = AppState(Settings(x_provider="live", allow_live_x_api=True))
+        dashboard = state.dashboard()
+        costs = state.refresh_usage_reconciliation()
+        self.assertIn("X_BEARER_TOKEN is required for live X API calls", dashboard["provider_readiness"]["blockers"])
+        self.assertIn("usage_reconciliation_error", costs)
+        self.assertFalse(dashboard["provider_readiness"]["x_live_read_ready"])
+
 
 if __name__ == "__main__":
     unittest.main()

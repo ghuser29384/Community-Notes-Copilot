@@ -466,9 +466,32 @@ class AppState:
         return gate.evaluate(candidate, draft, self.internal_scores.get(draft_id), self.x_evaluations.get(draft_id), test_mode)
 
     def refresh_usage_reconciliation(self) -> dict:
-        usage = self.x_client.get_usage()
+        try:
+            usage = self.x_client.get_usage()
+        except PermissionError as exc:
+            data = self.cost_ledger.to_dict()
+            data["usage_reconciliation_error"] = str(exc)
+            return data
         self.cost_ledger.reconcile_usage_api(usage.get("usage_api", {}))
         return self.cost_ledger.to_dict()
+
+    def provider_readiness(self) -> dict:
+        blockers = []
+        if self.settings.x_provider == "live":
+            if not self.settings.allow_live_x_api:
+                blockers.append("Live X provider selected but ALLOW_LIVE_X_API=false")
+            if not self.settings.x_bearer_token:
+                blockers.append("X_BEARER_TOKEN is required for live X API calls")
+        if self.settings.search_provider == "brave" and not self.settings.allow_live_search:
+            blockers.append("Brave search provider selected but ALLOW_LIVE_SEARCH=false")
+        if self.settings.llm_provider == "openai" and not self.settings.allow_live_llm:
+            blockers.append("OpenAI LLM provider selected but ALLOW_LIVE_LLM=false")
+        return {
+            "x_live_read_ready": self.settings.x_provider != "live" or (self.settings.allow_live_x_api and bool(self.settings.x_bearer_token)),
+            "search_live_ready": self.settings.search_provider != "brave" or self.settings.allow_live_search,
+            "llm_live_ready": self.settings.llm_provider != "openai" or self.settings.allow_live_llm,
+            "blockers": blockers,
+        }
 
     def submit_draft(self, draft_id: str, test_mode: bool = True) -> tuple[Submission | None, object]:
         draft = self.drafts[draft_id]
@@ -560,6 +583,7 @@ class AppState:
         writing = self.writing_limit()
         self.refresh_usage_reconciliation()
         costs = self.cost_ledger.summary()
+        provider_readiness = self.provider_readiness()
         statuses = {}
         for candidate in self.candidates.values():
             statuses[candidate.status] = statuses.get(candidate.status, 0) + 1
@@ -572,10 +596,11 @@ class AppState:
             "admission": admission.to_dict(),
             "writing_limit": writing.to_dict(),
             "costs": costs.to_dict(),
+            "provider_readiness": provider_readiness,
             "policy_scope": self.settings.policy_scope(),
             "bot_identity": self.settings.bot_identity(),
             "governance": self.governance_status(public=True),
-            "regression_alerts": admission.blockers + costs.blockers,
+            "regression_alerts": admission.blockers + costs.blockers + provider_readiness["blockers"],
         }
 
     def governance_status(self, public: bool = True) -> dict:
