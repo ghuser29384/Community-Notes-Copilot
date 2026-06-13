@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import io
 import unittest
+from unittest.mock import patch
+from urllib.error import HTTPError
 
-from app.services.providers import OpenAIResponsesClient
+from app.services.providers import OpenAIResponsesClient, ProviderError, request_json
 from app.storage import normalize_postgres_url
 from app.settings import Settings
 from app.x_client.community_notes import LiveXCommunityNotesClient
@@ -38,6 +41,21 @@ class PersistenceAndProviderTests(unittest.TestCase):
     def test_openai_provider_requires_explicit_live_llm_flag(self) -> None:
         with self.assertRaises(PermissionError):
             OpenAIResponsesClient(Settings(llm_provider="openai", llm_model="example", openai_api_key="sk-test"))
+
+    def test_request_json_wraps_http_errors_without_query_string(self) -> None:
+        error = HTTPError(
+            "https://api.x.com/2/notes/search/posts_eligible_for_notes?max_results=1",
+            429,
+            "Too Many Requests",
+            {},
+            io.BytesIO(b'{"title":"Rate limit exceeded"}'),
+        )
+        with patch("app.services.providers.urlopen", side_effect=error):
+            expected = "GET https://api.x.com/2/notes/search/posts_eligible_for_notes failed with HTTP 429"
+            with self.assertRaisesRegex(ProviderError, expected) as context:
+                request_json("GET", "https://api.x.com/2/notes/search/posts_eligible_for_notes?max_results=1")
+
+        self.assertNotIn("max_results=1", str(context.exception))
 
 
 if __name__ == "__main__":

@@ -13,6 +13,7 @@ from urllib.parse import parse_qs, urlparse
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from app.services.providers import ProviderError
 from app.services.store import AppState
 from app.settings import Settings
 
@@ -63,6 +64,9 @@ class Handler(BaseHTTPRequestHandler):
 
     def _send_not_found(self) -> None:
         self._send_json({"error": "not found", "path": self.path}, HTTPStatus.NOT_FOUND)
+
+    def _send_provider_error(self, exc: ProviderError) -> None:
+        self._send_json({"error": str(exc), "provider_error": True}, HTTPStatus.BAD_GATEWAY)
 
     def do_GET(self) -> None:
         parsed = urlparse(self.path)
@@ -158,6 +162,9 @@ class Handler(BaseHTTPRequestHandler):
         except PermissionError as exc:
             self._send_json({"error": str(exc)}, HTTPStatus.FORBIDDEN)
             return
+        except ProviderError as exc:
+            self._send_provider_error(exc)
+            return
         self._send_not_found()
 
     def _handle_api_post(self, path: str, body: dict) -> None:
@@ -210,6 +217,9 @@ class Handler(BaseHTTPRequestHandler):
             return
         except PermissionError as exc:
             self._send_json({"error": str(exc)}, HTTPStatus.FORBIDDEN)
+            return
+        except ProviderError as exc:
+            self._send_provider_error(exc)
             return
         self._send_not_found()
 

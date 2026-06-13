@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import json
 from typing import Any
-from urllib.parse import urlencode
+from urllib.error import HTTPError, URLError
+from urllib.parse import urlencode, urlsplit
 from urllib.request import Request, urlopen
 
 from app.settings import Settings
@@ -17,9 +18,51 @@ def request_json(method: str, url: str, headers: dict[str, str] | None = None, b
     request = Request(url, data=data, method=method, headers=headers or {})
     if data is not None:
         request.add_header("Content-Type", "application/json")
-    with urlopen(request, timeout=timeout) as response:
-        raw = response.read().decode("utf-8")
-        return json.loads(raw) if raw else {}
+    endpoint = _endpoint_label(method, url)
+    try:
+        with urlopen(request, timeout=timeout) as response:
+            raw = response.read().decode("utf-8")
+    except HTTPError as exc:
+        raw_error = exc.read().decode("utf-8", errors="replace")
+        raise ProviderError(f"{endpoint} failed with HTTP {exc.code}: {_error_detail(raw_error)}") from exc
+    except URLError as exc:
+        raise ProviderError(f"{endpoint} failed: {exc.reason}") from exc
+    except TimeoutError as exc:
+        raise ProviderError(f"{endpoint} timed out after {timeout}s") from exc
+    if not raw:
+        return {}
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ProviderError(f"{endpoint} returned invalid JSON: {_error_detail(raw)}") from exc
+
+
+def _endpoint_label(method: str, url: str) -> str:
+    parsed = urlsplit(url)
+    return f"{method} {parsed.scheme}://{parsed.netloc}{parsed.path}"
+
+
+def _error_detail(raw: str) -> str:
+    if not raw:
+        return "empty response"
+    try:
+        payload = json.loads(raw)
+    except json.JSONDecodeError:
+        return raw[:500].strip()
+    errors = payload.get("errors")
+    if isinstance(errors, list) and errors:
+        parts = []
+        for error in errors[:3]:
+            if isinstance(error, dict):
+                parts.append(str(error.get("detail") or error.get("title") or error.get("message") or error))
+            else:
+                parts.append(str(error))
+        return "; ".join(parts)
+    for key in ("detail", "title", "message", "error"):
+        value = payload.get(key)
+        if value:
+            return str(value)
+    return json.dumps(payload)[:500]
 
 
 class BraveSearchClient:
