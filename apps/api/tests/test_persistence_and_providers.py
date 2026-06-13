@@ -32,6 +32,17 @@ class PersistenceAndProviderTests(unittest.TestCase):
         with self.assertRaises(PermissionError):
             missing_token.get_usage()
 
+    def test_live_x_refresh_token_counts_as_configured_credential(self) -> None:
+        settings = Settings(
+            x_provider="live",
+            allow_live_x_api=True,
+            x_oauth2_client_id="client-id",
+            x_oauth2_refresh_token="refresh-token",
+        )
+        self.assertTrue(settings.x_live_credentials_configured())
+        self.assertTrue(settings.public_dict()["x_credentials_configured"])
+        self.assertTrue(settings.public_dict()["x_oauth2_refresh_configured"])
+
     def test_live_x_write_requires_separate_write_flag(self) -> None:
         settings = Settings(x_provider="live", allow_live_x_api=True, x_bearer_token="token")
         client = LiveXCommunityNotesClient(settings, CostLedger(settings))

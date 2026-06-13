@@ -757,14 +757,14 @@ class AppState:
         if self.settings.x_provider == "live":
             if not self.settings.allow_live_x_api:
                 blockers.append("Live X provider selected but ALLOW_LIVE_X_API=false")
-            if not self.settings.x_bearer_token:
-                blockers.append("X_BEARER_TOKEN is required for live X API calls")
+            if not self.settings.x_live_credentials_configured():
+                blockers.append("A user-context X credential is required: set X_BEARER_TOKEN or X_OAUTH2_REFRESH_TOKEN with X_OAUTH2_CLIENT_ID")
         if self.settings.search_provider == "brave" and not self.settings.allow_live_search:
             blockers.append("Brave search provider selected but ALLOW_LIVE_SEARCH=false")
         if self.settings.llm_provider == "openai" and not self.settings.allow_live_llm:
             blockers.append("OpenAI LLM provider selected but ALLOW_LIVE_LLM=false")
         return {
-            "x_live_read_ready": self.settings.x_provider != "live" or (self.settings.allow_live_x_api and bool(self.settings.x_bearer_token)),
+            "x_live_read_ready": self.settings.x_provider != "live" or (self.settings.allow_live_x_api and self.settings.x_live_credentials_configured()),
             "search_live_ready": self.settings.search_provider != "brave" or self.settings.allow_live_search,
             "llm_live_ready": self.settings.llm_provider != "openai" or self.settings.allow_live_llm,
             "credential_scope": credential_scope,

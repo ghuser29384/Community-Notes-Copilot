@@ -44,6 +44,11 @@ class Settings:
     llm_provider: str = "fixture"
     llm_model: str = ""
     x_bearer_token: str = ""
+    x_oauth2_client_id: str = ""
+    x_oauth2_client_secret: str = ""
+    x_oauth2_redirect_uri: str = ""
+    x_oauth2_refresh_token: str = ""
+    x_oauth2_scopes: str = "tweet.read users.read offline.access"
     brave_search_api_key: str = ""
     openai_api_key: str = ""
     secret_key: str = "dev-only-change-me"
@@ -87,6 +92,11 @@ class Settings:
             llm_provider=os.getenv("LLM_PROVIDER", cls.llm_provider),
             llm_model=os.getenv("LLM_MODEL", cls.llm_model),
             x_bearer_token=os.getenv("X_BEARER_TOKEN", cls.x_bearer_token),
+            x_oauth2_client_id=os.getenv("X_OAUTH2_CLIENT_ID", cls.x_oauth2_client_id),
+            x_oauth2_client_secret=os.getenv("X_OAUTH2_CLIENT_SECRET", cls.x_oauth2_client_secret),
+            x_oauth2_redirect_uri=os.getenv("X_OAUTH2_REDIRECT_URI", cls.x_oauth2_redirect_uri),
+            x_oauth2_refresh_token=os.getenv("X_OAUTH2_REFRESH_TOKEN", cls.x_oauth2_refresh_token),
+            x_oauth2_scopes=os.getenv("X_OAUTH2_SCOPES", cls.x_oauth2_scopes),
             brave_search_api_key=os.getenv("BRAVE_SEARCH_API_KEY", cls.brave_search_api_key),
             openai_api_key=os.getenv("OPENAI_API_KEY", cls.openai_api_key),
             secret_key=os.getenv("SECRET_KEY", cls.secret_key),
@@ -154,6 +164,12 @@ class Settings:
             "responsible_party": self.bot_responsible_party,
         }
 
+    def x_oauth2_refresh_configured(self) -> bool:
+        return bool(self.x_oauth2_client_id and self.x_oauth2_refresh_token)
+
+    def x_live_credentials_configured(self) -> bool:
+        return bool(self.x_bearer_token) or self.x_oauth2_refresh_configured()
+
     def public_dict(self) -> dict:
         return {
             "app_env": self.app_env,
@@ -171,7 +187,8 @@ class Settings:
             "search_provider": self.search_provider,
             "llm_provider": self.llm_provider,
             "llm_model_configured": bool(self.llm_model),
-            "x_credentials_configured": bool(self.x_bearer_token),
+            "x_credentials_configured": self.x_live_credentials_configured(),
+            "x_oauth2_refresh_configured": self.x_oauth2_refresh_configured(),
             "search_credentials_configured": bool(self.brave_search_api_key),
             "llm_credentials_configured": bool(self.openai_api_key),
             "min_neutrality_score": self.min_neutrality_score,

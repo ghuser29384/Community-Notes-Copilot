@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from base64 import b64encode
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode, urlsplit
@@ -18,6 +19,40 @@ def request_json(method: str, url: str, headers: dict[str, str] | None = None, b
     request = Request(url, data=data, method=method, headers=headers or {})
     if data is not None:
         request.add_header("Content-Type", "application/json")
+    endpoint = _endpoint_label(method, url)
+    try:
+        with urlopen(request, timeout=timeout) as response:
+            raw = response.read().decode("utf-8")
+    except HTTPError as exc:
+        raw_error = exc.read().decode("utf-8", errors="replace")
+        raise ProviderError(f"{endpoint} failed with HTTP {exc.code}: {_error_detail(raw_error)}") from exc
+    except URLError as exc:
+        raise ProviderError(f"{endpoint} failed: {exc.reason}") from exc
+    except TimeoutError as exc:
+        raise ProviderError(f"{endpoint} timed out after {timeout}s") from exc
+    if not raw:
+        return {}
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError as exc:
+        raise ProviderError(f"{endpoint} returned invalid JSON: {_error_detail(raw)}") from exc
+
+
+def request_form_json(
+    method: str,
+    url: str,
+    form: dict[str, Any],
+    headers: dict[str, str] | None = None,
+    basic_auth: tuple[str, str] | None = None,
+    timeout: int = 20,
+) -> dict[str, Any]:
+    request_headers = dict(headers or {})
+    request_headers["Content-Type"] = "application/x-www-form-urlencoded"
+    if basic_auth:
+        userpass = f"{basic_auth[0]}:{basic_auth[1]}".encode("utf-8")
+        request_headers["Authorization"] = f"Basic {b64encode(userpass).decode('ascii')}"
+    data = urlencode(form).encode("utf-8")
+    request = Request(url, data=data, method=method, headers=request_headers)
     endpoint = _endpoint_label(method, url)
     try:
         with urlopen(request, timeout=timeout) as response:

@@ -74,6 +74,18 @@ Recommended production upgrade:
 4. Configure Track B bot-profile disclosure and responsible-party identity before any write path is considered.
 5. Enable Postgres persistence first and confirm `/api/health` reports `persistence_provider=postgres`.
 6. Enable live read-only X calls with `ALLOW_LIVE_X_API=true` only after scopes, rate limits, local cost ledger, Usage API reconciliation, and Developer Console reconciliation are verified.
+   Use X user-context credentials for Community Notes endpoints:
+
+   ```bash
+   X_PROVIDER=live
+   ALLOW_LIVE_X_API=true
+   ALLOW_LIVE_X_WRITE=false
+   X_BEARER_TOKEN=... # user-context access token, not app-only bearer token
+   X_OAUTH2_CLIENT_ID=...
+   X_OAUTH2_CLIENT_SECRET=...
+   X_OAUTH2_REFRESH_TOKEN=...
+   ```
+
 7. Keep `ALLOW_LIVE_X_WRITE=false` and `ALLOW_NON_TEST_MODE_WRITE=false` through read-only staging.
 8. Confirm `/api/governance` shows emergency stop clear, methodology card present, policy drift requiring operator review before non-test writes, and official scoring replay available.
 9. Enable live test-mode writes only after deliberately setting `ALLOW_LIVE_X_WRITE=true`.

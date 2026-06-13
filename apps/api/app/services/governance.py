@@ -230,11 +230,12 @@ class CredentialScopeAndEnvironmentIsolationService:
     settings: Settings
 
     def scope_for(self, endpoint_class: str, test_mode: bool = True) -> dict:
+        x_credentials_configured = self.settings.x_live_credentials_configured()
         scopes = {
-            "x_read": self.settings.x_provider == "fixture" or (self.settings.allow_live_x_api and bool(self.settings.x_bearer_token)),
-            "x_evaluate": self.settings.x_provider == "fixture" or (self.settings.allow_live_x_api and bool(self.settings.x_bearer_token)),
+            "x_read": self.settings.x_provider == "fixture" or (self.settings.allow_live_x_api and x_credentials_configured),
+            "x_evaluate": self.settings.x_provider == "fixture" or (self.settings.allow_live_x_api and x_credentials_configured),
             "x_test_write": self.settings.x_provider == "fixture" or (
-                self.settings.allow_live_x_api and self.settings.allow_live_x_write and bool(self.settings.x_bearer_token)
+                self.settings.allow_live_x_api and self.settings.allow_live_x_write and x_credentials_configured
             ),
             "x_production_write": (
                 self.settings.app_env == "production"
@@ -242,7 +243,7 @@ class CredentialScopeAndEnvironmentIsolationService:
                 and self.settings.allow_live_x_api
                 and self.settings.allow_live_x_write
                 and self.settings.allow_non_test_mode_write
-                and bool(self.settings.x_bearer_token)
+                and x_credentials_configured
             ),
             "search": self.settings.search_provider == "fixture" or (self.settings.allow_live_search and bool(self.settings.brave_search_api_key)),
             "model_call": self.settings.llm_provider == "fixture" or (self.settings.allow_live_llm and bool(self.settings.openai_api_key)),
@@ -256,8 +257,8 @@ class CredentialScopeAndEnvironmentIsolationService:
             blockers.append(f"Credential scope {needed} is not available")
         if self.settings.allow_non_test_mode_write and self.settings.app_env != "production":
             blockers.append("Production-write feature flag is present outside production")
-        if self.settings.x_provider == "live" and self.settings.app_env == "local" and self.settings.x_bearer_token:
-            blockers.append("Live X bearer token should not be present in local/dev")
+        if self.settings.x_provider == "live" and self.settings.app_env == "local" and x_credentials_configured:
+            blockers.append("Live X credentials should not be present in local/dev")
         return {
             "policy_version": "credential-scope-v1",
             "app_env": self.settings.app_env,

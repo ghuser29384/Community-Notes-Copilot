@@ -10,7 +10,7 @@
 - `notes_written(since_id, max_results)`
 - `get_usage()`
 
-The fixture implementation simulates eligible posts, suggested sources, note request suggestions, evaluator responses, usage, and notes written feedback. The live implementation is selected with `X_PROVIDER=live` and raises unless `ALLOW_LIVE_X_API=true` and `X_BEARER_TOKEN` is configured. Live note writing is separately blocked unless `ALLOW_LIVE_X_WRITE=true`.
+The fixture implementation simulates eligible posts, suggested sources, note request suggestions, evaluator responses, usage, and notes written feedback. The live implementation is selected with `X_PROVIDER=live` and raises unless `ALLOW_LIVE_X_API=true` and a user-context X credential is configured. Live note writing is separately blocked unless `ALLOW_LIVE_X_WRITE=true`.
 
 ## Route Mapping
 
@@ -27,9 +27,24 @@ The local demo never requires credentials. Live credentials are read only from e
 
 Live provider envs:
 
-- `X_PROVIDER=live`, `ALLOW_LIVE_X_API=true`, `ALLOW_LIVE_X_WRITE=false`, `X_BEARER_TOKEN=...`
+- `X_PROVIDER=live`, `ALLOW_LIVE_X_API=true`, `ALLOW_LIVE_X_WRITE=false`
+- For a short-lived user-context access token: `X_BEARER_TOKEN=...`
+- For refresh support: `X_OAUTH2_CLIENT_ID=...`, optional `X_OAUTH2_CLIENT_SECRET=...`, `X_OAUTH2_REFRESH_TOKEN=...`
 - `SEARCH_PROVIDER=brave`, `ALLOW_LIVE_SEARCH=true`, `BRAVE_SEARCH_API_KEY=...`
 - `LLM_PROVIDER=openai`, `ALLOW_LIVE_LLM=true`, `OPENAI_API_KEY=...`, `LLM_MODEL=...`
+
+The Community Notes endpoints require X user-context authentication, not an app-only bearer token. Use `X_BEARER_TOKEN` only for a user-context access token. The local helper can generate and refresh user-context credentials:
+
+```bash
+export X_OAUTH2_CLIENT_ID=...
+export X_OAUTH2_CLIENT_SECRET=... # optional for public clients
+export X_OAUTH2_REDIRECT_URI=...
+export X_OAUTH2_SCOPES="tweet.read users.read offline.access"
+
+PYTHONPATH=apps/api python3 apps/api/app/cli.py x-oauth-start
+PYTHONPATH=apps/api python3 apps/api/app/cli.py x-oauth-exchange CODE CODE_VERIFIER
+PYTHONPATH=apps/api python3 apps/api/app/cli.py x-oauth-refresh
+```
 
 Required future scopes depend on X's current AI Note Writer API requirements. Confirm exact scopes from X before staging live mode.
 

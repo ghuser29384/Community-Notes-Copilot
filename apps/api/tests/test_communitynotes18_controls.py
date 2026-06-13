@@ -74,7 +74,7 @@ class CommunityNotes18ControlTests(unittest.TestCase):
         scope = state.credential_scope.scope_for("x_write", test_mode=True)
 
         self.assertEqual(scope["status"], "BLOCK")
-        self.assertIn("Live X bearer token should not be present in local/dev", scope["blockers"])
+        self.assertIn("Live X credentials should not be present in local/dev", scope["blockers"])
 
     def test_governance_status_exposes_communitynotes18_controls(self) -> None:
         status = AppState(Settings()).governance_status(public=True)

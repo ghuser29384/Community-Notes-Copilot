@@ -9,6 +9,7 @@ from app.models.records import XEvaluationResult, new_id, sha256_text
 from app.services.costs import CostLedger
 from app.services.providers import request_json
 from app.settings import Settings
+from app.x_client.oauth import refresh_oauth2_user_access_token
 
 
 class XCommunityNotesClient(Protocol):
@@ -103,14 +104,31 @@ class LiveXCommunityNotesClient:
     settings: Settings
     cost_ledger: CostLedger
 
+    def __post_init__(self) -> None:
+        self._access_token = self.settings.x_bearer_token
+        self._refresh_token = self.settings.x_oauth2_refresh_token
+
     def _disabled(self) -> None:
         if not self.settings.allow_live_x_api:
             raise PermissionError("Live X API calls are disabled by default. Set ALLOW_LIVE_X_API=true to enable.")
-        if not self.settings.x_bearer_token:
-            raise PermissionError("X_BEARER_TOKEN is required for live X API calls.")
+        if not self.settings.x_live_credentials_configured():
+            raise PermissionError("A user-context X credential is required: set X_BEARER_TOKEN or X_OAUTH2_REFRESH_TOKEN with X_OAUTH2_CLIENT_ID.")
+
+    def _access_token_for_request(self) -> str:
+        if self.settings.x_oauth2_refresh_configured() and (not self._access_token or self._access_token == self.settings.x_bearer_token):
+            token = refresh_oauth2_user_access_token(
+                self.settings.x_oauth2_client_id,
+                self.settings.x_oauth2_client_secret,
+                self._refresh_token or self.settings.x_oauth2_refresh_token,
+            )
+            self._access_token = token.access_token
+            self._refresh_token = token.refresh_token or self._refresh_token
+        if self._access_token:
+            return self._access_token
+        raise PermissionError("A user-context X credential is required: set X_BEARER_TOKEN or X_OAUTH2_REFRESH_TOKEN with X_OAUTH2_CLIENT_ID.")
 
     def _headers(self) -> dict[str, str]:
-        return {"Authorization": f"Bearer {self.settings.x_bearer_token}"}
+        return {"Authorization": f"Bearer {self._access_token_for_request()}"}
 
     def _normalize_post(self, item: dict) -> dict:
         return {
