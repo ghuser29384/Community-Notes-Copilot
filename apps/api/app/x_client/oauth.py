@@ -4,7 +4,7 @@ import base64
 import hashlib
 import secrets
 from dataclasses import dataclass
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 
 from app.services.providers import ProviderError, request_form_json
 
@@ -40,7 +40,8 @@ def oauth2_authorize_url(client_id: str, redirect_uri: str, scopes: str, state: 
             "state": state,
             "code_challenge": code_challenge,
             "code_challenge_method": "S256",
-        }
+        },
+        quote_via=quote,
     )
     return f"{X_AUTHORIZE_URL}?{params}"
 

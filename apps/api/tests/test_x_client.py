@@ -6,7 +6,7 @@ from unittest.mock import patch
 from app.services.costs import CostLedger
 from app.settings import Settings
 from app.x_client.community_notes import FixtureXCommunityNotesClient, LiveXCommunityNotesClient
-from app.x_client.oauth import OAuth2TokenResponse
+from app.x_client.oauth import OAuth2TokenResponse, oauth2_authorize_url
 
 
 class XClientTests(unittest.TestCase):
@@ -23,6 +23,17 @@ class XClientTests(unittest.TestCase):
         client = LiveXCommunityNotesClient(settings, CostLedger(settings))
         with self.assertRaises(PermissionError):
             client.search_posts_eligible_for_notes(test_mode=True, max_results=1)
+
+    def test_oauth_authorize_url_uses_percent_encoded_scopes(self) -> None:
+        url = oauth2_authorize_url(
+            "client-id",
+            "https://example.com/callback",
+            "tweet.read users.read offline.access",
+            "state",
+            "challenge",
+        )
+        self.assertIn("scope=tweet.read%20users.read%20offline.access", url)
+        self.assertNotIn("tweet.read+users.read", url)
 
     def test_live_x_uses_oauth2_refresh_token_for_authorization_header(self) -> None:
         settings = Settings(
