@@ -68,7 +68,9 @@ class ClaimExtractor:
 class SourceSuggestionIngestor:
     def ingest(self, candidate) -> list[EvidenceSource]:
         sources = []
-        for item in candidate.suggested_source_links_with_counts:
+        crowd_filter = getattr(candidate, "crowd_signal_filter", {}) or {}
+        source_items = crowd_filter.get("accepted_suggested_source_links") or candidate.suggested_source_links_with_counts
+        for item in source_items:
             count = int(item.get("count", 0))
             publisher = item.get("publisher", "")
             source_type = "official" if any(token in publisher.lower() for token in ["ministry", "centers for disease", "agency"]) else "suggested"

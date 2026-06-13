@@ -24,15 +24,15 @@ sequenceDiagram
   Web->>API: POST /api/x/sync-eligible-posts
   API->>XFixture: posts_eligible_for_notes(test_mode=true)
   XFixture-->>API: fixture posts with suggested sources
-  API->>Services: normalize, portable-context adapt, classify audience/media/high-stakes risk, and deduplicate
+  API->>Services: normalize, portable-context adapt, classify audience/media/high-stakes risk, filter crowd leads, create artifact/state records, and deduplicate
   Operator->>Web: Analyze, retrieve, draft
   Web->>API: candidate workflow calls
-  API->>Services: claim extraction, abstention guard, source ingest, evidence audit, freshness lifecycle, draft generation
+  API->>Services: claim extraction, abstention guard, source ingest, source authority policy, claim/source relation graph, evidence audit, freshness lifecycle, contradiction review, draft generation
   Operator->>Web: Critique and evaluate
   API->>Services: internal critique
   API->>XFixture: evaluate_note(exact draft text)
   Operator->>Web: Approve and submit
-  API->>Services: SubmissionGate plus CommunityNotes14 governance checks
+  API->>Services: SubmissionGate plus signed CentralPolicyGatekeeper decision, exact approval record, credential scope, scheduler, and idempotency checks
   API->>XFixture: write_note(test_mode=true)
 ```
 
@@ -56,6 +56,22 @@ sequenceDiagram
 - Phase/complexity budget, latency SLO metadata, feed strategy/cadence, and official scoring replay status.
 
 The public-safe operational summary is available at `/api/governance` and in the Settings UI. Private thresholds, credentials, private X payloads, and operator identifiers are redacted from public methodology cards.
+
+## CommunityNotes18 Control Plane
+
+`CommunityNotes18.md` adds a policy and artifact control plane around the original workflow. The implementation keeps those controls deterministic and persisted:
+
+- Durable artifact graph and candidate state machine for sync, claim extraction, evidence retrieval, draft generation, and submission transitions.
+- Online/offline promotion status so replay, ablation, and calibration jobs cannot mutate live behavior without promotion.
+- `CentralPolicyGatekeeper` as the signed write authority for X writes.
+- `ExactSubmissionPreviewAndApprovalRecord` tying operator approval to exact text, post ID, mode, source URLs, account identity, API payload, and gate-input hash.
+- `ExternalCallIdempotencyAndCostLedger` records request/response hashes for X feed, `evaluate_note`, `write_note`, notes-written, and usage calls, and blocks duplicate note submissions.
+- `CredentialScopeAndEnvironmentIsolationService` checks read, evaluate, test-write, production-write, search, model, and storage scopes before external calls.
+- `RateLimitBackpressureAndWorkScheduler` records quota/cost/latency/write-limit scheduling decisions.
+- `ModelGatewayAndPromptContractRegistry` records the promoted prompt/model contract used by draft artifacts.
+- `AtomicClaimGraphAndSourceRelationMatrix`, `SourceAuthorityPolicyRegistry`, and `NoteFormatAndPlatformConstraintValidator` make source support and platform constraints deterministic.
+- `CrowdSignalRobustnessFilter` treats suggested links and note requests as untrusted leads until independently validated.
+- `AdversarialEvidenceAndContradictionSearchService`, `PredictionCalibrationAndUncertaintyLedger`, `TopicCoverageAndSkewMonitor`, and `BaselineComparisonAndAblationHarness` expose review, calibration, coverage, and replay status.
 
 ## Persistence
 

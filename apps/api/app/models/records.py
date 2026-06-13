@@ -85,6 +85,14 @@ class CandidatePost(ModelMixin):
     freshness_lifecycle: dict[str, Any] = field(default_factory=dict)
     retention_policy: dict[str, Any] = field(default_factory=dict)
     feed_strategy: dict[str, Any] = field(default_factory=dict)
+    artifact_graph: dict[str, Any] = field(default_factory=dict)
+    state_machine: dict[str, Any] = field(default_factory=dict)
+    crowd_signal_filter: dict[str, Any] = field(default_factory=dict)
+    atomic_claim_graph: dict[str, Any] = field(default_factory=dict)
+    source_authority_policy: dict[str, Any] = field(default_factory=dict)
+    topic_coverage: dict[str, Any] = field(default_factory=dict)
+    credential_scope: dict[str, Any] = field(default_factory=dict)
+    scheduler_decision: dict[str, Any] = field(default_factory=dict)
     duplicate_of: str | None = None
     created_at: str = field(default_factory=now_iso)
 
@@ -158,6 +166,12 @@ class DraftNote(ModelMixin):
     cross_perspective: dict[str, Any] = field(default_factory=dict)
     writing_opportunity: dict[str, Any] = field(default_factory=dict)
     methodology: dict[str, Any] = field(default_factory=dict)
+    format_validation: dict[str, Any] = field(default_factory=dict)
+    adversarial_review: dict[str, Any] = field(default_factory=dict)
+    prediction_ledger: dict[str, Any] = field(default_factory=dict)
+    approval_record: dict[str, Any] = field(default_factory=dict)
+    central_gate_decision: dict[str, Any] = field(default_factory=dict)
+    model_contract: dict[str, Any] = field(default_factory=dict)
     operator_feedback: list[dict[str, Any]] = field(default_factory=list)
     operator_approved: bool = False
     operator_override_reason: str | None = None
@@ -225,6 +239,9 @@ class Submission(ModelMixin):
     x_response: dict[str, Any] = field(default_factory=dict)
     gate_snapshot: dict[str, Any] = field(default_factory=dict)
     lifecycle_snapshot: dict[str, Any] = field(default_factory=dict)
+    idempotency_key: str = ""
+    approval_record: dict[str, Any] = field(default_factory=dict)
+    central_gate_decision: dict[str, Any] = field(default_factory=dict)
     created_at: str = field(default_factory=now_iso)
 
 

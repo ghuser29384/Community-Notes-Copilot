@@ -3,22 +3,29 @@
 ## Non-Negotiable Defaults
 
 - Do not train or fine-tune a foundation/frontier model on X API data or X Content.
-- Do not submit unless `SubmissionGate` passes.
+- Do not submit unless `SubmissionGate` passes and `CentralPolicyGatekeeper` returns a signed authorized `GateDecision`.
 - Live X calls are disabled by default.
 - Live X note writing is disabled behind a separate `ALLOW_LIVE_X_WRITE` flag.
 - `EMERGENCY_STOP_EXTERNAL_WRITES=true` blocks all fixture and live write paths regardless of ordinary gates.
 - Live search and live LLM calls are disabled by default.
 - Non-test writes are disabled by default.
 - Operator approval is required by default.
+- Operator approval must be tied to an exact immutable submission preview payload.
+- Duplicate note writes are blocked by idempotency keys and persisted request hashes.
+- Production-write credentials must not be present outside production.
 - Process X Community Notes API data solely for Community Notes AI note writing.
 - Run evaluation only when directly necessary to operate that note-writing workflow.
 - Track A manual/export actions require express and informed contributor consent; authentication alone is not enough.
 - Track B API-based bot use requires bot-profile disclosure and a responsible-party identity.
 - Every factual sentence in a draft note must map to approved evidence source IDs.
+- Drafts must have deterministic platform-format validation before `evaluate_note` and before submission.
+- Claim-level source relations and source-authority policy must be materialized before drafting/submission.
 - High-severity hallucination, unsupported claim, weak source, overclaim, harassment/abuse risk, or policy issue blocks submission.
 - Media-dependent claims require an approved multimodal workflow or operator hold/abstention.
 - High-stakes health, civic, legal, financial, public-safety, war/crisis, and identity-sensitive claims require authoritative/current evidence and operator confirmation.
 - Cross-perspective helpfulness, writing-opportunity priority, freshness, audience/context fit, and abstention/redundancy checks must pass before submission.
+- Crowd signals are untrusted leads, not proof; they require independent source validation before affecting ranking or gates.
+- Adversarial contradiction review must pass before submission.
 
 ## Prompt Injection
 
@@ -59,6 +66,18 @@ The governance layer persists candidate and draft decisions for:
 - Methodology transparency, policy drift, emergency stop, latency SLO, feed strategy, and official scoring replay status.
 
 The public-safe summary is available at `/api/governance`. It must not expose credentials, private X payloads, exact exploitable thresholds, or operator identifiers.
+
+## CommunityNotes18 Gate Additions
+
+The submission path also enforces:
+
+- Signed `CentralPolicyGatekeeper` decisions as the only write authorization.
+- Exact-payload approval records that invalidate on text, source URL, post ID, mode, account, or gate-input changes.
+- Credential-scope/environment isolation for X read, evaluate, test-write, production-write, search, model, and storage privileges.
+- Rate-limit/backpressure scheduler decisions against cost caps, latency SLOs, and writing limits.
+- External-call idempotency records for X feed reads, `evaluate_note`, note writes, notes-written sync, and usage reconciliation.
+- Source-authority policy, claim/source relation graph, deterministic note-format validation, and adversarial contradiction review.
+- Prediction calibration, topic/skew monitoring, and ablation status as governance telemetry; they cannot override evidence, safety, or helpfulness gates.
 
 ## Cost And Rate Limits
 

@@ -58,7 +58,8 @@ class SubmissionGateTests(unittest.TestCase):
         draft = state.drafts[draft_id]
         draft.support_map_json = {}
         state.critique_draft(draft_id)
-        state.evaluate_x(draft_id)
+        with self.assertRaisesRegex(PermissionError, "Deterministic note format validation"):
+            state.evaluate_x(draft_id)
         state.approve_draft(draft_id)
         gate = state.gate_for_draft(draft_id, test_mode=True)
         self.assertFalse(gate.can_submit)

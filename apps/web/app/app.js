@@ -237,8 +237,16 @@ async function renderCandidateDetail(candidateId) {
       </section>
     </div>
     <section class="panel stack" style="margin-top:16px">
-      <h2>CommunityNotes14 governance</h2>
+        <h2>CommunityNotes18 governance</h2>
       <div class="governance-grid">
+        <div><h3>State machine</h3>${jsonBlock(candidate.state_machine)}</div>
+        <div><h3>Artifact graph</h3>${jsonBlock(candidate.artifact_graph)}</div>
+        <div><h3>Crowd signals</h3>${jsonBlock(candidate.crowd_signal_filter)}</div>
+        <div><h3>Claim graph</h3>${jsonBlock(candidate.atomic_claim_graph)}</div>
+        <div><h3>Source policy</h3>${jsonBlock(candidate.source_authority_policy)}</div>
+        <div><h3>Credential scope</h3>${jsonBlock(candidate.credential_scope)}</div>
+        <div><h3>Scheduler</h3>${jsonBlock(candidate.scheduler_decision)}</div>
+        <div><h3>Topic coverage</h3>${jsonBlock(candidate.topic_coverage)}</div>
         <div><h3>Audience</h3>${jsonBlock(candidate.audience_context)}</div>
         <div><h3>Media dependency</h3>${jsonBlock(candidate.media_dependency)}</div>
         <div><h3>High-stakes routing</h3>${jsonBlock(candidate.high_stakes)}</div>
@@ -267,6 +275,12 @@ function renderDraft(draft) {
       </div>
       <div class="codebox">${escapeHtml(draft.evidence_brief || "No evidence brief.")}</div>
       <div class="governance-grid compact">
+        <div><h3>Format validation</h3>${jsonBlock(draft.format_validation)}</div>
+        <div><h3>Contradiction review</h3>${jsonBlock(draft.adversarial_review)}</div>
+        <div><h3>Prediction ledger</h3>${jsonBlock(draft.prediction_ledger)}</div>
+        <div><h3>Approval record</h3>${jsonBlock(draft.approval_record)}</div>
+        <div><h3>Central gate</h3>${jsonBlock(draft.central_gate_decision)}</div>
+        <div><h3>Model contract</h3>${jsonBlock(draft.model_contract)}</div>
         <div><h3>Cross-perspective</h3>${jsonBlock(draft.cross_perspective)}</div>
         <div><h3>Writing opportunity</h3>${jsonBlock(draft.writing_opportunity)}</div>
         <div><h3>Evidence report</h3>${jsonBlock(draft.evidence_report)}</div>
@@ -380,10 +394,25 @@ async function renderSettings() {
       <div class="codebox">${escapeHtml(JSON.stringify(costs.summary, null, 2))}</div>
     </section>
     <section class="panel stack" style="margin-top:16px">
-      <h2>CommunityNotes14 governance</h2>
+      <h2>CommunityNotes18 governance</h2>
       <div class="governance-grid">
         <div><h3>Phase</h3>${jsonBlock(governance.phase_and_complexity)}</div>
         <div><h3>Latency SLO</h3>${jsonBlock(governance.latency_slo)}</div>
+        <div><h3>Promotion gate</h3>${jsonBlock(governance.online_offline_promotion)}</div>
+        <div><h3>Credential scope</h3>${jsonBlock(governance.credential_scope_and_environment)}</div>
+        <div><h3>Backpressure</h3>${jsonBlock(governance.rate_limit_backpressure_scheduler)}</div>
+        <div><h3>Idempotency</h3>${jsonBlock(governance.external_call_idempotency_and_cost)}</div>
+        <div><h3>Model gateway</h3>${jsonBlock(governance.model_gateway_and_prompt_contracts)}</div>
+        <div><h3>Central gate</h3>${jsonBlock(governance.central_policy_gatekeeper)}</div>
+        <div><h3>Source policy</h3>${jsonBlock(governance.source_authority_policy)}</div>
+        <div><h3>Topic coverage</h3>${jsonBlock(governance.topic_coverage_and_skew)}</div>
+        <div><h3>Ablations</h3>${jsonBlock(governance.baseline_comparison_and_ablation)}</div>
+        <div><h3>Calibration</h3>${jsonBlock(governance.prediction_calibration_and_uncertainty)}</div>
+        <div><h3>Exact approval</h3>${jsonBlock(governance.exact_submission_preview_and_approval)}</div>
+        <div><h3>Claim graph</h3>${jsonBlock(governance.claim_graph_and_source_relations)}</div>
+        <div><h3>Crowd signals</h3>${jsonBlock(governance.crowd_signal_robustness)}</div>
+        <div><h3>Format validator</h3>${jsonBlock(governance.note_format_validator)}</div>
+        <div><h3>Contradiction search</h3>${jsonBlock(governance.adversarial_contradiction_search)}</div>
         <div><h3>Methodology</h3>${jsonBlock(governance.methodology)}</div>
         <div><h3>Policy drift</h3>${jsonBlock(governance.policy_drift)}</div>
         <div><h3>Emergency stop</h3>${jsonBlock(governance.emergency_stop)}</div>
