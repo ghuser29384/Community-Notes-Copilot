@@ -111,7 +111,11 @@ class FixtureXCommunityNotesClient:
         self.cost_ledger.log("x_fixture", "write_note", 0.003, post_id, {"test_mode": test_mode})
         if not test_mode and not self.settings.allow_non_test_mode_write:
             raise PermissionError("Non-test write blocked by ALLOW_NON_TEST_MODE_WRITE=false")
-        submission_info = _validated_submission_info(info)
+        fixture_info = dict(info or {})
+        fixture_info.setdefault("classification", MISLEADING_CLASSIFICATION)
+        if fixture_info["classification"] == MISLEADING_CLASSIFICATION and not fixture_info.get("misleading_tags"):
+            fixture_info["misleading_tags"] = ["other"]
+        submission_info = _validated_submission_info(fixture_info)
         return {
             "id": f"fixture-write-{new_id()}",
             "post_id": post_id,
