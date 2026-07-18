@@ -7,7 +7,12 @@ from unittest.mock import patch
 from app.models.records import NotesWrittenSnapshot
 from app.services.admission import AdmissionDashboardService
 from app.services.costs import CostLedger
-from app.services.launch_readiness import LaunchReadyAppState
+from app.services.launch_readiness import (
+    LaunchReadyAppState,
+    SubmissionMetadataXClient,
+    X_SNOWFLAKE_EPOCH_MS,
+    x_snowflake_created_at,
+)
 from app.services.writing_limit import WritingLimitMonitor
 from app.settings import Settings
 from app.x_client.community_notes import LiveXCommunityNotesClient
@@ -88,6 +93,20 @@ class AdmissionLaunchReadinessTests(unittest.TestCase):
         result = state.admission()
         self.assertFalse(result.eligible_boolean)
         self.assertEqual(result.raw_inputs["observed_window_size"], 0)
+
+    def test_x_snowflake_timestamp_fills_missing_created_at(self) -> None:
+        expected = datetime(2026, 7, 18, 7, 30, tzinfo=UTC)
+        timestamp_ms = int(expected.timestamp() * 1000)
+        note_id = str((timestamp_ms - X_SNOWFLAKE_EPOCH_MS) << 22)
+        self.assertEqual(x_snowflake_created_at(note_id), expected.isoformat())
+        self.assertEqual(x_snowflake_created_at("not-a-snowflake"), "")
+
+        class Delegate:
+            def notes_written(self, since_id=None, max_results=100, test_mode=True):
+                return {"notes": [{"note_id": note_id, "created_at": ""}], "test_mode": test_mode}
+
+        result = SubmissionMetadataXClient(Delegate(), state=None).notes_written(test_mode=True)
+        self.assertEqual(result["notes"][0]["created_at"], expected.isoformat())
 
     def test_oauth1_header_is_deterministic_and_query_order_independent(self) -> None:
         kwargs = {
