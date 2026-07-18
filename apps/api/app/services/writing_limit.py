@@ -120,17 +120,17 @@ class WritingLimitMonitor:
             },
             "large": {
                 "eligible": high_performing,
-                "non_test_mode_only": False,
+                "non_test_mode_only": True,
                 "requirements": "At least 100 notes, HR_L >= 5%, and recent-100 CRNH rate <= 10%.",
             },
             "xl": {
                 "eligible": high_performing,
-                "non_test_mode_only": False,
+                "non_test_mode_only": True,
                 "requirements": "At least 100 notes, HR_L >= 5%, and recent-100 CRNH rate <= 10%.",
             },
             "xxl": {
                 "eligible": impact_90d >= 100,
-                "non_test_mode_only": False,
+                "non_test_mode_only": True,
                 "requirements": "Writing Impact of at least 100 over the past 90 days.",
             },
         }
