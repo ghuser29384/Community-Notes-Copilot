@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
+from datetime import UTC, datetime
 from typing import Any
 
 from app.models.records import CandidatePost, DraftNote, EvidenceCard, sha256_text
@@ -22,10 +23,31 @@ ALLOWED_MISLEADING_TAGS = {
     "outdated_information",
     "other",
 }
+X_SNOWFLAKE_EPOCH_MS = 1_288_834_974_657
 
 
 def _canonical_json(value: Any) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"), default=str)
+
+
+def x_snowflake_created_at(value: Any) -> str:
+    """Return an ISO-8601 UTC timestamp encoded in a numeric X Snowflake ID.
+
+    The notes_written response does not currently expose created_at. This
+    fallback preserves the chronology needed for 14/30/90-day metrics while
+    keeping X IDs stored as strings. Invalid or non-Snowflake values return an
+    empty string and are handled conservatively by downstream metrics.
+    """
+
+    try:
+        snowflake = int(str(value))
+        if snowflake <= 0:
+            return ""
+        timestamp_ms = (snowflake >> 22) + X_SNOWFLAKE_EPOCH_MS
+        created_at = datetime.fromtimestamp(timestamp_ms / 1000, tz=UTC)
+    except (TypeError, ValueError, OSError, OverflowError):
+        return ""
+    return created_at.isoformat()
 
 
 def normalize_submission_metadata(classification: Any, misleading_tags: Any) -> tuple[dict[str, Any], list[str]]:
@@ -137,7 +159,7 @@ class SubmissionMetadataApprovalRecord(ExactSubmissionPreviewAndApprovalRecord):
 
 
 class SubmissionMetadataXClient:
-    """Inject only operator-approved submission metadata into write_note calls."""
+    """Inject approved write metadata and normalize read-side note chronology."""
 
     def __init__(self, delegate: Any, state: "LaunchReadyAppState"):
         self.delegate = delegate
@@ -145,6 +167,13 @@ class SubmissionMetadataXClient:
 
     def __getattr__(self, name: str) -> Any:
         return getattr(self.delegate, name)
+
+    def notes_written(self, since_id: str | None = None, max_results: int = 100, test_mode: bool = True) -> dict:
+        result = self.delegate.notes_written(since_id=since_id, max_results=max_results, test_mode=test_mode)
+        for note in result.get("notes", []):
+            if not note.get("created_at"):
+                note["created_at"] = x_snowflake_created_at(note.get("note_id"))
+        return result
 
     def write_note(self, post_id: str, note_text: str, test_mode: bool, info: dict | None = None) -> dict:
         outgoing = dict(info or {})
