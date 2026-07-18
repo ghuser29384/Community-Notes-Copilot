@@ -13,14 +13,14 @@ from urllib.parse import parse_qs, urlparse
 if __package__ in {None, ""}:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
+from app.services.launch_readiness import LaunchReadyAppState
 from app.services.providers import ProviderError
-from app.services.store import AppState
 from app.settings import Settings
 
 
 REPO_ROOT = Path(__file__).resolve().parents[3]
 WEB_ROOT = REPO_ROOT / "apps" / "web" / "app"
-STATE = AppState(Settings.from_env())
+STATE = LaunchReadyAppState(Settings.from_env())
 
 
 def _json_default(value):
@@ -197,7 +197,14 @@ class Handler(BaseHTTPRequestHandler):
                 return
             if path.endswith("/approve") and path.startswith("/api/drafts/"):
                 draft_id = path.split("/")[-2]
-                self._send_json(STATE.approve_draft(draft_id, body.get("operator_override_reason")).to_dict())
+                self._send_json(
+                    STATE.approve_draft(
+                        draft_id,
+                        override_reason=body.get("operator_override_reason"),
+                        classification=body.get("classification"),
+                        misleading_tags=body.get("misleading_tags"),
+                    ).to_dict()
+                )
                 return
             if path.endswith("/submit") and path.startswith("/api/drafts/"):
                 draft_id = path.split("/")[-2]
