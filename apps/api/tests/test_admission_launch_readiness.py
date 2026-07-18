@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import unittest
+from datetime import UTC, datetime, timedelta
 from unittest.mock import patch
 
 from app.models.records import NotesWrittenSnapshot
 from app.services.admission import AdmissionDashboardService
 from app.services.costs import CostLedger
 from app.services.launch_readiness import LaunchReadyAppState
+from app.services.writing_limit import WritingLimitMonitor
 from app.settings import Settings
 from app.x_client.community_notes import LiveXCommunityNotesClient
 from app.x_client.oauth import oauth1_authorization_header
@@ -25,6 +27,31 @@ def note(index: int, *, claim: str = "high", url: str = "high", harassment: str 
         url_validity=url,
         harassment_abuse=harassment,
         helpfulness="unknown",
+    )
+
+
+def rated_note(
+    index: int,
+    *,
+    days_ago: int = 1,
+    crh: bool = False,
+    crnh: bool = False,
+    nmr: bool | None = None,
+) -> NotesWrittenSnapshot:
+    if nmr is None:
+        nmr = not crh and not crnh
+    return NotesWrittenSnapshot(
+        id=f"rated-id-{index}",
+        note_id=f"rated-note-{index}",
+        candidate_id=f"rated-candidate-{index}",
+        created_at=(datetime.now(UTC) - timedelta(days=days_ago, seconds=index)).isoformat(),
+        crh=crh,
+        crnh=crnh,
+        nmr=nmr,
+        claim_opinion="high",
+        url_validity="high",
+        harassment_abuse="high",
+        helpfulness="high" if crh else "low" if crnh else "unknown",
     )
 
 
@@ -54,6 +81,13 @@ class AdmissionLaunchReadinessTests(unittest.TestCase):
         result = AdmissionDashboardService(Settings()).compute(notes)
         self.assertTrue(result.eligible_boolean)
         self.assertNotIn("old-bad", result.raw_inputs["window_note_ids"])
+
+    def test_live_state_does_not_seed_fixture_admission_history(self) -> None:
+        state = LaunchReadyAppState(Settings(x_provider="live", persistence_provider="memory"))
+        self.assertEqual(state.seed_history(), [])
+        result = state.admission()
+        self.assertFalse(result.eligible_boolean)
+        self.assertEqual(result.raw_inputs["observed_window_size"], 0)
 
     def test_oauth1_header_is_deterministic_and_query_order_independent(self) -> None:
         kwargs = {
@@ -143,6 +177,45 @@ class AdmissionLaunchReadinessTests(unittest.TestCase):
         self.assertIsNotNone(submission)
         self.assertEqual(submission.x_response["info"]["classification"], "misinformed_or_potentially_misleading")
         self.assertEqual(submission.x_response["info"]["misleading_tags"], ["factual_error"])
+
+    def test_writing_limit_new_writer_starts_at_ten(self) -> None:
+        result = WritingLimitMonitor().compute([rated_note(index, crh=True) for index in range(10)])
+        self.assertEqual(result.wl, 10)
+
+    def test_writing_limit_applies_recent_five_crnh_penalty(self) -> None:
+        newest = [
+            rated_note(0, crnh=True),
+            rated_note(1, crnh=True),
+            rated_note(2, crnh=True),
+            rated_note(3, crh=True),
+            rated_note(4, crh=True),
+        ]
+        older = [rated_note(index + 5, days_ago=2, crh=True) for index in range(20)]
+        result = WritingLimitMonitor().compute(newest + older)
+        self.assertEqual(result.nh_5, 3)
+        self.assertEqual(result.wl, 5)
+
+    def test_writing_limit_applies_recent_ten_crnh_penalty_first(self) -> None:
+        newest = [rated_note(index, crnh=index < 8, crh=index >= 8) for index in range(10)]
+        older = [rated_note(index + 10, days_ago=2, crh=True) for index in range(20)]
+        result = WritingLimitMonitor().compute(newest + older)
+        self.assertEqual(result.nh_10, 8)
+        self.assertEqual(result.wl, 2)
+
+    def test_writing_limit_uses_net_hit_rate_and_feed_requirements(self) -> None:
+        notes = [rated_note(index, crh=True) for index in range(60)]
+        notes.extend(rated_note(index + 60, crnh=True) for index in range(5))
+        notes.extend(rated_note(index + 65, nmr=True) for index in range(35))
+        result = WritingLimitMonitor().compute(notes)
+        self.assertAlmostEqual(result.hr_100, 0.55)
+        self.assertEqual(result.writing_impact_90d["net"], 55)
+        self.assertTrue(result.feed_size_eligibility["large"]["eligible"])
+        self.assertTrue(result.feed_size_eligibility["xl"]["eligible"])
+        self.assertFalse(result.feed_size_eligibility["xxl"]["eligible"])
+
+    def test_writing_limit_unlocks_xxl_at_one_hundred_recent_impact(self) -> None:
+        result = WritingLimitMonitor().compute([rated_note(index, crh=True) for index in range(100)])
+        self.assertTrue(result.feed_size_eligibility["xxl"]["eligible"])
 
 
 if __name__ == "__main__":
