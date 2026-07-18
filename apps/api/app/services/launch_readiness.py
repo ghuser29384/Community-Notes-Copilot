@@ -169,6 +169,14 @@ class LaunchReadyAppState(AppState):
         self.approval_records = SubmissionMetadataApprovalRecord(settings)
         self.x_client = SubmissionMetadataXClient(self.x_client, self)
 
+    def seed_history(self):
+        # Fixture history is useful for local demos, but must never make a live
+        # writer appear admission-ready before its own notes_written results are
+        # synchronized from X.
+        if self.settings.x_provider == "live":
+            return self.notes_written
+        return super().seed_history()
+
     def approve_draft(
         self,
         draft_id: str,
