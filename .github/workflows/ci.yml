@@ -28,12 +28,44 @@ jobs:
         run: python -m compileall apps/api/app apps/api/tests
 
       - name: Run unit tests
-        run: make test
+        id: unit_tests
+        continue-on-error: true
+        run: make test > unit-tests.log 2>&1
 
       - name: Run fixture end-to-end flow
-        run: make e2e
+        id: fixture_e2e
+        if: always()
+        continue-on-error: true
+        run: make e2e > fixture-e2e.log 2>&1
 
       - name: Check browser JavaScript syntax
+        id: javascript
+        if: always()
+        continue-on-error: true
         run: |
-          node --check apps/web/app/app.js
-          node --check apps/web/app/submission-metadata.js
+          {
+            node --check apps/web/app/app.js
+            node --check apps/web/app/submission-metadata.js
+          } > javascript.log 2>&1
+
+      - name: Upload test diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-diagnostics
+          path: |
+            unit-tests.log
+            fixture-e2e.log
+            javascript.log
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Enforce validation result
+        if: always()
+        run: |
+          if [[ "${{ steps.unit_tests.outcome }}" != "success" || \
+                "${{ steps.fixture_e2e.outcome }}" != "success" || \
+                "${{ steps.javascript.outcome }}" != "success" ]]; then
+            echo "::error::One or more validation stages failed; inspect the ci-diagnostics artifact."
+            exit 1
+          fi
