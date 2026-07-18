@@ -31,19 +31,24 @@ class Settings:
     persistence_provider: str = "auto"
     app_env: str = "local"
     x_provider: str = "fixture"
+    x_auth_mode: str = "auto"
     allow_live_x_api: bool = False
     allow_live_x_write: bool = False
     allow_live_search: bool = False
     allow_live_llm: bool = False
     allow_non_test_mode_write: bool = False
     require_operator_approval: bool = True
-    monthly_x_api_budget_usd: float = 1950.0
-    daily_x_api_budget_usd: float = 25.0
+    monthly_x_api_budget_usd: float = 150.0
+    daily_x_api_budget_usd: float = 10.0
     per_candidate_search_budget: int = 8
     search_provider: str = "fixture"
     llm_provider: str = "fixture"
     llm_model: str = ""
     x_bearer_token: str = ""
+    x_api_key: str = ""
+    x_api_key_secret: str = ""
+    x_access_token: str = ""
+    x_access_token_secret: str = ""
     x_oauth2_client_id: str = ""
     x_oauth2_client_secret: str = ""
     x_oauth2_redirect_uri: str = ""
@@ -79,6 +84,7 @@ class Settings:
             persistence_provider=os.getenv("PERSISTENCE_PROVIDER", cls.persistence_provider),
             app_env=os.getenv("APP_ENV", cls.app_env),
             x_provider=os.getenv("X_PROVIDER", cls.x_provider),
+            x_auth_mode=os.getenv("X_AUTH_MODE", cls.x_auth_mode),
             allow_live_x_api=env_bool("ALLOW_LIVE_X_API", cls.allow_live_x_api),
             allow_live_x_write=env_bool("ALLOW_LIVE_X_WRITE", cls.allow_live_x_write),
             allow_live_search=env_bool("ALLOW_LIVE_SEARCH", cls.allow_live_search),
@@ -92,6 +98,10 @@ class Settings:
             llm_provider=os.getenv("LLM_PROVIDER", cls.llm_provider),
             llm_model=os.getenv("LLM_MODEL", cls.llm_model),
             x_bearer_token=os.getenv("X_BEARER_TOKEN", cls.x_bearer_token),
+            x_api_key=os.getenv("X_API_KEY", cls.x_api_key),
+            x_api_key_secret=os.getenv("X_API_KEY_SECRET", cls.x_api_key_secret),
+            x_access_token=os.getenv("X_ACCESS_TOKEN", cls.x_access_token),
+            x_access_token_secret=os.getenv("X_ACCESS_TOKEN_SECRET", cls.x_access_token_secret),
             x_oauth2_client_id=os.getenv("X_OAUTH2_CLIENT_ID", cls.x_oauth2_client_id),
             x_oauth2_client_secret=os.getenv("X_OAUTH2_CLIENT_SECRET", cls.x_oauth2_client_secret),
             x_oauth2_redirect_uri=os.getenv("X_OAUTH2_REDIRECT_URI", cls.x_oauth2_redirect_uri),
@@ -164,17 +174,39 @@ class Settings:
             "responsible_party": self.bot_responsible_party,
         }
 
+    def x_oauth1_configured(self) -> bool:
+        return bool(self.x_api_key and self.x_api_key_secret and self.x_access_token and self.x_access_token_secret)
+
     def x_oauth2_refresh_configured(self) -> bool:
         return bool(self.x_oauth2_client_id and self.x_oauth2_refresh_token)
 
-    def x_live_credentials_configured(self) -> bool:
+    def x_oauth2_user_configured(self) -> bool:
         return bool(self.x_bearer_token) or self.x_oauth2_refresh_configured()
+
+    def resolved_x_auth_mode(self) -> str:
+        mode = self.x_auth_mode.strip().lower()
+        if mode not in {"auto", "oauth1", "oauth2"}:
+            return "invalid"
+        if mode == "oauth1":
+            return "oauth1" if self.x_oauth1_configured() else "none"
+        if mode == "oauth2":
+            return "oauth2" if self.x_oauth2_user_configured() else "none"
+        if self.x_oauth1_configured():
+            return "oauth1"
+        if self.x_oauth2_user_configured():
+            return "oauth2"
+        return "none"
+
+    def x_live_credentials_configured(self) -> bool:
+        return self.resolved_x_auth_mode() in {"oauth1", "oauth2"}
 
     def public_dict(self) -> dict:
         return {
             "app_env": self.app_env,
             "persistence_provider": "postgres" if self.postgres_persistence_enabled() else "memory",
             "x_provider": self.x_provider,
+            "x_auth_mode": self.x_auth_mode,
+            "resolved_x_auth_mode": self.resolved_x_auth_mode(),
             "allow_live_x_api": self.allow_live_x_api,
             "allow_live_x_write": self.allow_live_x_write,
             "allow_live_search": self.allow_live_search,
@@ -188,6 +220,7 @@ class Settings:
             "llm_provider": self.llm_provider,
             "llm_model_configured": bool(self.llm_model),
             "x_credentials_configured": self.x_live_credentials_configured(),
+            "x_oauth1_configured": self.x_oauth1_configured(),
             "x_oauth2_refresh_configured": self.x_oauth2_refresh_configured(),
             "search_credentials_configured": bool(self.brave_search_api_key),
             "llm_credentials_configured": bool(self.openai_api_key),
