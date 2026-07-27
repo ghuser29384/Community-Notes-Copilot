@@ -1,0 +1,52 @@
+name: Shenzhen Cat AI browser smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'qa/szcat-ai-browser-smoke/**'
+      - '.github/workflows/szcat-ai-browser-smoke.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser
+        working-directory: /tmp
+        run: |
+          mkdir -p /tmp/szcat-browser-smoke && cd /tmp/szcat-browser-smoke
+          npm init -y
+          npm install --no-save playwright@1.54.2
+          npx playwright install --with-deps chromium
+          cp "$GITHUB_WORKSPACE/qa/szcat-ai-browser-smoke/smoke.mjs" ./smoke.mjs
+      - name: Run probe
+        id: probe
+        continue-on-error: true
+        working-directory: /tmp/szcat-browser-smoke
+        run: node smoke.mjs
+      - name: Copy evidence
+        if: always()
+        run: |
+          mkdir -p artifacts
+          if [ -d /tmp/szcat-browser-smoke/artifacts/szcat-ai-browser-smoke ]; then
+            cp -R /tmp/szcat-browser-smoke/artifacts/szcat-ai-browser-smoke artifacts/
+          fi
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: szcat-ai-browser-smoke
+          path: artifacts/szcat-ai-browser-smoke
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Fail on probe error
+        if: steps.probe.outcome != 'success'
+        run: exit 1
