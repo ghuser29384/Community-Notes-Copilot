@@ -1,0 +1,36 @@
+name: Shenzhen Cat AI direct batch audit
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'qa/szcat-ai-direct-batch/**'
+      - '.github/workflows/szcat-ai-direct-batch.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run 51-case initialized-share audit
+        id: audit
+        continue-on-error: true
+        run: node qa/szcat-ai-direct-batch/audit.mjs
+      - name: Upload raw responses
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: szcat-ai-direct-batch-results
+          path: artifacts/szcat-ai-direct-batch
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Fail on material collection error
+        if: steps.audit.outcome != 'success'
+        run: exit 1
