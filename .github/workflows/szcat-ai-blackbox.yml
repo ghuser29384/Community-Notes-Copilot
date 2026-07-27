@@ -1,0 +1,67 @@
+name: Shenzhen Cat AI black-box audit
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'qa/szcat-ai/**'
+      - '.github/workflows/szcat-ai-blackbox.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out audit branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install isolated Playwright runner
+        working-directory: /tmp
+        run: |
+          rm -rf /tmp/szcat-ai-runner
+          mkdir -p /tmp/szcat-ai-runner
+          cd /tmp/szcat-ai-runner
+          npm init -y
+          npm install --no-save playwright@1.54.2
+          npx playwright install --with-deps chromium
+          cp "$GITHUB_WORKSPACE/qa/szcat-ai/audit.mjs" ./audit.mjs
+
+      - name: Run 50-case public black-box audit
+        id: audit
+        continue-on-error: true
+        working-directory: /tmp/szcat-ai-runner
+        run: |
+          node audit.mjs
+          rm -rf "$GITHUB_WORKSPACE/artifacts/szcat-ai-audit"
+          mkdir -p "$GITHUB_WORKSPACE/artifacts"
+          cp -R artifacts/szcat-ai-audit "$GITHUB_WORKSPACE/artifacts/"
+
+      - name: Preserve partial artifacts after runner error
+        if: always()
+        run: |
+          if [ -d /tmp/szcat-ai-runner/artifacts/szcat-ai-audit ] && [ ! -d artifacts/szcat-ai-audit ]; then
+            mkdir -p artifacts
+            cp -R /tmp/szcat-ai-runner/artifacts/szcat-ai-audit artifacts/
+          fi
+
+      - name: Upload audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: szcat-ai-blackbox-results
+          path: artifacts/szcat-ai-audit
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Fail if the audit runner failed materially
+        if: steps.audit.outcome != 'success'
+        run: exit 1
