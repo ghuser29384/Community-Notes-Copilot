@@ -1,0 +1,34 @@
+name: Shenzhen Cat AI direct API smoke
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'qa/szcat-ai-api/**'
+      - '.github/workflows/szcat-ai-api-smoke.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Probe public share API
+        id: probe
+        continue-on-error: true
+        run: node qa/szcat-ai-api/smoke.mjs
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: szcat-ai-api-smoke
+          path: artifacts/szcat-ai-api-smoke
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Fail on inaccessible API
+        if: steps.probe.outcome != 'success'
+        run: exit 1
