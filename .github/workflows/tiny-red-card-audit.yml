@@ -1,0 +1,118 @@
+name: Tiny Red Card thorough audit
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/tiny-red-card-audit.yml'
+      - 'qa/tiny-red-card-audit/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Check out isolated audit branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Clone exact public target and record provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          git clone --depth 1 https://github.com/cancer-complications-lifeguard-card/tiny_red_card.git target
+          git -C target rev-parse HEAD | tee artifacts/target-head.txt
+          git -C target log -1 --format=fuller > artifacts/target-commit.txt
+          git -C target remote -v > artifacts/target-remotes.txt
+          find target -type f -not -path '*/.git/*' | sort > artifacts/source-file-list.txt
+          tar -czf artifacts/tiny-red-card-source.tgz --exclude='.git' -C target .
+
+      - name: Install target dependencies
+        working-directory: target
+        run: npm ci
+
+      - name: Run lint, typecheck, build, dependency and source checks
+        shell: bash
+        run: |
+          set +e
+          cd target
+          npm run lint > ../artifacts/lint.txt 2>&1
+          echo $? > ../artifacts/lint-exit-code.txt
+          npx tsc -p tsconfig.app.json --noEmit > ../artifacts/typecheck.txt 2>&1
+          echo $? > ../artifacts/typecheck-exit-code.txt
+          npm run build > ../artifacts/build.txt 2>&1
+          echo $? > ../artifacts/build-exit-code.txt
+          npm audit --json > ../artifacts/npm-audit.json 2> ../artifacts/npm-audit-stderr.txt
+          echo $? > ../artifacts/npm-audit-exit-code.txt
+          npm outdated --json > ../artifacts/npm-outdated.json 2> ../artifacts/npm-outdated-stderr.txt
+          echo $? > ../artifacts/npm-outdated-exit-code.txt
+          find dist -type f -printf '%p\t%s bytes\n' 2>/dev/null | sort > ../artifacts/dist-file-sizes.txt
+          grep -RInE 'http://|https://|fetch\(|localStorage|sessionId|userAgent|身份证|血型|过敏|120|AI技术集成|权威可靠|精准匹配' src supabase README.md > ../artifacts/source-risk-string-inventory.txt 2>&1
+          exit 0
+
+      - name: Capture live response headers
+        shell: bash
+        run: |
+          set +e
+          curl -sSIL --max-time 30 https://shiny-platypus-2c16ce.netlify.app > artifacts/live-headers.txt 2> artifacts/live-headers-stderr.txt
+          echo $? > artifacts/live-headers-exit-code.txt
+          exit 0
+
+      - name: Install isolated browser-audit dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p runner
+          cp qa/tiny-red-card-audit/audit.mjs runner/audit.mjs
+          cd runner
+          npm init -y >/dev/null 2>&1
+          npm install --no-save playwright@1.54.1 @axe-core/playwright@4.10.2
+          npx playwright install --with-deps chromium
+
+      - name: Start exact local production build
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd target
+          nohup npm run preview -- --host 127.0.0.1 --port 4173 > ../artifacts/local-preview.log 2>&1 &
+          echo $! > ../artifacts/local-preview.pid
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4173 >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat ../artifacts/local-preview.log
+          exit 1
+
+      - name: Run desktop, mobile, accessibility, privacy and export audit
+        working-directory: runner
+        env:
+          AUDIT_OUTPUT: ${{ github.workspace }}/artifacts/browser
+          LIVE_URL: https://shiny-platypus-2c16ce.netlify.app
+          LOCAL_URL: http://127.0.0.1:4173
+        run: node audit.mjs
+
+      - name: Create artifact index and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+
+      - name: Upload audit evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: tiny-red-card-thorough-audit
+          path: artifacts
+          retention-days: 14
+          if-no-files-found: error
