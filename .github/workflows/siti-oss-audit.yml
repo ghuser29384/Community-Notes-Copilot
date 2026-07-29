@@ -1,0 +1,330 @@
+name: Siti OSS reliability audit
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-audit.yml'
+      - 'qa/siti-oss-audit/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  discovery-and-api:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Clone public Siti OSS repositories
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p targets artifacts/discovery artifacts/api artifacts/live
+          repos=(
+            disastermap
+            sitioss-reportcards-ng
+            sitioss-schema
+            sitioss-reports
+            sitioss-reports-telegram
+            sitioss-reports-telegram-server
+            sitioss-notification-lambda
+            sitioss-rem-latest
+            sitioss-rem
+            petabencana-docs
+            -- -Depricated-sitioss-server
+          )
+          for repo in "${repos[@]}"; do
+            if [ "$repo" = "--" ]; then continue; fi
+            git clone --depth 1 "https://github.com/petabencana/${repo}.git" "targets/${repo}"
+          done
+          for repo in targets/*; do
+            printf '%s\t%s\t%s\t%s\n' \
+              "$(basename "$repo")" \
+              "$(git -C "$repo" rev-parse HEAD)" \
+              "$(git -C "$repo" show -s --format=%cI HEAD)" \
+              "$(git -C "$repo" show -s --format=%s HEAD)"
+          done | sort > artifacts/discovery/exact-repository-heads.tsv
+      - name: Source and provenance inventory
+        env:
+          SITI_TARGET_ROOT: ${{ github.workspace }}/targets
+          SITI_AUDIT_OUT: ${{ github.workspace }}/artifacts/discovery
+        run: python qa/siti-oss-audit/discovery.py
+      - name: Read-only live API audit
+        env:
+          SITI_AUDIT_OUT: ${{ github.workspace }}/artifacts/api
+        run: python qa/siti-oss-audit/api_audit.py
+      - name: Capture live public surface headers and HTML without submitting data
+        shell: bash
+        run: |
+          set +e
+          for url in \
+            https://petabencana.id/ \
+            https://petabencana.id/map \
+            https://mapakalamidad.ph/ \
+            https://sitioss.info/ \
+            https://docs.petabencana.id/; do
+            slug=$(echo "$url" | sed -E 's#https?://##; s#[^A-Za-z0-9]+#-#g')
+            curl -A 'SitiOSS-Reliability-Audit/2026-07-29 read-only' -L --max-time 35 -sS -D "artifacts/live/${slug}-headers.txt" "$url" -o "artifacts/live/${slug}-body.html"
+            printf '%s\t%s\n' "$url" "$?" >> artifacts/live/curl-exit-codes.tsv
+          done
+          exit 0
+      - name: Create source snapshots and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/source-snapshots
+          for repo in targets/*; do
+            name=$(basename "$repo")
+            tar -czf "artifacts/source-snapshots/${name}.tgz" --exclude='.git' -C "$repo" .
+          done
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+      - name: Upload discovery and API evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: siti-oss-discovery-api
+          path: artifacts
+          retention-days: 14
+          if-no-files-found: error
+
+  reportcards-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '14.21.3'
+      - name: Clone exact reporting-cards source
+        run: |
+          git clone https://github.com/petabencana/sitioss-reportcards-ng.git target
+          git -C target checkout eaec8b1a2bfe15745077c0e8ad5ff69fbdccc552
+          mkdir -p artifacts
+          git -C target show -s --format=fuller HEAD > artifacts/commit.txt
+      - name: Install dependencies
+        working-directory: target
+        shell: bash
+        run: |
+          set +e
+          npm --version > ../artifacts/npm-version.txt
+          node --version > ../artifacts/node-version.txt
+          npm install > ../artifacts/npm-install.txt 2>&1
+          echo $? > ../artifacts/npm-install-exit-code.txt
+          exit 0
+      - name: Dependency audit
+        working-directory: target
+        shell: bash
+        run: |
+          set +e
+          npm audit --json > ../artifacts/npm-audit.json 2> ../artifacts/npm-audit-stderr.txt
+          echo $? > ../artifacts/npm-audit-exit-code.txt
+          npm outdated --json > ../artifacts/npm-outdated.json 2> ../artifacts/npm-outdated-stderr.txt
+          echo $? > ../artifacts/npm-outdated-exit-code.txt
+          exit 0
+      - name: Lint, unit test, and production/development builds
+        working-directory: target
+        shell: bash
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: |
+          set +e
+          dep=id npm run pre-build-tasks > ../artifacts/pre-build-id.txt 2>&1
+          echo $? > ../artifacts/pre-build-id-exit-code.txt
+          timeout 12m npm run lint > ../artifacts/lint.txt 2>&1
+          echo $? > ../artifacts/lint-exit-code.txt
+          timeout 15m npm test -- --watch=false --browsers=ChromeHeadless > ../artifacts/unit-tests.txt 2>&1
+          echo $? > ../artifacts/unit-tests-exit-code.txt
+          timeout 15m npm run build-dev-id > ../artifacts/build-dev-id.txt 2>&1
+          echo $? > ../artifacts/build-dev-id-exit-code.txt
+          timeout 15m npm run build-prod-id > ../artifacts/build-prod-id.txt 2>&1
+          echo $? > ../artifacts/build-prod-id-exit-code.txt
+          find dist -type f -printf '%p\t%s bytes\n' 2>/dev/null | sort > ../artifacts/dist-files.txt
+          exit 0
+      - name: Source risk inventory
+        working-directory: target
+        shell: bash
+        run: |
+          set +e
+          grep -RInE --exclude-dir=node_modules --exclude-dir=dist \
+            'captcha|rate.?limit|api\.petabencana|data_server|cardId|signed|s3|image|photo|exif|localStorage|sessionStorage|console\.|innerHTML|bypassSecurityTrust|phone|email|contact|location|latitude|longitude|created_at|expires|duplicate|idempot' \
+            src deployments tasks angular.json package.json README.md > ../artifacts/source-risk-grep.txt 2>&1
+          find src -type f | sort > ../artifacts/src-file-list.txt
+          exit 0
+      - name: Package reportcards evidence
+        if: always()
+        shell: bash
+        run: |
+          tar -czf artifacts/source.tgz --exclude='.git' --exclude='node_modules' --exclude='dist' -C target .
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: siti-oss-reportcards-build
+          path: artifacts
+          retention-days: 14
+
+  disastermap-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '14.21.3'
+      - name: Clone exact map source
+        run: |
+          git clone https://github.com/petabencana/disastermap.git target
+          git -C target checkout 599af2ad992a742115ebcf7c08aa804a79567839
+          mkdir -p artifacts
+          git -C target show -s --format=fuller HEAD > artifacts/commit.txt
+      - name: Install and audit dependencies
+        working-directory: target
+        shell: bash
+        run: |
+          set +e
+          npm install > ../artifacts/npm-install.txt 2>&1
+          echo $? > ../artifacts/npm-install-exit-code.txt
+          npm audit --json > ../artifacts/npm-audit.json 2> ../artifacts/npm-audit-stderr.txt
+          echo $? > ../artifacts/npm-audit-exit-code.txt
+          npm outdated --json > ../artifacts/npm-outdated.json 2> ../artifacts/npm-outdated-stderr.txt
+          echo $? > ../artifacts/npm-outdated-exit-code.txt
+          exit 0
+      - name: Build and test map
+        working-directory: target
+        shell: bash
+        env:
+          DEP: id
+          DATA_SERVER_KEY: audit-placeholder-not-a-secret
+          CHROME_BIN: /usr/bin/google-chrome
+        run: |
+          set +e
+          if [ ! -f src/environment.js ] && [ -f aurelia_project/environments/local.js ]; then cp aurelia_project/environments/local.js src/environment.js; fi
+          timeout 15m npm test > ../artifacts/npm-test.txt 2>&1
+          echo $? > ../artifacts/npm-test-exit-code.txt
+          timeout 15m npm run build-dev > ../artifacts/build-dev.txt 2>&1
+          echo $? > ../artifacts/build-dev-exit-code.txt
+          timeout 15m npm run build > ../artifacts/build-prod.txt 2>&1
+          echo $? > ../artifacts/build-prod-exit-code.txt
+          find scripts -type f -printf '%p\t%s bytes\n' 2>/dev/null | sort > ../artifacts/scripts-files.txt
+          exit 0
+      - name: Source risk inventory
+        working-directory: target
+        shell: bash
+        run: |
+          set +e
+          grep -RInE --exclude-dir=node_modules --exclude-dir=scripts \
+            'api\.petabencana|data_server|card_Server|report_timeperiod|verified|verification|expire|stale|cluster|created_at|location|coordinates|phone|email|contact|innerHTML|console\.|localStorage|sessionStorage|mapbox|token|key' \
+            src aurelia_project assets package.json README.md > ../artifacts/source-risk-grep.txt 2>&1
+          find src -type f | sort > ../artifacts/src-file-list.txt
+          exit 0
+      - name: Package map evidence
+        if: always()
+        shell: bash
+        run: |
+          tar -czf artifacts/source.tgz --exclude='.git' --exclude='node_modules' --exclude='scripts' -C target .
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: siti-oss-disastermap-build
+          path: artifacts
+          retention-days: 14
+
+  schema-and-services:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    services:
+      postgres:
+        image: postgis/postgis:14-3.4
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '14.21.3'
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Clone schema and service repositories
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p targets artifacts
+          for repo in sitioss-schema sitioss-reports sitioss-reports-telegram sitioss-reports-telegram-server sitioss-notification-lambda sitioss-rem-latest sitioss-rem; do
+            git clone --depth 1 "https://github.com/petabencana/${repo}.git" "targets/${repo}"
+          done
+          for repo in targets/*; do git -C "$repo" show -s --format='%H%x09%cI%x09%s'; done > artifacts/exact-heads.tsv
+      - name: Run schema tests against isolated PostGIS
+        working-directory: targets/sitioss-schema
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+        shell: bash
+        run: |
+          set +e
+          npm install > ../../artifacts/schema-npm-install.txt 2>&1
+          echo $? > ../../artifacts/schema-npm-install-exit-code.txt
+          npm audit --json > ../../artifacts/schema-npm-audit.json 2> ../../artifacts/schema-npm-audit-stderr.txt
+          timeout 20m npm test > ../../artifacts/schema-tests.txt 2>&1
+          echo $? > ../../artifacts/schema-tests-exit-code.txt
+          psql -d postgres -Atc "SELECT version();" > ../../artifacts/postgres-version.txt 2>&1
+          exit 0
+      - name: Run service install/test/build attempts
+        shell: bash
+        run: |
+          set +e
+          for repo in sitioss-reports sitioss-reports-telegram sitioss-reports-telegram-server sitioss-notification-lambda sitioss-rem-latest sitioss-rem; do
+            dir="targets/$repo"
+            mkdir -p "artifacts/$repo"
+            if [ ! -f "$dir/package.json" ]; then echo 'no package.json' > "artifacts/$repo/skip.txt"; continue; fi
+            (
+              cd "$dir"
+              npm install > "../../artifacts/$repo/npm-install.txt" 2>&1
+              echo $? > "../../artifacts/$repo/npm-install-exit-code.txt"
+              npm audit --json > "../../artifacts/$repo/npm-audit.json" 2> "../../artifacts/$repo/npm-audit-stderr.txt"
+              echo $? > "../../artifacts/$repo/npm-audit-exit-code.txt"
+              if node -e "const p=require('./package.json'); process.exit(p.scripts&&p.scripts.lint?0:1)"; then timeout 8m npm run lint > "../../artifacts/$repo/lint.txt" 2>&1; echo $? > "../../artifacts/$repo/lint-exit-code.txt"; fi
+              if node -e "const p=require('./package.json'); process.exit(p.scripts&&p.scripts.test?0:1)"; then timeout 12m npm test > "../../artifacts/$repo/test.txt" 2>&1; echo $? > "../../artifacts/$repo/test-exit-code.txt"; fi
+              if node -e "const p=require('./package.json'); process.exit(p.scripts&&p.scripts.build?0:1)"; then timeout 15m npm run build > "../../artifacts/$repo/build.txt" 2>&1; echo $? > "../../artifacts/$repo/build-exit-code.txt"; fi
+            )
+          done
+          exit 0
+      - name: Cross-service source risk inventory
+        shell: bash
+        run: |
+          set +e
+          grep -RInE --exclude-dir=.git --exclude-dir=node_modules \
+            'secret|token|password|api.?key|console\.|logger|winston|phone|email|user.?id|location|coordinates|retry|duplicate|idempot|rate.?limit|throttl|authorize|permission|role|jwt|image|s3|signed|exif|eval\(|innerHTML|SELECT.*\+|query\(.*\+' \
+            targets > artifacts/service-risk-grep.txt 2>&1
+          exit 0
+      - name: Package schema and service evidence
+        if: always()
+        shell: bash
+        run: |
+          for repo in targets/*; do
+            name=$(basename "$repo")
+            tar -czf "artifacts/${name}-source.tgz" --exclude='.git' --exclude='node_modules' --exclude='dist' --exclude='.next' -C "$repo" .
+          done
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: siti-oss-schema-services
+          path: artifacts
+          retention-days: 14
