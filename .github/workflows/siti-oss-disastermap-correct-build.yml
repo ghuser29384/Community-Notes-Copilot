@@ -1,0 +1,56 @@
+name: Siti OSS disastermap corrected build audit
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-disastermap-correct-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  corrected-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '14.21.3'
+      - name: Clone exact public map source
+        run: |
+          git clone https://github.com/petabencana/disastermap.git target
+          git -C target checkout 599af2ad992a742115ebcf7c08aa804a79567839
+          mkdir -p artifacts
+          git -C target show -s --format=fuller HEAD > artifacts/commit.txt
+      - name: Install dependencies
+        working-directory: target
+        run: npm install
+      - name: Build with the repository's documented PetaBencana deployment key
+        working-directory: target
+        env:
+          DEP: pb
+          DATA_SERVER_KEY: audit-placeholder-not-a-secret
+        shell: bash
+        run: |
+          set +e
+          timeout 15m npm run build-dev > ../artifacts/build-dev-pb.txt 2>&1
+          echo $? > ../artifacts/build-dev-pb-exit-code.txt
+          timeout 15m npm run build > ../artifacts/build-prod-pb.txt 2>&1
+          echo $? > ../artifacts/build-prod-pb-exit-code.txt
+          find scripts -type f -printf '%p\t%s bytes\n' 2>/dev/null | sort > ../artifacts/scripts-files.txt
+          exit 0
+      - name: Package evidence
+        if: always()
+        shell: bash
+        run: |
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: siti-oss-disastermap-correct-build
+          path: artifacts
+          retention-days: 14
+          if-no-files-found: error
