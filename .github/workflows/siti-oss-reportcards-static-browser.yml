@@ -1,0 +1,96 @@
+name: Siti OSS reporting-cards static browser audit
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-reportcards-static-browser.yml'
+      - 'qa/siti-oss-audit/reportcards_browser_audit.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '14.21.3'
+      - name: Clone exact reporting-cards source
+        run: |
+          git clone https://github.com/petabencana/sitioss-reportcards-ng.git target
+          git -C target checkout eaec8b1a2bfe15745077c0e8ad5ff69fbdccc552
+          mkdir -p artifacts/server artifacts/browser
+          git -C target show -s --format=fuller HEAD > artifacts/server/target-commit.txt
+      - name: Install and build the Indonesian development deployment
+        working-directory: target
+        run: |
+          npm install
+          npm run build-dev-id
+      - name: Start static SPA server with history fallback
+        shell: bash
+        run: |
+          cat > spa_server.py <<'PY'
+          import http.server, os, socketserver
+          ROOT = os.path.abspath('target/dist/dev-id')
+          class Handler(http.server.SimpleHTTPRequestHandler):
+              def translate_path(self, path):
+                  original = super().translate_path(path)
+                  rel = os.path.relpath(original, os.getcwd())
+                  return os.path.join(ROOT, rel)
+              def do_GET(self):
+                  clean = self.path.split('?',1)[0].split('#',1)[0]
+                  candidate = os.path.join(ROOT, clean.lstrip('/'))
+                  if clean != '/' and not os.path.exists(candidate):
+                      self.path = '/index.html'
+                  return super().do_GET()
+              def end_headers(self):
+                  self.send_header('Cache-Control', 'no-store')
+                  super().end_headers()
+          os.chdir(ROOT)
+          with socketserver.TCPServer(('127.0.0.1', 4200), Handler) as httpd:
+              httpd.serve_forever()
+          PY
+          nohup python3 spa_server.py > artifacts/server/static-server.log 2>&1 &
+          echo $! > artifacts/server/static-server.pid
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4200/test123/flood >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat artifacts/server/static-server.log
+          exit 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.1'
+      - name: Install isolated browser dependencies
+        shell: bash
+        run: |
+          mkdir -p runner
+          cp qa/siti-oss-audit/reportcards_browser_audit.mjs runner/audit.mjs
+          cd runner
+          npm init -y >/dev/null
+          npm install --no-save playwright@1.54.1 @axe-core/playwright@4.10.2
+          npx playwright install --with-deps chromium
+      - name: Run synthetic desktop/mobile/deck/edge-case audit
+        working-directory: runner
+        env:
+          REPORTCARDS_URL: http://127.0.0.1:4200
+          AUDIT_OUTPUT: ${{ github.workspace }}/artifacts/browser
+        run: node audit.mjs
+      - name: Create evidence index
+        if: always()
+        shell: bash
+        run: |
+          curl -sS -D artifacts/server/final-headers.txt http://127.0.0.1:4200/test123/flood -o artifacts/server/final-page.html || true
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: siti-oss-reportcards-static-browser
+          path: artifacts
+          retention-days: 14
+          if-no-files-found: error
