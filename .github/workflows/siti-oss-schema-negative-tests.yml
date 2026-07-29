@@ -1,0 +1,83 @@
+name: Siti OSS schema negative constraint audit
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-schema-negative-tests.yml'
+      - 'qa/siti-oss-audit/schema_negative_tests.sql'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  negative-constraints:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    services:
+      postgres:
+        image: postgis/postgis:14-3.4
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '14.21.3'
+      - name: Install PostgreSQL client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Clone and build exact schema
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: siti_audit_constraints
+          COUNTRY: id
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone https://github.com/petabencana/sitioss-schema.git target
+          git -C target checkout 091229bff2a299c31b814979008ebc6df7b428e8
+          mkdir -p artifacts
+          git -C target show -s --format=fuller HEAD > artifacts/target-commit.txt
+          cd target
+          npm install
+          npm run build > ../artifacts/schema-build.txt 2>&1
+      - name: Run negative constraint and lifecycle tests
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: siti_audit_constraints
+        shell: bash
+        run: |
+          set +e
+          psql -v ON_ERROR_STOP=1 -f qa/siti-oss-audit/schema_negative_tests.sql > artifacts/schema-negative-tests.csv 2> artifacts/schema-negative-tests-stderr.txt
+          echo $? > artifacts/schema-negative-tests-exit-code.txt
+          psql -Atc "SELECT table_schema||'.'||table_name||E'\t'||column_name||E'\t'||data_type||E'\t'||is_nullable FROM information_schema.columns WHERE table_schema IN ('cognicity','grasp','template_data_source') ORDER BY 1,ordinal_position" > artifacts/schema-columns.tsv
+          psql -Atc "SELECT conrelid::regclass||E'\t'||conname||E'\t'||pg_get_constraintdef(oid) FROM pg_constraint WHERE connamespace IN ('cognicity'::regnamespace,'grasp'::regnamespace,'template_data_source'::regnamespace) ORDER BY 1,2" > artifacts/schema-constraints.tsv
+          exit 0
+      - name: Create evidence index
+        if: always()
+        shell: bash
+        run: |
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: siti-oss-schema-negative-tests
+          path: artifacts
+          retention-days: 14
+          if-no-files-found: error
