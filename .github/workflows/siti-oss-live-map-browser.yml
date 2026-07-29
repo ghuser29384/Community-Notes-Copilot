@@ -1,0 +1,48 @@
+name: Siti OSS live map read-only browser audit
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-live-map-browser.yml'
+      - 'qa/siti-oss-audit/live_map_browser_audit.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-map-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.1'
+      - name: Install isolated browser dependencies
+        shell: bash
+        run: |
+          mkdir -p runner artifacts/browser
+          cp qa/siti-oss-audit/live_map_browser_audit.mjs runner/audit.mjs
+          cd runner
+          npm init -y >/dev/null
+          npm install --no-save playwright@1.54.1 @axe-core/playwright@4.10.2
+          npx playwright install --with-deps chromium
+      - name: Run read-only live browser scenarios
+        working-directory: runner
+        env:
+          AUDIT_OUTPUT: ${{ github.workspace }}/artifacts/browser
+        run: node audit.mjs
+      - name: Create evidence index
+        if: always()
+        shell: bash
+        run: |
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: siti-oss-live-map-browser
+          path: artifacts
+          retention-days: 14
+          if-no-files-found: error
