@@ -1,0 +1,77 @@
+name: Siti OSS reporting-cards browser audit
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-reportcards-browser.yml'
+      - 'qa/siti-oss-audit/reportcards_browser_audit.mjs'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  browser-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '14.21.3'
+      - name: Clone exact reporting-cards source
+        run: |
+          git clone https://github.com/petabencana/sitioss-reportcards-ng.git target
+          git -C target checkout eaec8b1a2bfe15745077c0e8ad5ff69fbdccc552
+          mkdir -p artifacts/server artifacts/browser
+          git -C target show -s --format=fuller HEAD > artifacts/server/target-commit.txt
+      - name: Install target dependencies
+        working-directory: target
+        run: npm install
+      - name: Prepare Indonesian development deployment
+        working-directory: target
+        run: dep=id npm run pre-build-tasks
+      - name: Start isolated local Angular server
+        working-directory: target
+        shell: bash
+        run: |
+          nohup ./node_modules/.bin/ng serve --configuration=dev-id --host 127.0.0.1 --port 4200 --disable-host-check > ../artifacts/server/ng-serve.log 2>&1 &
+          echo $! > ../artifacts/server/ng-serve.pid
+          for i in $(seq 1 180); do
+            if curl -fsS http://127.0.0.1:4200/test123/flood >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat ../artifacts/server/ng-serve.log
+          exit 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.1'
+      - name: Install isolated browser dependencies
+        shell: bash
+        run: |
+          mkdir -p runner
+          cp qa/siti-oss-audit/reportcards_browser_audit.mjs runner/audit.mjs
+          cd runner
+          npm init -y >/dev/null
+          npm install --no-save playwright@1.54.1 @axe-core/playwright@4.10.2
+          npx playwright install --with-deps chromium
+      - name: Run synthetic desktop/mobile/deck/edge-case audit
+        working-directory: runner
+        env:
+          REPORTCARDS_URL: http://127.0.0.1:4200
+          AUDIT_OUTPUT: ${{ github.workspace }}/artifacts/browser
+        run: node audit.mjs
+      - name: Capture server state and checksums
+        if: always()
+        shell: bash
+        run: |
+          curl -sS -D artifacts/server/final-headers.txt http://127.0.0.1:4200/test123/flood -o artifacts/server/final-page.html || true
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: siti-oss-reportcards-browser
+          path: artifacts
+          retention-days: 14
+          if-no-files-found: error
