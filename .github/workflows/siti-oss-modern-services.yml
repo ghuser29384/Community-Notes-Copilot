@@ -1,0 +1,65 @@
+name: Siti OSS modern services build audit
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-modern-services.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rem-latest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.1'
+      - name: Clone exact public source
+        run: |
+          git clone https://github.com/petabencana/sitioss-rem-latest.git target
+          git -C target checkout 0fbd435aa1e05dba53232084738274fba92ccf50
+          mkdir -p artifacts
+          git -C target show -s --format=fuller HEAD > artifacts/target-commit.txt
+      - name: Install, lint, typecheck, build, and dependency audit
+        working-directory: target
+        shell: bash
+        run: |
+          set +e
+          npm install > ../artifacts/npm-install.txt 2>&1
+          echo $? > ../artifacts/npm-install-exit-code.txt
+          npm audit --json > ../artifacts/npm-audit.json 2> ../artifacts/npm-audit-stderr.txt
+          echo $? > ../artifacts/npm-audit-exit-code.txt
+          npm run lint > ../artifacts/lint.txt 2>&1
+          echo $? > ../artifacts/lint-exit-code.txt
+          npx tsc --noEmit > ../artifacts/typecheck.txt 2>&1
+          echo $? > ../artifacts/typecheck-exit-code.txt
+          npm run build > ../artifacts/build.txt 2>&1
+          echo $? > ../artifacts/build-exit-code.txt
+          find .next -type f -printf '%p\t%s bytes\n' 2>/dev/null | sort > ../artifacts/next-files.txt
+          exit 0
+      - name: Source risk inventory
+        working-directory: target
+        shell: bash
+        run: |
+          set +e
+          grep -RInE --exclude-dir=node_modules --exclude-dir=.next \
+            'secret|token|password|api.?key|user.?id|email|phone|location|coordinates|role|permission|authori[sz]|jwt|console\.|dangerouslySetInnerHTML|innerHTML|localStorage|sessionStorage|fetch\(' \
+            app pages src components lib public package.json README.md > ../artifacts/source-risk-grep.txt 2>&1
+          exit 0
+      - name: Package evidence
+        if: always()
+        shell: bash
+        run: |
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: siti-oss-modern-services
+          path: artifacts
+          retention-days: 14
+          if-no-files-found: error
