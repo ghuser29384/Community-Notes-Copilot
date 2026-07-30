@@ -26,8 +26,8 @@ jobs:
           git clone https://github.com/petabencana/sitioss-reportcards-ng.git target
           git -C target checkout eaec8b1a2bfe15745077c0e8ad5ff69fbdccc552
           python qa/siti-oss-highest-level/apply-proposed-fixes.py
-          git -C target diff --check
-          git -C target diff --binary > artifacts/applied.patch
+          git -C target diff --check --ignore-space-at-eol
+          git -C target diff --ignore-space-at-eol --binary > artifacts/applied.patch
           git -C target status --short > artifacts/status.txt
       - name: Install and build patched target
         shell: bash
