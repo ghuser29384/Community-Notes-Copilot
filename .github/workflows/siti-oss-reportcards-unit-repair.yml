@@ -29,18 +29,24 @@ jobs:
         run: |
           set +e
           cd target
-          npm install --global npm@9.9.4 > ../artifacts/npm-bootstrap.txt 2>&1
-          npm ci --legacy-peer-deps --no-audit --no-fund > ../artifacts/npm-install.txt 2>&1 || {
-            rm -rf node_modules
-            npm install --legacy-peer-deps --no-audit --no-fund >> ../artifacts/npm-install.txt 2>&1
-          }
+          npm --version > ../artifacts/npm-version.txt
+          npm ci --no-audit --no-fund > ../artifacts/npm-install.txt 2>&1
+          install_ec=$?
+          echo "$install_ec" > ../artifacts/npm-install-exit-code.txt
+          dep=id npm run pre-build-tasks > ../artifacts/pre-build.txt 2>&1
+          pre_ec=$?
+          echo "$pre_ec" > ../artifacts/pre-build-exit-code.txt
+
           timeout 15m npm test -- --watch=false --browsers=ChromeHeadless > ../artifacts/unit-baseline.txt 2>&1
           baseline_ec=$?
           echo "$baseline_ec" > ../artifacts/unit-baseline-exit-code.txt
 
-          npm install --save-dev --save-exact --legacy-peer-deps --no-audit --no-fund @types/jasmine@2.8.8 > ../artifacts/pin-install.txt 2>&1
+          npm install --save-dev --save-exact --no-audit --no-fund @types/jasmine@2.8.8 > ../artifacts/pin-install.txt 2>&1
           pin_install_ec=$?
           echo "$pin_install_ec" > ../artifacts/pin-install-exit-code.txt
+          dep=id npm run pre-build-tasks > ../artifacts/pre-build-after-pin.txt 2>&1
+          pre_after_ec=$?
+          echo "$pre_after_ec" > ../artifacts/pre-build-after-pin-exit-code.txt
           timeout 15m npm test -- --watch=false --browsers=ChromeHeadless > ../artifacts/unit-after-pin.txt 2>&1
           after_ec=$?
           echo "$after_ec" > ../artifacts/unit-after-pin-exit-code.txt
@@ -62,6 +68,9 @@ jobs:
       - name: Differential unit-test gate
         if: always()
         run: |
+          test "$(cat artifacts/npm-install-exit-code.txt)" -eq 0
+          test "$(cat artifacts/pre-build-exit-code.txt)" -eq 0
           test "$(cat artifacts/unit-baseline-exit-code.txt)" -ne 0
           test "$(cat artifacts/pin-install-exit-code.txt)" -eq 0
+          test "$(cat artifacts/pre-build-after-pin-exit-code.txt)" -eq 0
           test "$(cat artifacts/unit-after-pin-exit-code.txt)" -eq 0
