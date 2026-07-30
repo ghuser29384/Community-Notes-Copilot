@@ -1,0 +1,92 @@
+name: Siti OSS Report Cards patch differential verification
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-patch-verification.yml'
+      - 'qa/siti-oss-highest-level/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-proposed-patches:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '14.21.3'
+      - name: Clone exact source and apply minimal patches
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          git clone https://github.com/petabencana/sitioss-reportcards-ng.git target
+          git -C target checkout eaec8b1a2bfe15745077c0e8ad5ff69fbdccc552
+          git -C target apply ../qa/siti-oss-highest-level/patches/0001-explicit-training-classification.patch
+          git -C target apply ../qa/siti-oss-highest-level/patches/0002-respect-giver-training-selection.patch
+          git -C target diff --check
+          git -C target diff > artifacts/applied.patch
+          git -C target status --short > artifacts/status.txt
+      - name: Install and build patched target
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd target
+          npm install --global npm@9.9.4 > ../artifacts/npm-bootstrap.txt 2>&1
+          npm ci --legacy-peer-deps --no-audit --no-fund > ../artifacts/npm-install.txt 2>&1 || {
+            rm -rf node_modules
+            npm install --legacy-peer-deps --no-audit --no-fund >> ../artifacts/npm-install.txt 2>&1
+          }
+          dep=id npm run pre-build-tasks > ../artifacts/pre-build.txt 2>&1
+          npm run build-dev-id > ../artifacts/build-dev-id.txt 2>&1
+      - name: Serve patched SPA with history fallback
+        run: |
+          nohup node qa/siti-oss-highest-level/spa-server.mjs target/dist/dev-id 4200 > artifacts/spa-server.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:4200/test123/flood/location >/dev/null && exit 0
+            sleep 1
+          done
+          cat artifacts/spa-server.log
+          exit 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install isolated Playwright dependencies
+        run: |
+          mkdir -p runner
+          cp qa/siti-oss-highest-level/reportcards-audit.mjs runner/
+          cp qa/siti-oss-highest-level/patch-gate.mjs runner/
+          cd runner
+          npm init -y >/dev/null 2>&1
+          npm install --no-save playwright@1.54.1 @axe-core/playwright@4.10.2
+          npx playwright install --with-deps chromium
+      - name: Run same executed audit against patched build
+        id: audit
+        continue-on-error: true
+        working-directory: runner
+        env:
+          AUDIT_OUTPUT: ${{ github.workspace }}/artifacts/browser
+          BASE_URL: http://127.0.0.1:4200
+          TARGET_ROOT: ${{ github.workspace }}/target
+          TARGET_COMMIT: eaec8b1a2bfe15745077c0e8ad5ff69fbdccc552+proposed-patches
+        run: node reportcards-audit.mjs
+      - name: Package evidence before the differential gate
+        if: always()
+        run: |
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: siti-oss-reportcards-proposed-patches
+          path: artifacts
+          retention-days: 14
+          if-no-files-found: error
+      - name: Differential patch gate
+        if: always()
+        run: |
+          test -s artifacts/browser/reportcards-audit-results.json
+          node runner/patch-gate.mjs artifacts/browser/reportcards-audit-results.json
