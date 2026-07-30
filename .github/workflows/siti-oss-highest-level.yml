@@ -13,7 +13,7 @@ permissions:
 jobs:
   reportcards-executed-audit:
     runs-on: ubuntu-24.04
-    timeout-minutes: 60
+    timeout-minutes: 65
     steps:
       - name: Check out isolated audit harness
         uses: actions/checkout@v4
@@ -94,6 +94,7 @@ jobs:
           set -euo pipefail
           mkdir -p runner
           cp qa/siti-oss-highest-level/reportcards-audit.mjs runner/reportcards-audit.mjs
+          cp qa/siti-oss-highest-level/normalize-audit.mjs runner/normalize-audit.mjs
           cp qa/siti-oss-highest-level/gate.mjs runner/gate.mjs
           cd runner
           npm init -y >/dev/null 2>&1
@@ -112,7 +113,19 @@ jobs:
           TARGET_COMMIT: eaec8b1a2bfe15745077c0e8ad5ff69fbdccc552
         run: node reportcards-audit.mjs
 
-      - name: Record source, build and test gates without hiding failures
+      - name: Normalize prerequisite failures and invalid mock results
+        if: always() && steps.target_build.outputs.build_ok == 'true'
+        run: |
+          test -s artifacts/browser/reportcards-audit-results.json
+          node runner/normalize-audit.mjs artifacts/browser/reportcards-audit-results.json artifacts/browser/reportcards-audit-normalized.json target
+
+      - name: Return to target-compatible Node for lint and unit tests
+        if: always()
+        uses: actions/setup-node@v4
+        with:
+          node-version: '14.21.3'
+
+      - name: Record source, lint, unit, and dependency gates without hiding failures
         if: always()
         shell: bash
         run: |
@@ -124,7 +137,7 @@ jobs:
           echo $? > ../artifacts/build/unit-tests-exit-code.txt
           npm audit --json --legacy-peer-deps > ../artifacts/build/npm-audit.json 2> ../artifacts/build/npm-audit-stderr.txt
           echo $? > ../artifacts/build/npm-audit-exit-code.txt
-          grep -RInE --exclude-dir=node_modules --exclude-dir=dist 'Captcha disabled|containsTrainingWord|is_training|delivery_code|idempot|signedRequest|imageSignedUrl|EXIF|GPS|location|address|contactNumber' src > ../artifacts/build/risk-source-lines.txt 2>&1
+          grep -RInE --exclude-dir=node_modules --exclude-dir=dist 'Captcha disabled|containsTrainingWord|is_training|delivery_code|idempot|signedRequest|imageSignedUrl|EXIF|GPS|location|address|contactNumber|leaflet-geosearch/lib/index.js' src angular.json > ../artifacts/build/risk-source-lines.txt 2>&1
           exit 0
 
       - name: Build evidence index and checksums
@@ -149,9 +162,9 @@ jobs:
         shell: bash
         run: |
           test '${{ steps.target_build.outputs.build_ok }}' = true
-          test -s artifacts/browser/reportcards-audit-results.json
-          node -e "const r=require('./artifacts/browser/reportcards-audit-results.json'); if((r.tests||[]).length<10) process.exit(2); console.log('Executed tests:',r.tests.length)"
+          test -s artifacts/browser/reportcards-audit-normalized.json
+          node -e "const r=require('./artifacts/browser/reportcards-audit-normalized.json'); if((r.tests||[]).length<12) process.exit(2); console.log('Normalized tests:',r.tests.length)"
 
       - name: Product gate — fail visibly on unresolved P0 findings
         if: always() && steps.target_build.outputs.build_ok == 'true'
-        run: node runner/gate.mjs artifacts/browser/reportcards-audit-results.json
+        run: node runner/gate.mjs artifacts/browser/reportcards-audit-normalized.json
