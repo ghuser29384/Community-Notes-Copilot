@@ -1,0 +1,52 @@
+name: Siti OSS notification idempotency v3
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-notification-idempotency-v3.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  notification-idempotency:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '14.21.3'
+      - name: Clone exact source and install dependencies
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p target artifacts
+          git clone https://github.com/petabencana/sitioss-notification-lambda.git target/notification
+          git -C target/notification checkout 305c1f7fe768e6aec3b0592d545685c1983bd9a0
+          git -C target/notification show -s --format='%H%x09%cI%x09%s' > artifacts/notification-commit.tsv
+          cd target/notification
+          npm install --no-audit --no-fund > ../../artifacts/npm-install.log 2>&1
+      - name: Execute identical sequential, concurrent, and duplicate Lambda events
+        env:
+          NOTIFICATION_SOURCE: ${{ github.workspace }}/target/notification
+          SITI_VALIDATION_OUT: ${{ github.workspace }}/artifacts
+          NODE_PATH: ${{ github.workspace }}/target/notification/node_modules
+        shell: bash
+        run: |
+          set -euo pipefail
+          node -r ./target/notification/node_modules/babel-register qa/siti-oss-validation/notification_idempotency.js | tee artifacts/notification-console.log
+      - name: Index evidence
+        if: always()
+        shell: bash
+        run: |
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: siti-oss-notification-idempotency-v3
+          path: artifacts
+          retention-days: 14
+          if-no-files-found: error
