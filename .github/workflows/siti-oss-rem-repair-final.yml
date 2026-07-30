@@ -1,0 +1,86 @@
+name: Siti OSS REM latest final repair verification
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-rem-repair-final.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-final-rem-repair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Clone exact source and apply asserted repair
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          git clone https://github.com/petabencana/sitioss-rem-latest.git target
+          git -C target checkout 0fbd435aa1e05dba53232084738274fba92ccf50
+          python qa/siti-oss-highest-level/apply-rem-latest-fixes.py
+          git -C target diff --check
+          git -C target diff --binary > artifacts/applied.patch
+          test -s artifacts/applied.patch
+          git -C target status --short > artifacts/status.txt
+      - name: Install, lint, typecheck, and build
+        id: checks
+        continue-on-error: true
+        working-directory: target
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+        shell: bash
+        run: |
+          set +e
+          npm install > ../artifacts/npm-install.txt 2>&1
+          install_ec=$?; echo "$install_ec" > ../artifacts/npm-install-exit-code.txt
+          npm run lint > ../artifacts/lint.txt 2>&1
+          lint_ec=$?; echo "$lint_ec" > ../artifacts/lint-exit-code.txt
+          npx tsc --noEmit > ../artifacts/typecheck.txt 2>&1
+          type_ec=$?; echo "$type_ec" > ../artifacts/typecheck-exit-code.txt
+          npm run build > ../artifacts/build.txt 2>&1
+          build_ec=$?; echo "$build_ec" > ../artifacts/build-exit-code.txt
+          find .next -type f -printf '%p\t%s bytes\n' 2>/dev/null | sort > ../artifacts/next-files.txt
+          exit 0
+      - name: Smoke-test the fail-closed no-secrets state
+        id: smoke
+        continue-on-error: true
+        shell: bash
+        run: |
+          set +e
+          cd target
+          nohup npm start > ../artifacts/server.txt 2>&1 &
+          echo $! > ../artifacts/server.pid
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:3000/ > ../artifacts/home.html; then break; fi
+            sleep 1
+          done
+          grep -q 'Authentication configuration required' ../artifacts/home.html
+          echo $? > ../artifacts/smoke-exit-code.txt
+          exit 0
+      - name: Package evidence before gate
+        if: always()
+        run: |
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: siti-oss-rem-latest-final-repair
+          path: artifacts
+          retention-days: 14
+          if-no-files-found: error
+      - name: Final engineering and smoke gate
+        if: always()
+        run: |
+          test "$(cat artifacts/npm-install-exit-code.txt)" -eq 0
+          test "$(cat artifacts/lint-exit-code.txt)" -eq 0
+          test "$(cat artifacts/typecheck-exit-code.txt)" -eq 0
+          test "$(cat artifacts/build-exit-code.txt)" -eq 0
+          test "$(cat artifacts/smoke-exit-code.txt)" -eq 0
