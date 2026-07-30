@@ -25,6 +25,11 @@ DB = {
     "password": os.environ.get("PGPASSWORD", "postgres"),
     "dbname": os.environ.get("PGDATABASE", "cognicity_validation"),
 }
+DUPLICATE_CONCURRENCY = int(os.environ.get("DUPLICATE_CONCURRENCY", "50"))
+READ_LOAD_REQUESTS = int(os.environ.get("READ_LOAD_REQUESTS", "10000"))
+READ_LOAD_CONCURRENCY = int(os.environ.get("READ_LOAD_CONCURRENCY", "100"))
+WRITE_LOAD_REQUESTS = int(os.environ.get("WRITE_LOAD_REQUESTS", "1000"))
+WRITE_LOAD_CONCURRENCY = int(os.environ.get("WRITE_LOAD_CONCURRENCY", "50"))
 UA = "SitiOSS-Authorized-Local-Validation/2026-07-30"
 SESSION = requests.Session()
 SESSION.headers.update({"User-Agent": UA})
@@ -111,17 +116,19 @@ def test_duplicate_sequential() -> dict[str, Any]:
     first = request("PUT", f"/cards/{card}", json=payload)
     second = request("PUT", f"/cards/{card}", json=payload)
     count = db_query("SELECT count(*) FROM grasp.reports WHERE card_id=%s", (card,))[0][0]
+    all_reports = db_query("SELECT count(*) FROM cognicity.all_reports WHERE source='grasp' AND url=%s", (card,))[0][0]
     logs = db_query("SELECT event_type, count(*) FROM grasp.log WHERE card_id=%s GROUP BY event_type ORDER BY event_type", (card,))
-    return {"card_id": card, "first": first, "second": second, "report_row_count": count, "log_counts": logs}
+    return {"card_id": card, "first": first, "second": second, "report_row_count": count, "all_reports_row_count": all_reports, "log_counts": logs}
 
 
-def test_duplicate_concurrent(workers: int = 25) -> dict[str, Any]:
+def test_duplicate_concurrent(workers: int = DUPLICATE_CONCURRENCY) -> dict[str, Any]:
     card = create_card("audit-concurrent-duplicate")
     payload = flood_payload("SITI local concurrent duplicate validation")
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
         futures = [pool.submit(request, "PUT", f"/cards/{card}", json=payload) for _ in range(workers)]
         results = [future.result() for future in futures]
     report_rows = db_query("SELECT count(*) FROM grasp.reports WHERE card_id=%s", (card,))[0][0]
+    all_reports = db_query("SELECT count(*) FROM cognicity.all_reports WHERE source='grasp' AND url=%s", (card,))[0][0]
     log_rows = db_query("SELECT event_type, count(*) FROM grasp.log WHERE card_id=%s GROUP BY event_type ORDER BY event_type", (card,))
     return {
         "card_id": card,
@@ -133,12 +140,13 @@ def test_duplicate_concurrent(workers: int = 25) -> dict[str, Any]:
             "max": max(item["elapsed_ms"] for item in results),
         },
         "report_row_count": report_rows,
+        "all_reports_row_count": all_reports,
         "log_counts": log_rows,
-        "sample_results": results[:8],
+        "sample_results": results[:12],
     }
 
 
-def test_local_read_load(total: int = 2000, workers: int = 50) -> dict[str, Any]:
+def test_local_read_load(total: int = READ_LOAD_REQUESTS, workers: int = READ_LOAD_CONCURRENCY) -> dict[str, Any]:
     started = time.perf_counter()
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
         results = list(pool.map(lambda _: request("GET", "/reports?timeperiod=3600"), range(total)))
@@ -159,21 +167,27 @@ def test_local_read_load(total: int = 2000, workers: int = 50) -> dict[str, Any]
     }
 
 
-def test_local_write_load(total: int = 200, workers: int = 25) -> dict[str, Any]:
+def test_local_write_load(total: int = WRITE_LOAD_REQUESTS, workers: int = WRITE_LOAD_CONCURRENCY) -> dict[str, Any]:
+    card_started = time.perf_counter()
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
         cards = list(pool.map(lambda index: create_card(f"audit-write-{index}"), range(total)))
+    card_wall = time.perf_counter() - card_started
     started = time.perf_counter()
     with concurrent.futures.ThreadPoolExecutor(max_workers=workers) as pool:
         futures = [pool.submit(request, "PUT", f"/cards/{card}", json=flood_payload(f"write-load-{index}")) for index, card in enumerate(cards)]
         results = [future.result() for future in futures]
     wall = time.perf_counter() - started
     latencies = [item["elapsed_ms"] for item in results]
-    rows = db_query("SELECT count(*) FROM grasp.reports WHERE card_id = ANY(%s)", (cards,))[0][0]
+    rows = db_query("SELECT count(*) FROM grasp.reports WHERE card_id = ANY(%s::uuid[])", (cards,))[0][0]
+    all_rows = db_query("SELECT count(*) FROM cognicity.all_reports WHERE source='grasp' AND url = ANY(%s::varchar[])", (cards,))[0][0]
     return {
         "requests": total,
         "concurrency": workers,
+        "card_create_wall_seconds": round(card_wall, 3),
+        "card_creates_per_second": round(total / card_wall, 2) if card_wall else None,
         "status_counts": dict(Counter(str(item.get("status")) for item in results)),
         "persisted_report_rows": rows,
+        "persisted_all_report_rows": all_rows,
         "wall_seconds": round(wall, 3),
         "writes_per_second": round(total / wall, 2) if wall else None,
         "latency_ms": {
@@ -218,8 +232,15 @@ def test_rem_authorization() -> dict[str, Any]:
 def main() -> None:
     result: dict[str, Any] = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "scope": "isolated exact public legacy server and PostGIS schema; no production writes",
+        "scope": "isolated exact public legacy server and public PostGIS schema plus explicitly labelled audit-only compatibility migration; no production writes",
         "server_url": BASE_URL,
+        "load_parameters": {
+            "duplicate_concurrency": DUPLICATE_CONCURRENCY,
+            "read_requests": READ_LOAD_REQUESTS,
+            "read_concurrency": READ_LOAD_CONCURRENCY,
+            "write_requests": WRITE_LOAD_REQUESTS,
+            "write_concurrency": WRITE_LOAD_CONCURRENCY,
+        },
         "health": request("GET", "/"),
     }
     tests = [
@@ -241,7 +262,7 @@ def main() -> None:
         writer.writeheader()
         for name, _function in tests:
             data = result.get(name, {})
-            writer.writerow({"test": name, "error": data.get("error"), "summary": json.dumps(data, default=str)[:4000]})
+            writer.writerow({"test": name, "error": data.get("error"), "summary": json.dumps(data, default=str)[:8000]})
     print(json.dumps(result, indent=2, default=str))
 
 
