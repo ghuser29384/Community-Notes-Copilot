@@ -23,10 +23,11 @@ async function inspect(page,id){
     buttons:[...document.querySelectorAll('button')].filter(x=>{const r=x.getBoundingClientRect();return r.width&&r.height}).map(x=>({text:(x.textContent||'').trim(),aria:x.getAttribute('aria-label'),title:x.getAttribute('title')})).slice(0,100),
     links:[...document.querySelectorAll('a')].filter(x=>{const r=x.getBoundingClientRect();return r.width&&r.height}).map(x=>({text:(x.textContent||'').trim(),href:x.href,aria:x.getAttribute('aria-label')})).slice(0,100),
     imagesWithoutAlt:[...document.querySelectorAll('img:not([alt]),img[alt=""]')].length,
-    unlabeledButtons:[...document.querySelectorAll('button')].filter(b=>{const t=(b.textContent||'').trim();return !t&&!b.getAttribute('aria-label')&&!b.getAttribute('title')}).length,
+    unlabeledButtons:[...document.querySelectorAll('button')].filter(b=>{const r=b.getBoundingClientRect();const t=(b.textContent||'').trim();return r.width&&r.height&&!t&&!b.getAttribute('aria-label')&&!b.getAttribute('title')}).length,
     mapCount:document.querySelectorAll('.mapboxgl-map,.leaflet-container,canvas').length,
     hasListAlternative:Boolean(document.querySelector('table,[role="table"],[role="list"],ol,ul')),
     visibleStatusTerms:/verified|unverified|partner|public|updated|reported|diverifikasi|belum diverifikasi|laporan/i.test(document.body?.innerText||''),
+    nextAssetCount:[...document.scripts].filter(x=>x.src.includes('/_next/')).length,
   }),id);
 }
 
@@ -40,6 +41,16 @@ async function newContext(browser,id,mobile=false){
  return context;
 }
 
+async function clickVisible(page, selector) {
+  const candidates = page.locator(selector).filter({ visible: true });
+  const count = await candidates.count();
+  if (!count) return { count: 0 };
+  const chosen = candidates.last();
+  const box = await chosen.boundingBox();
+  await chosen.click({ timeout: 15000 });
+  return { count, box };
+}
+
 async function run(browser,id,mobile=false){
  const context=await newContext(browser,id,mobile);const page=await context.newPage();
  page.on('console',m=>{if(['error','warning','warn'].includes(m.type()))results.console.push({id,type:m.type(),text:m.text()})});
@@ -49,19 +60,42 @@ async function run(browser,id,mobile=false){
   const resp=await page.goto('https://petabencana.id/map?tab=report',{waitUntil:'domcontentloaded',timeout:60000});
   await page.waitForTimeout(8000);
   row.status=resp?.status();row.initial=await inspect(page,id+'-initial');row.initialScreenshot=await shot(page,id+'-initial');row.initialAxe=await axe(page,id+'-initial');
-  const report=page.getByRole('button',{name:/KIRIM LAPORAN|SUBMIT REPORT/i}).first();
+
+  const reportSelector='button:visible:has-text("KIRIM LAPORAN"),button:visible:has-text("SUBMIT REPORT")';
+  const report=page.locator(reportSelector);
   row.reportButtonCount=await report.count();
   if(row.reportButtonCount){
     const before=page.url();
-    await report.click();await page.waitForTimeout(1800);
+    await report.last().click({timeout:15000});await page.waitForTimeout(1200);
     row.afterReport={before,url:page.url(),state:await inspect(page,id+'-after-report'),screenshot:await shot(page,id+'-after-report'),axe:await axe(page,id+'-after-report')};
+
+    const web=page.locator('a:visible:has-text("Laporkan via Web"),a:visible:has-text("Report via Web"),button:visible:has-text("Laporkan via Web"),button:visible:has-text("Report via Web")');
+    row.webReportControlCount=await web.count();
+    if(row.webReportControlCount){
+      const control=web.last();
+      const href=await control.getAttribute('href');
+      row.webReportHref=href;
+      if(href){
+        const destination=new URL(href,page.url()).href;
+        const response=await page.goto(destination,{waitUntil:'domcontentloaded',timeout:60000});
+        await page.waitForTimeout(5000);
+        row.webReportDestination={status:response?.status(),state:await inspect(page,id+'-web-report'),screenshot:await shot(page,id+'-web-report'),axe:await axe(page,id+'-web-report')};
+      }else{
+        await control.click({timeout:15000});await page.waitForTimeout(4000);
+        row.webReportDestination={state:await inspect(page,id+'-web-report'),screenshot:await shot(page,id+'-web-report'),axe:await axe(page,id+'-web-report')};
+      }
+    }
   }
-  const active=page.getByRole('button',{name:/Laporan Aktif|Active Reports/i}).first();
-  row.activeButtonCount=await active.count();
-  if(row.activeButtonCount){await active.click();await page.waitForTimeout(1000);row.afterActive={state:await inspect(page,id+'-active'),screenshot:await shot(page,id+'-active')};}
-  const marker=page.locator('button,[role="button"],div').filter({hasText:/^[1-9]\d*$/}).first();
-  row.numericMarkerCount=await marker.count();
-  if(row.numericMarkerCount){await marker.click().catch(()=>{});await page.waitForTimeout(700);row.afterMarker={state:await inspect(page,id+'-marker'),screenshot:await shot(page,id+'-marker')};}
+
+  if(page.url().startsWith('https://petabencana.id/map')){
+    const active=page.locator('button:visible:has-text("Laporan Aktif"),button:visible:has-text("Active Reports")');
+    row.activeButtonCount=await active.count();
+    if(row.activeButtonCount){await active.last().click({timeout:15000});await page.waitForTimeout(1000);row.afterActive={state:await inspect(page,id+'-active'),screenshot:await shot(page,id+'-active')};}
+    const marker=page.locator('button:visible,[role="button"]:visible,div:visible').filter({hasText:/^[1-9]\d*$/});
+    row.numericMarkerCount=await marker.count();
+    if(row.numericMarkerCount){await marker.first().click({timeout:8000}).catch(()=>{});await page.waitForTimeout(700);row.afterMarker={state:await inspect(page,id+'-marker'),screenshot:await shot(page,id+'-marker')};}
+  }
+
   await page.keyboard.press('Tab');
   const focus=[];for(let i=0;i<25;i++){focus.push(await page.evaluate(()=>{const e=document.activeElement;return {tag:e?.tagName,text:(e?.textContent||'').trim().slice(0,120),aria:e?.getAttribute?.('aria-label'),href:e?.getAttribute?.('href')}}));await page.keyboard.press('Tab');}
   row.keyboardOrder=focus;
