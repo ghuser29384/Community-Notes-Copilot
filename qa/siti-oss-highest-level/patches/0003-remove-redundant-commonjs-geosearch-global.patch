@@ -1,0 +1,14 @@
+diff --git a/angular.json b/angular.json
+--- a/angular.json
++++ b/angular.json
+@@ -35,10 +35,9 @@
+             "scripts": [
+               "node_modules/leaflet/dist/leaflet.js",
+               "node_modules/leaflet.locatecontrol/dist/L.Control.Locate.min.js",
+               "node_modules/leaflet-compass/dist/leaflet-compass.min.js",
+-              "node_modules/leaflet-textpath/leaflet.textpath.js",
+-              "node_modules/leaflet-geosearch/lib/index.js"
++              "node_modules/leaflet-textpath/leaflet.textpath.js"
+             ]
+           },
+           "configurations": {
