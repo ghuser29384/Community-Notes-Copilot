@@ -1,0 +1,54 @@
+diff --git a/src/app/services/cards/deck.service.ts b/src/app/services/cards/deck.service.ts
+index a5f9f45..f81aa37 100644
+--- a/src/app/services/cards/deck.service.ts
++++ b/src/app/services/cards/deck.service.ts
+@@ -30,8 +30,6 @@ type deckSubType =
+   | 'need'
+   | 'giver';
+ 
+-  type TrainingWords = ["trainer", "duta", "dkrb", "youth", "tes", "test", "simulasi", "HKB"];
+-
+ interface LatLng {
+   lat: number;
+   lng: number;
+@@ -59,7 +57,6 @@ export class DeckService {
+   constructor(private http: HttpClient) {}
+   finishedSubType = [];
+   cardLanguage = '';
+-  trainingWords: string[] = ["trainer", "duta", "dkrb", "youth", "tes", "test", "simulasi", "HKB"];
+ 
+   tweetID: string;
+   waNumber: string;
+@@ -726,16 +723,6 @@ export class DeckService {
+     }
+   }
+ 
+-  containsTrainingWord(str) {
+-    const words = this.trainingWords;
+-    for (const word of words) {
+-      if (str.toLowerCase().includes(word.toLowerCase())) {
+-        return true;
+-      }
+-    }
+-    return false;
+-  }
+-
+   _get_report_summary(): any {
+     const cardId = this.route.snapshot['_routerState'].url.split('/')[1];
+     const summary: any = {
+@@ -748,8 +735,7 @@ export class DeckService {
+       image_url: this.setImage ? cardId : '',
+       location: this.location,
+       partnerCode: this.partnerCode ? this.partnerCode : '',
+-      is_training : this.getReportType() === 'training' || this.containsTrainingWord(this.description)
+     };
+     if (this.tweetID) {
+       summary.tweetID = this.tweetID;
+@@ -820,7 +806,6 @@ export class DeckService {
+               .patch(reportURL, {
+                 // TODO: match server patch handler
+                 image_url: id,
+-                image_type: this.fileType,
+               })
+               .subscribe(
+                 (patch_success) => {
