@@ -13,7 +13,7 @@ permissions:
 jobs:
   reportcards-executed-audit:
     runs-on: ubuntu-24.04
-    timeout-minutes: 55
+    timeout-minutes: 60
     steps:
       - name: Check out isolated audit harness
         uses: actions/checkout@v4
@@ -39,8 +39,17 @@ jobs:
         run: |
           set +e
           cd target
-          npm install > ../artifacts/build/npm-install.txt 2>&1
+          npm install --global npm@9.9.4 > ../artifacts/build/npm-bootstrap.txt 2>&1
+          bootstrap_ec=$?
+          echo "$bootstrap_ec" > ../artifacts/build/npm-bootstrap-exit-code.txt
+          npm --version > ../artifacts/build/npm-version.txt 2>&1
+          npm ci --legacy-peer-deps --no-audit --no-fund > ../artifacts/build/npm-install.txt 2>&1
           install_ec=$?
+          if [ "$install_ec" -ne 0 ]; then
+            rm -rf node_modules
+            npm install --legacy-peer-deps --no-audit --no-fund >> ../artifacts/build/npm-install.txt 2>&1
+            install_ec=$?
+          fi
           echo "$install_ec" > ../artifacts/build/npm-install-exit-code.txt
           dep=id npm run pre-build-tasks > ../artifacts/build/pre-build.txt 2>&1
           pre_ec=$?
@@ -49,15 +58,15 @@ jobs:
           build_ec=$?
           echo "$build_ec" > ../artifacts/build/build-dev-id-exit-code.txt
           find dist -type f -printf '%p\t%s bytes\n' 2>/dev/null | sort > ../artifacts/build/dist-files.txt
-          if [ "$install_ec" -ne 0 ] || [ "$pre_ec" -ne 0 ] || [ "$build_ec" -ne 0 ]; then
-            echo "TARGET_BUILD_OK=false" >> "$GITHUB_ENV"
+          if [ "$bootstrap_ec" -eq 0 ] && [ "$install_ec" -eq 0 ] && [ "$pre_ec" -eq 0 ] && [ "$build_ec" -eq 0 ]; then
+            echo "build_ok=true" >> "$GITHUB_OUTPUT"
           else
-            echo "TARGET_BUILD_OK=true" >> "$GITHUB_ENV"
+            echo "build_ok=false" >> "$GITHUB_OUTPUT"
           fi
           exit 0
 
       - name: Start deterministic SPA history-fallback server
-        if: env.TARGET_BUILD_OK == 'true'
+        if: steps.target_build.outputs.build_ok == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -73,13 +82,13 @@ jobs:
           exit 1
 
       - name: Switch to modern Node for Playwright
-        if: env.TARGET_BUILD_OK == 'true'
+        if: steps.target_build.outputs.build_ok == 'true'
         uses: actions/setup-node@v4
         with:
           node-version: '20'
 
       - name: Install isolated browser audit dependencies
-        if: env.TARGET_BUILD_OK == 'true'
+        if: steps.target_build.outputs.build_ok == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -93,7 +102,7 @@ jobs:
 
       - name: Run executed browser, privacy, classification, mobile and accessibility audit
         id: browser_audit
-        if: env.TARGET_BUILD_OK == 'true'
+        if: steps.target_build.outputs.build_ok == 'true'
         continue-on-error: true
         working-directory: runner
         env:
@@ -113,7 +122,7 @@ jobs:
           echo $? > ../artifacts/build/lint-exit-code.txt
           timeout 15m npm test -- --watch=false --browsers=ChromeHeadless > ../artifacts/build/unit-tests.txt 2>&1
           echo $? > ../artifacts/build/unit-tests-exit-code.txt
-          npm audit --json > ../artifacts/build/npm-audit.json 2> ../artifacts/build/npm-audit-stderr.txt
+          npm audit --json --legacy-peer-deps > ../artifacts/build/npm-audit.json 2> ../artifacts/build/npm-audit-stderr.txt
           echo $? > ../artifacts/build/npm-audit-exit-code.txt
           grep -RInE --exclude-dir=node_modules --exclude-dir=dist 'Captcha disabled|containsTrainingWord|is_training|delivery_code|idempot|signedRequest|imageSignedUrl|EXIF|GPS|location|address|contactNumber' src > ../artifacts/build/risk-source-lines.txt 2>&1
           exit 0
@@ -139,10 +148,10 @@ jobs:
         if: always()
         shell: bash
         run: |
-          test "$TARGET_BUILD_OK" = true
+          test '${{ steps.target_build.outputs.build_ok }}' = true
           test -s artifacts/browser/reportcards-audit-results.json
           node -e "const r=require('./artifacts/browser/reportcards-audit-results.json'); if((r.tests||[]).length<10) process.exit(2); console.log('Executed tests:',r.tests.length)"
 
       - name: Product gate — fail visibly on unresolved P0 findings
-        if: always() && env.TARGET_BUILD_OK == 'true'
+        if: always() && steps.target_build.outputs.build_ok == 'true'
         run: node runner/gate.mjs artifacts/browser/reportcards-audit-results.json
