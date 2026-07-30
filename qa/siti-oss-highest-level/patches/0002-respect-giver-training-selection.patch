@@ -1,0 +1,12 @@
+diff --git a/src/app/routes/decks/giver/giver.component.ts b/src/app/routes/decks/giver/giver.component.ts
+--- a/src/app/routes/decks/giver/giver.component.ts
++++ b/src/app/routes/decks/giver/giver.component.ts
+@@ -43,7 +43,7 @@ export class GiverComponent implements OnInit {
+ 
+   onTypeSelected(type) {
+     this.showReportTypeButton = false;
+-    this.deckService.selectReportType('real');
++    this.deckService.selectReportType(type);
+   }
+ 
+   get isShowButtons(): boolean {
