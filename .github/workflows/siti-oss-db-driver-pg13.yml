@@ -1,0 +1,75 @@
+name: Siti OSS legacy DB driver on PostgreSQL 13
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-db-driver-pg13.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pg13:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgis/postgis:13-3.4
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '14.21.3'
+      - name: Build exact schema and diagnose pg 7 connection
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          mkdir -p targets artifacts
+          git clone https://github.com/petabencana/sitioss-schema.git targets/schema
+          git -C targets/schema checkout 091229bff2a299c31b814979008ebc6df7b428e8
+          git clone https://github.com/petabencana/-Depricated-sitioss-server.git targets/server
+          git -C targets/server checkout 933f345801340027181be21d24671146e3785701
+          cd targets/schema
+          npm install --no-audit --no-fund
+          PGHOST=127.0.0.1 PGPORT=5432 PGUSER=postgres PGPASSWORD=postgres PGDATABASE=cognicity_pg13 PG_DEFAULT_DB=postgres COUNTRY=id DATA=true FUNCTIONS=true SCHEMA=true ./build/run.sh > ../../artifacts/schema-build.log 2>&1
+          cd ../server
+          NODE_ENV=development npm install --production=false --no-audit --no-fund > ../../artifacts/server-install.log 2>&1
+          npm ls pg-promise pg bluebird --depth=2 > ../../artifacts/dependencies.txt 2>&1
+          PGHOST=127.0.0.1 PGPORT=5432 PGUSER=postgres PGPASSWORD=postgres PGDATABASE=cognicity_pg13 node - <<'NODE' | tee ../../artifacts/diagnostic.json
+          const pg=require('pg');
+          const Bluebird=require('bluebird');
+          const out={pg:require('pg/package.json').version,pgp:require('pg-promise/package.json').version};
+          async function main(){
+            try{const c=new pg.Client({host:'127.0.0.1',port:5432,user:'postgres',password:'postgres',database:'cognicity_pg13',ssl:false,connectionTimeoutMillis:5000});await c.connect();out.query=(await c.query('select 1 as ok')).rows;await c.end();}catch(e){out.pg_error={message:e.message,stack:e.stack};}
+            try{const pgp=require('pg-promise')({promiseLib:Bluebird});const db=pgp('postgres://postgres:postgres@127.0.0.1:5432/cognicity_pg13?ssl=false');out.pgp_query=await db.one('select 1 as ok').timeout(8000);out.proc=await db.proc('cognicity.version').timeout(8000);pgp.end();}catch(e){out.pgp_error={message:e.message,stack:e.stack};}
+            console.log(JSON.stringify(out,null,2));
+            if(out.pg_error||out.pgp_error) process.exitCode=1;
+          }
+          main();
+          NODE
+      - name: Index and upload
+        if: always()
+        shell: bash
+        run: |
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: siti-oss-db-driver-pg13
+          path: artifacts
+          retention-days: 14
+          if-no-files-found: error
