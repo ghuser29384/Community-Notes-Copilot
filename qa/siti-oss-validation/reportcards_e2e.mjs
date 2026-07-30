@@ -62,20 +62,25 @@ async function enableLocation(page) {
 
   const marker = page.locator('.mapboxgl-marker').last();
   await marker.waitFor({ state: 'visible', timeout: 15000 });
+  await marker.scrollIntoViewIfNeeded();
+  await page.waitForTimeout(250);
   const box = await marker.boundingBox();
   if (!box) throw new Error('marker has no bounding box');
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
-  await page.mouse.move(box.x + box.width / 2 + 110, box.y + box.height / 2 - 75, { steps: 14 });
+  await page.mouse.move(box.x + box.width / 2 + 110, Math.max(20, box.y + box.height / 2 - 75), { steps: 14 });
   await page.mouse.up();
   await page.waitForTimeout(700);
 
   const next = nextButton(page);
+  await next.scrollIntoViewIfNeeded();
   await next.waitFor({ state: 'visible', timeout: 15000 });
   if (await next.isDisabled()) {
     const debug = await page.evaluate(() => ({
+      scrollY,
+      innerHeight,
       buttons: [...document.querySelectorAll('button')].map(button => ({ text: button.textContent?.trim(), disabled: button.disabled, className: button.className })),
-      markers: [...document.querySelectorAll('.mapboxgl-marker')].map(markerElement => ({ html: markerElement.outerHTML.slice(0, 1000), transform: getComputedStyle(markerElement).transform })),
+      markers: [...document.querySelectorAll('.mapboxgl-marker')].map(markerElement => ({ html: markerElement.outerHTML.slice(0, 1000), transform: getComputedStyle(markerElement).transform, rect: markerElement.getBoundingClientRect().toJSON() })),
     }));
     throw new Error(`NEXT remained disabled after searched-location marker drag: ${JSON.stringify(debug)}`);
   }
@@ -86,14 +91,16 @@ async function setDepthAndNext(page) {
   await page.waitForURL(/\/depth(?:\?|$)/, { timeout: 15000 });
   const zone = page.locator('#sliderZone');
   await zone.waitFor({ state: 'visible', timeout: 15000 });
+  await zone.scrollIntoViewIfNeeded();
   const box = await zone.boundingBox();
   if (!box) throw new Error('depth slider has no box');
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
-  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 - 35, { steps: 5 });
+  await page.mouse.move(box.x + box.width / 2, Math.max(20, box.y + box.height / 2 - 35), { steps: 5 });
   await page.mouse.up();
   const next = nextButton(page);
   await page.waitForTimeout(250);
+  await next.scrollIntoViewIfNeeded();
   if (await next.isDisabled()) throw new Error('NEXT remained disabled after depth interaction');
   await next.click();
 }
@@ -104,16 +111,21 @@ async function photoAndDescription(page, uploadMode) {
     await page.locator('input[type=file]').setInputFiles(files[uploadMode]);
     await page.waitForTimeout(uploadMode === 'oversized' ? 1800 : 900);
   }
-  await nextButton(page).click();
+  const photoNext = nextButton(page);
+  await photoNext.scrollIntoViewIfNeeded();
+  await photoNext.click();
   await page.waitForURL(/\/description(?:\?|$)/, { timeout: 15000 });
   await page.locator('textarea[name=textbox]').fill(`SITI E2E ${uploadMode || 'no-image'} ${new Date().toISOString()}`);
-  await nextButton(page).click();
+  const descriptionNext = nextButton(page);
+  await descriptionNext.scrollIntoViewIfNeeded();
+  await descriptionNext.click();
 }
 
 async function submitReview(page, doubleSubmit) {
   await page.waitForURL(/\/review(?:\?|$)/, { timeout: 15000 });
   const submit = page.locator('app-submit-button button:visible').first();
   await submit.waitFor({ state: 'visible', timeout: 15000 });
+  await submit.scrollIntoViewIfNeeded();
   if (await submit.isDisabled()) throw new Error('review submit button is disabled');
   if (doubleSubmit) {
     await Promise.allSettled([submit.click({ noWaitAfter: true }), submit.click({ noWaitAfter: true })]);
