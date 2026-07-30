@@ -1,0 +1,71 @@
+name: Siti OSS REM latest corrected runtime audit
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-rem-latest-corrected.yml'
+      - 'qa/siti-oss-highest-level/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rem-latest:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Clone exact public REM latest source
+        run: |
+          mkdir -p artifacts
+          git clone https://github.com/petabencana/sitioss-rem-latest.git target
+          git -C target checkout 0fbd435aa1e05dba53232084738274fba92ccf50
+          git -C target show -s --format=fuller HEAD > artifacts/target-commit.txt
+      - name: Install, lint, typecheck, and build
+        id: checks
+        continue-on-error: true
+        working-directory: target
+        shell: bash
+        run: |
+          set +e
+          npm install > ../artifacts/npm-install.txt 2>&1
+          install_ec=$?; echo "$install_ec" > ../artifacts/npm-install-exit-code.txt
+          npm run lint > ../artifacts/lint.txt 2>&1
+          lint_ec=$?; echo "$lint_ec" > ../artifacts/lint-exit-code.txt
+          npx tsc --noEmit > ../artifacts/typecheck.txt 2>&1
+          type_ec=$?; echo "$type_ec" > ../artifacts/typecheck-exit-code.txt
+          npm run build > ../artifacts/build.txt 2>&1
+          build_ec=$?; echo "$build_ec" > ../artifacts/build-exit-code.txt
+          npm audit --json > ../artifacts/npm-audit.json 2> ../artifacts/npm-audit-stderr.txt
+          echo $? > ../artifacts/npm-audit-exit-code.txt
+          find .next -type f -printf '%p\t%s bytes\n' 2>/dev/null | sort > ../artifacts/next-files.txt
+          exit 0
+      - name: Source and configuration inventory
+        if: always()
+        working-directory: target
+        run: |
+          grep -RInE --exclude-dir=node_modules --exclude-dir=.next 'NEXT_PUBLIC_|AMPLIFY|COGNITO|API|token|secret|password|role|permission|organization|tenant|contact|phone|email|latitude|longitude|address|export|csv' . > ../artifacts/source-risk-lines.txt 2>&1 || true
+          tar -czf ../artifacts/source.tgz --exclude='.git' --exclude='node_modules' --exclude='.next' .
+      - name: Package evidence before gates
+        if: always()
+        run: |
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: siti-oss-rem-latest-corrected
+          path: artifacts
+          retention-days: 14
+          if-no-files-found: error
+      - name: Absolute engineering gate
+        if: always()
+        run: |
+          test "$(cat artifacts/npm-install-exit-code.txt)" -eq 0
+          test "$(cat artifacts/lint-exit-code.txt)" -eq 0
+          test "$(cat artifacts/typecheck-exit-code.txt)" -eq 0
+          test "$(cat artifacts/build-exit-code.txt)" -eq 0
