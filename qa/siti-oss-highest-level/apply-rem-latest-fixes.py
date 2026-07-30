@@ -30,6 +30,7 @@ NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN=pk.example
 (root / "src/app/navbar.tsx").write_text("""'use client';
 
 import { useAuthenticator } from '@aws-amplify/ui-react';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 const Navbar = () => {
@@ -44,7 +45,7 @@ const Navbar = () => {
   return (
     <div className="nav">
       <div className="logo">
-        <img src="/assets/Peta_logo.svg" alt="PetaBencana" width="150" height="50" />
+        <Image src="/assets/Peta_logo.svg" alt="PetaBencana" width={150} height={50} priority />
       </div>
       <div className="email">{user?.signInDetails?.loginId ?? ''}</div>
       <button type="button" className="rounded-button logout" onClick={handleLogout}>
@@ -118,7 +119,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 """)
 
-(root / "src/app/map/components/Legend.tsx").write_text("""import styles from './base_layout.module.css';
+(root / "src/app/map/components/Legend.tsx").write_text("""import Image from 'next/image';
+import styles from './base_layout.module.css';
 
 const gaugeLevelNames: Record<number, string> = {
   1: 'Siaga I', 2: 'Siaga II', 3: 'Siaga III', 4: 'Siaga IV',
@@ -129,7 +131,7 @@ const Legend = () => (
     <div className={`${styles.info} ${styles.legend}`}>
       <div id="reportsLegend">
         <div className={styles.sublegend}>
-          <div><img src="/assets/floodsIcon.svg" height="22" alt="Flood report" style={{ verticalAlign: 'middle' }} /><span>&nbsp; Laporan Banjir</span></div>
+          <div><Image src="/assets/floodsIcon.svg" width={22} height={22} alt="Flood report" style={{ verticalAlign: 'middle' }} /><span>&nbsp; Laporan Banjir</span></div>
         </div>
       </div>
       <div id="heightsLegend">
@@ -145,7 +147,7 @@ const Legend = () => (
         <div className={styles.sublegend}>
           <div style={{ fontWeight: 'bold' }}>Tinggi Muka Air</div>
           {[1, 2, 3, 4].map((level) => (
-            <div key={level}><img src={`/assets/floodgauge_${level}.svg`} height="24" alt={`Flood gauge ${gaugeLevelNames[level]}`} style={{ verticalAlign: 'middle' }} /><span>&nbsp;{gaugeLevelNames[level]}</span></div>
+            <div key={level}><Image src={`/assets/floodgauge_${level}.svg`} width={24} height={24} alt={`Flood gauge ${gaugeLevelNames[level]}`} style={{ verticalAlign: 'middle' }} /><span>&nbsp;{gaugeLevelNames[level]}</span></div>
           ))}
         </div>
       </div>
@@ -166,12 +168,12 @@ import { convertTopoJSONToGeoJSON } from './ConvertToGeoJson';
 import sampleTopoJsonData from '../topojson.json';
 
 const MapPage = () => {
-  const initialGeoJson = useMemo(() => convertTopoJSONToGeoJSON(sampleTopoJsonData), []);
+  const initialGeoJson: any = useMemo(() => convertTopoJSONToGeoJSON(sampleTopoJsonData), []);
   const [selectedDistrict, setSelectedDistrict] = useState('');
   const [selectedVillage, setSelectedVillage] = useState('');
   const [isPolygonMarked, setIsPolygonMarked] = useState(true);
 
-  const features = initialGeoJson?.features ?? [];
+  const features: any[] = initialGeoJson?.features ?? [];
   const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const [district, village] = event.target.value.split('|');
     setSelectedDistrict(district);
@@ -186,7 +188,7 @@ const MapPage = () => {
           Area
           <select onChange={handleSelectChange} value={`${selectedDistrict}|${selectedVillage}`}>
             <option value="|">Select</option>
-            {features.map((feature: any) => (
+            {features.map((feature) => (
               <option key={feature.properties.area_id} value={`${feature.properties.parent_name}|${feature.properties.area_name}`}>
                 {feature.properties.area_name} - {feature.properties.parent_name}
               </option>
