@@ -1,0 +1,29 @@
+diff --git a/src/app/services/cards/deck.service.ts b/src/app/services/cards/deck.service.ts
+--- a/src/app/services/cards/deck.service.ts
++++ b/src/app/services/cards/deck.service.ts
+@@ -723,16 +723,6 @@ export class DeckService {
+     }
+   }
+ 
+-  containsTrainingWord(str) {
+-    const words = this.trainingWords;
+-    for (const word of words) {
+-      if (str.toLowerCase().includes(word.toLowerCase())) {
+-        return true;
+-      }
+-    }
+-    return false;
+-  }
+-
+   _get_report_summary(): any {
+     const cardId = this.route.snapshot['_routerState'].url.split('/')[1];
+     const summary: any = {
+@@ -746,7 +736,7 @@ export class DeckService {
+       image_url: this.setImage ? cardId : '',
+       location: this.location,
+       partnerCode: this.partnerCode ? this.partnerCode : '',
+-      is_training : this.getReportType() === 'training' || this.containsTrainingWord(this.description)
++      is_training: this.getReportType() === 'training'
+     };
+     if (this.tweetID) {
+       summary.tweetID = this.tweetID;
