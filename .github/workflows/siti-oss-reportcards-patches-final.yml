@@ -1,0 +1,95 @@
+name: Siti OSS Report Cards final patch verification
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-reportcards-patches-final.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-final-proposed-patches:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '14.21.3'
+      - name: Clone exact source and apply asserted fixes
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          git clone https://github.com/petabencana/sitioss-reportcards-ng.git target
+          git -C target checkout eaec8b1a2bfe15745077c0e8ad5ff69fbdccc552
+          python qa/siti-oss-highest-level/apply-proposed-fixes.py
+          git -C target diff --ignore-space-at-eol --binary > artifacts/applied.patch
+          test -s artifacts/applied.patch
+          git -C target status --short > artifacts/status.txt
+      - name: Install and build patched source
+        run: |
+          set -euo pipefail
+          cd target
+          npm install --global npm@9.9.4 > ../artifacts/npm-bootstrap.txt 2>&1
+          npm ci --legacy-peer-deps --no-audit --no-fund > ../artifacts/npm-install.txt 2>&1 || {
+            rm -rf node_modules
+            npm install --legacy-peer-deps --no-audit --no-fund >> ../artifacts/npm-install.txt 2>&1
+          }
+          dep=id npm run pre-build-tasks > ../artifacts/pre-build.txt 2>&1
+          npm run build-dev-id > ../artifacts/build-dev-id.txt 2>&1
+      - name: Serve patched SPA with deterministic history fallback
+        run: |
+          nohup node qa/siti-oss-highest-level/spa-server.mjs target/dist/dev-id 4200 > artifacts/spa-server.log 2>&1 &
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:4200/test123/flood/location >/dev/null && exit 0
+            sleep 1
+          done
+          cat artifacts/spa-server.log
+          exit 1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Install isolated browser dependencies
+        run: |
+          mkdir -p runner
+          cp qa/siti-oss-highest-level/reportcards-audit.mjs runner/
+          cp qa/siti-oss-highest-level/normalize-audit.mjs runner/
+          cp qa/siti-oss-highest-level/patch-gate.mjs runner/
+          cd runner
+          npm init -y >/dev/null 2>&1
+          npm install --no-save playwright@1.54.1 @axe-core/playwright@4.10.2
+          npx playwright install --with-deps chromium
+      - name: Execute the same browser audit against the patched build
+        id: browser
+        continue-on-error: true
+        working-directory: runner
+        env:
+          AUDIT_OUTPUT: ${{ github.workspace }}/artifacts/browser
+          BASE_URL: http://127.0.0.1:4200
+          TARGET_ROOT: ${{ github.workspace }}/target
+          TARGET_COMMIT: eaec8b1a2bfe15745077c0e8ad5ff69fbdccc552+three-proposed-fixes
+        run: node reportcards-audit.mjs
+      - name: Normalize patched results
+        if: always()
+        run: |
+          test -s artifacts/browser/reportcards-audit-results.json
+          node runner/normalize-audit.mjs artifacts/browser/reportcards-audit-results.json artifacts/browser/reportcards-audit-normalized.json target
+      - name: Package evidence before enforcing the differential gate
+        if: always()
+        run: |
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: siti-oss-reportcards-final-patches
+          path: artifacts
+          retention-days: 14
+          if-no-files-found: error
+      - name: Differential gate for runtime and classification fixes
+        if: always()
+        run: |
+          test -s artifacts/browser/reportcards-audit-normalized.json
+          node runner/patch-gate.mjs artifacts/browser/reportcards-audit-normalized.json
