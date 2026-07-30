@@ -1,0 +1,148 @@
+name: Siti OSS highest-level executed audit
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-highest-level.yml'
+      - 'qa/siti-oss-highest-level/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reportcards-executed-audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - name: Check out isolated audit harness
+        uses: actions/checkout@v4
+
+      - name: Set up target-compatible Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '14.21.3'
+
+      - name: Clone exact public Report Cards source
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/build
+          git clone https://github.com/petabencana/sitioss-reportcards-ng.git target
+          git -C target checkout eaec8b1a2bfe15745077c0e8ad5ff69fbdccc552
+          git -C target show -s --format=fuller HEAD > artifacts/build/target-commit.txt
+          git -C target remote -v > artifacts/build/target-remotes.txt
+
+      - name: Install and build exact development deployment
+        id: target_build
+        shell: bash
+        run: |
+          set +e
+          cd target
+          npm install > ../artifacts/build/npm-install.txt 2>&1
+          install_ec=$?
+          echo "$install_ec" > ../artifacts/build/npm-install-exit-code.txt
+          dep=id npm run pre-build-tasks > ../artifacts/build/pre-build.txt 2>&1
+          pre_ec=$?
+          echo "$pre_ec" > ../artifacts/build/pre-build-exit-code.txt
+          npm run build-dev-id > ../artifacts/build/build-dev-id.txt 2>&1
+          build_ec=$?
+          echo "$build_ec" > ../artifacts/build/build-dev-id-exit-code.txt
+          find dist -type f -printf '%p\t%s bytes\n' 2>/dev/null | sort > ../artifacts/build/dist-files.txt
+          if [ "$install_ec" -ne 0 ] || [ "$pre_ec" -ne 0 ] || [ "$build_ec" -ne 0 ]; then
+            echo "TARGET_BUILD_OK=false" >> "$GITHUB_ENV"
+          else
+            echo "TARGET_BUILD_OK=true" >> "$GITHUB_ENV"
+          fi
+          exit 0
+
+      - name: Start deterministic SPA history-fallback server
+        if: env.TARGET_BUILD_OK == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup node qa/siti-oss-highest-level/spa-server.mjs target/dist/dev-id 4200 > artifacts/build/spa-server.log 2>&1 &
+          echo $! > artifacts/build/spa-server.pid
+          for i in $(seq 1 60); do
+            if curl -fsS -H 'Accept: text/html' http://127.0.0.1:4200/test123/flood/location >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat artifacts/build/spa-server.log
+          exit 1
+
+      - name: Switch to modern Node for Playwright
+        if: env.TARGET_BUILD_OK == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install isolated browser audit dependencies
+        if: env.TARGET_BUILD_OK == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p runner
+          cp qa/siti-oss-highest-level/reportcards-audit.mjs runner/reportcards-audit.mjs
+          cp qa/siti-oss-highest-level/gate.mjs runner/gate.mjs
+          cd runner
+          npm init -y >/dev/null 2>&1
+          npm install --no-save playwright@1.54.1 @axe-core/playwright@4.10.2
+          npx playwright install --with-deps chromium
+
+      - name: Run executed browser, privacy, classification, mobile and accessibility audit
+        id: browser_audit
+        if: env.TARGET_BUILD_OK == 'true'
+        continue-on-error: true
+        working-directory: runner
+        env:
+          AUDIT_OUTPUT: ${{ github.workspace }}/artifacts/browser
+          BASE_URL: http://127.0.0.1:4200
+          TARGET_ROOT: ${{ github.workspace }}/target
+          TARGET_COMMIT: eaec8b1a2bfe15745077c0e8ad5ff69fbdccc552
+        run: node reportcards-audit.mjs
+
+      - name: Record source, build and test gates without hiding failures
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          cd target
+          timeout 12m npm run lint > ../artifacts/build/lint.txt 2>&1
+          echo $? > ../artifacts/build/lint-exit-code.txt
+          timeout 15m npm test -- --watch=false --browsers=ChromeHeadless > ../artifacts/build/unit-tests.txt 2>&1
+          echo $? > ../artifacts/build/unit-tests-exit-code.txt
+          npm audit --json > ../artifacts/build/npm-audit.json 2> ../artifacts/build/npm-audit-stderr.txt
+          echo $? > ../artifacts/build/npm-audit-exit-code.txt
+          grep -RInE --exclude-dir=node_modules --exclude-dir=dist 'Captcha disabled|containsTrainingWord|is_training|delivery_code|idempot|signedRequest|imageSignedUrl|EXIF|GPS|location|address|contactNumber' src > ../artifacts/build/risk-source-lines.txt 2>&1
+          exit 0
+
+      - name: Build evidence index and checksums
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+
+      - name: Upload complete evidence before any gate failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: siti-oss-highest-level-reportcards
+          path: artifacts
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Fail if audit harness did not execute completely
+        if: always()
+        shell: bash
+        run: |
+          test "$TARGET_BUILD_OK" = true
+          test -s artifacts/browser/reportcards-audit-results.json
+          node -e "const r=require('./artifacts/browser/reportcards-audit-results.json'); if((r.tests||[]).length<10) process.exit(2); console.log('Executed tests:',r.tests.length)"
+
+      - name: Product gate — fail visibly on unresolved P0 findings
+        if: always() && env.TARGET_BUILD_OK == 'true'
+        run: node runner/gate.mjs artifacts/browser/reportcards-audit-results.json
