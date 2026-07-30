@@ -8,14 +8,24 @@ const outDir = path.resolve(process.env.SITI_VALIDATION_OUT || 'artifacts/report
 fs.mkdirSync(outDir, { recursive: true });
 
 const validPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2nWQAAAAASUVORK5CYII=', 'base64');
+const fakeExifJpeg = Buffer.concat([
+  Buffer.from([0xff, 0xd8, 0xff, 0xe1, 0x00, 0x3c]),
+  Buffer.from('Exif\u0000\u0000SITI_AUDIT_GPSLatitude=-6.175392;GPSLongitude=106.827153;', 'utf8'),
+  Buffer.from([0xff, 0xd9]),
+]);
 const files = {
   valid: { name: 'valid.png', mimeType: 'image/png', buffer: validPng },
   disguised: { name: 'disguised.jpg', mimeType: 'image/jpeg', buffer: Buffer.from('<html><script>window.__siti_bad=1</script></html>') },
   oversized: { name: 'oversized.jpg', mimeType: 'image/jpeg', buffer: Buffer.alloc(12 * 1024 * 1024, 0x41) },
+  exif: { name: 'gps-exif.jpg', mimeType: 'image/jpeg', buffer: fakeExifJpeg },
 };
 
 function save(name, value) {
   fs.writeFileSync(path.join(outDir, name), JSON.stringify(value, null, 2));
+}
+
+function nextButton(page) {
+  return page.locator('button:visible').filter({ hasText: /NEXT/i }).first();
 }
 
 async function api(method, route, body) {
@@ -42,18 +52,33 @@ async function clickTraining(page) {
 }
 
 async function enableLocation(page) {
-  const marker = page.locator('.mapboxgl-marker').first();
+  const search = page.locator('input[name=search]');
+  await search.waitFor({ state: 'visible', timeout: 15000 });
+  await search.fill('Monumen Nasional');
+  const option = page.locator('.dynamic-search-results__result').first();
+  await option.waitFor({ state: 'visible', timeout: 15000 });
+  await option.click();
+  await page.waitForTimeout(900);
+
+  const marker = page.locator('.mapboxgl-marker').last();
   await marker.waitFor({ state: 'visible', timeout: 15000 });
   const box = await marker.boundingBox();
   if (!box) throw new Error('marker has no bounding box');
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
-  await page.mouse.move(box.x + box.width / 2 + 45, box.y + box.height / 2 + 25, { steps: 8 });
+  await page.mouse.move(box.x + box.width / 2 + 110, box.y + box.height / 2 - 75, { steps: 14 });
   await page.mouse.up();
-  await page.waitForTimeout(400);
-  const next = page.getByRole('button', { name: /^NEXT$/i });
-  await next.waitFor({ state: 'visible' });
-  if (await next.isDisabled()) throw new Error('NEXT remained disabled after marker drag');
+  await page.waitForTimeout(700);
+
+  const next = nextButton(page);
+  await next.waitFor({ state: 'visible', timeout: 15000 });
+  if (await next.isDisabled()) {
+    const debug = await page.evaluate(() => ({
+      buttons: [...document.querySelectorAll('button')].map(button => ({ text: button.textContent?.trim(), disabled: button.disabled, className: button.className })),
+      markers: [...document.querySelectorAll('.mapboxgl-marker')].map(markerElement => ({ html: markerElement.outerHTML.slice(0, 1000), transform: getComputedStyle(markerElement).transform })),
+    }));
+    throw new Error(`NEXT remained disabled after searched-location marker drag: ${JSON.stringify(debug)}`);
+  }
   await next.click();
 }
 
@@ -67,7 +92,7 @@ async function setDepthAndNext(page) {
   await page.mouse.down();
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2 - 35, { steps: 5 });
   await page.mouse.up();
-  const next = page.getByRole('button', { name: /^NEXT$/i });
+  const next = nextButton(page);
   await page.waitForTimeout(250);
   if (await next.isDisabled()) throw new Error('NEXT remained disabled after depth interaction');
   await next.click();
@@ -77,12 +102,12 @@ async function photoAndDescription(page, uploadMode) {
   await page.waitForURL(/\/photo(?:\?|$)/, { timeout: 15000 });
   if (uploadMode) {
     await page.locator('input[type=file]').setInputFiles(files[uploadMode]);
-    await page.waitForTimeout(uploadMode === 'oversized' ? 1400 : 700);
+    await page.waitForTimeout(uploadMode === 'oversized' ? 1800 : 900);
   }
-  await page.getByRole('button', { name: /^NEXT$/i }).click();
+  await nextButton(page).click();
   await page.waitForURL(/\/description(?:\?|$)/, { timeout: 15000 });
   await page.locator('textarea[name=textbox]').fill(`SITI E2E ${uploadMode || 'no-image'} ${new Date().toISOString()}`);
-  await page.getByRole('button', { name: /^NEXT$/i }).click();
+  await nextButton(page).click();
 }
 
 async function submitReview(page, doubleSubmit) {
@@ -95,7 +120,8 @@ async function submitReview(page, doubleSubmit) {
   } else {
     await submit.click({ noWaitAfter: true });
   }
-  await page.waitForTimeout(1800);
+  await page.waitForURL(/\/thank(?:\?|$)/, { timeout: 15000 }).catch(() => null);
+  await page.waitForTimeout(1600);
 }
 
 async function runScenario(browser, scenario) {
@@ -143,10 +169,36 @@ async function runScenario(browser, scenario) {
     }
     if (/amazonaws\.com$/.test(url.hostname) && method === 'PUT') {
       const bytes = request.postDataBuffer();
-      s3Uploads.push({ url: request.url(), contentType: request.headers()['content-type'], bytes: bytes?.length || 0, prefixHex: bytes?.subarray(0, 40).toString('hex') || '' });
+      s3Uploads.push({
+        url: request.url(),
+        contentType: request.headers()['content-type'],
+        bytes: bytes?.length || 0,
+        prefixHex: bytes?.subarray(0, 96).toString('hex') || '',
+        containsAuditGPS: bytes ? bytes.includes(Buffer.from('SITI_AUDIT_GPSLatitude')) : false,
+        containsHTMLScript: bytes ? bytes.includes(Buffer.from('<html><script>')) : false,
+      });
       return route.fulfill({ status: 200, headers: { etag: 'audit-etag' }, body: '' });
     }
     if (url.hostname === 'nominatim.openstreetmap.org') {
+      if (url.pathname.includes('/search')) {
+        return route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify([{
+            place_id: 101,
+            licence: 'synthetic audit response',
+            osm_type: 'node',
+            osm_id: 101,
+            lat: '-6.170100',
+            lon: '106.831000',
+            display_name: 'Synthetic Audit Location, Jakarta, Indonesia',
+            class: 'place',
+            type: 'monument',
+            importance: 0.9,
+            boundingbox: ['-6.171', '-6.169', '106.830', '106.832'],
+          }]),
+        });
+      }
       return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ address: { country_code: 'id', country: 'Indonesia' } }) });
     }
     if (/api\.mapbox\.com|tiles\.mapbox\.com|events\.mapbox\.com/.test(url.hostname)) {
@@ -203,6 +255,7 @@ async function main() {
     { id: 'valid-image', uploadMode: 'valid' },
     { id: 'disguised-image', uploadMode: 'disguised' },
     { id: 'oversized-image', uploadMode: 'oversized' },
+    { id: 'gps-exif-image', uploadMode: 'exif' },
   ];
   const results = [];
   try {
@@ -226,7 +279,8 @@ async function main() {
   };
   save('reportcards-full-e2e-summary.json', summary);
   console.log(JSON.stringify(summary, null, 2));
-  if (results.some(result => result.scenario.id === 'full-success-no-image' && (!result.reportPersisted || result.errors.length))) process.exitCode = 2;
+  const base = results.find(result => result.scenario.id === 'full-success-no-image');
+  if (!base || !base.reportPersisted || base.errors.length) process.exitCode = 2;
 }
 
 main().catch(error => {
