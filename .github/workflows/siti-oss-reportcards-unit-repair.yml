@@ -1,0 +1,67 @@
+name: Siti OSS Report Cards unit-test dependency repair
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-reportcards-unit-repair.yml'
+      - 'qa/siti-oss-highest-level/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-jasmine-types-pin:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '14.21.3'
+      - name: Clone exact public target
+        run: |
+          mkdir -p artifacts
+          git clone https://github.com/petabencana/sitioss-reportcards-ng.git target
+          git -C target checkout eaec8b1a2bfe15745077c0e8ad5ff69fbdccc552
+      - name: Reproduce baseline and test a minimal type-definition pin
+        shell: bash
+        run: |
+          set +e
+          cd target
+          npm install --global npm@9.9.4 > ../artifacts/npm-bootstrap.txt 2>&1
+          npm ci --legacy-peer-deps --no-audit --no-fund > ../artifacts/npm-install.txt 2>&1 || {
+            rm -rf node_modules
+            npm install --legacy-peer-deps --no-audit --no-fund >> ../artifacts/npm-install.txt 2>&1
+          }
+          timeout 15m npm test -- --watch=false --browsers=ChromeHeadless > ../artifacts/unit-baseline.txt 2>&1
+          baseline_ec=$?
+          echo "$baseline_ec" > ../artifacts/unit-baseline-exit-code.txt
+
+          npm install --save-dev --save-exact --legacy-peer-deps --no-audit --no-fund @types/jasmine@2.8.8 > ../artifacts/pin-install.txt 2>&1
+          pin_install_ec=$?
+          echo "$pin_install_ec" > ../artifacts/pin-install-exit-code.txt
+          timeout 15m npm test -- --watch=false --browsers=ChromeHeadless > ../artifacts/unit-after-pin.txt 2>&1
+          after_ec=$?
+          echo "$after_ec" > ../artifacts/unit-after-pin-exit-code.txt
+          git diff -- package.json package-lock.json > ../artifacts/jasmine-types-pin.patch
+          git status --short > ../artifacts/status.txt
+          exit 0
+      - name: Package evidence before gate
+        if: always()
+        run: |
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: siti-oss-reportcards-unit-repair
+          path: artifacts
+          retention-days: 14
+          if-no-files-found: error
+      - name: Differential unit-test gate
+        if: always()
+        run: |
+          test "$(cat artifacts/unit-baseline-exit-code.txt)" -ne 0
+          test "$(cat artifacts/pin-install-exit-code.txt)" -eq 0
+          test "$(cat artifacts/unit-after-pin-exit-code.txt)" -eq 0
