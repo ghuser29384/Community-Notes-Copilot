@@ -1,0 +1,77 @@
+name: Siti OSS legacy DisasterMap corrected build audit
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-disastermap-legacy-build.yml'
+      - 'qa/siti-oss-highest-level/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  corrected-legacy-build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '14.21.3'
+      - name: Clone exact public legacy map source
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts
+          git clone https://github.com/petabencana/disastermap.git target
+          git -C target checkout 599af2ad992a742115ebcf7c08aa804a79567839
+          git -C target show -s --format=fuller HEAD > artifacts/target-commit.txt
+      - name: Install dependencies
+        id: install
+        continue-on-error: true
+        working-directory: target
+        run: npm install
+      - name: Correctly build the PetaBencana deployment code pb
+        id: build
+        continue-on-error: true
+        working-directory: target
+        env:
+          DATA_SERVER_KEY: audit-placeholder-not-a-secret
+          DEP: pb
+        run: |
+          npm test
+          DEP=pb npm run build
+      - name: Record dependency and source evidence
+        if: always()
+        working-directory: target
+        shell: bash
+        run: |
+          set +e
+          npm audit --json > ../artifacts/npm-audit.json 2> ../artifacts/npm-audit-stderr.txt
+          echo $? > ../artifacts/npm-audit-exit-code.txt
+          npm outdated --json > ../artifacts/npm-outdated.json 2> ../artifacts/npm-outdated-stderr.txt
+          echo $? > ../artifacts/npm-outdated-exit-code.txt
+          find scripts -type f -printf '%p\t%s bytes\n' 2>/dev/null | sort > ../artifacts/scripts-files.txt
+          grep -RInE --exclude-dir=node_modules --exclude-dir=scripts 'report_timeperiod|verified|expire|stale|cluster|created_at|location|coordinates|phone|email|contact|innerHTML|localStorage|sessionStorage|mapbox|token|key' src aurelia_project assets package.json README.md > ../artifacts/source-risk-lines.txt 2>&1
+          tar -czf ../artifacts/source.tgz --exclude='.git' --exclude='node_modules' --exclude='scripts' .
+          exit 0
+      - name: Record exact check outcomes
+        if: always()
+        shell: bash
+        run: |
+          printf 'install_outcome=%s\nbuild_outcome=%s\n' '${{ steps.install.outcome }}' '${{ steps.build.outcome }}' > artifacts/check-outcomes.txt
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+      - name: Upload evidence before enforcing gates
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: siti-oss-legacy-disastermap-corrected-build
+          path: artifacts
+          retention-days: 14
+          if-no-files-found: error
+      - name: Absolute build gate
+        if: always()
+        run: |
+          test '${{ steps.install.outcome }}' = success
+          test '${{ steps.build.outcome }}' = success
