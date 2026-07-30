@@ -80,8 +80,8 @@ async function activateLocation(page) {
   await marker.waitFor({ state: 'visible', timeout: 20_000 });
   await marker.scrollIntoViewIfNeeded();
 
-  // First exercise the user-visible pointer path. Mapbox marker dragging can be
-  // nondeterministic in headless software-WebGL, so the exact outcome is recorded.
+  // Exercise the user-visible pointer path first. Marker dragging is sometimes
+  // nondeterministic under headless software-WebGL, so the exact outcome is recorded.
   const box = await marker.boundingBox();
   let pointerAttempt = { attempted: false };
   if (box) {
@@ -101,13 +101,20 @@ async function activateLocation(page) {
     return { mode: 'pointer-drag', pointerAttempt };
   }
 
-  // Deterministic component-level fallback: invoke the *same Mapbox Marker
-  // dragend listener registered by the application. This does not patch app
-  // state directly; it moves the real Marker instance and fires its event.
+  // Deterministic component-level path. Angular View Engine exposes ng.probe;
+  // this moves the real Mapbox Marker and fires the exact dragend listener that
+  // the application registered. App state is not patched around the listener.
   const componentAttempt = await page.evaluate(() => {
     function collectCandidates(host) {
       const candidates = [];
       const ngApi = window.ng;
+      try {
+        if (ngApi && typeof ngApi.probe === 'function') {
+          const debug = ngApi.probe(host);
+          if (debug?.componentInstance) candidates.push(debug.componentInstance);
+          if (debug?.context) candidates.push(debug.context);
+        }
+      } catch {}
       for (const method of ['getComponent', 'getOwningComponent']) {
         try {
           if (ngApi && typeof ngApi[method] === 'function') {
@@ -128,6 +135,8 @@ async function activateLocation(page) {
     }
 
     const host = document.querySelector('app-location-picker');
+    const ngApi = window.ng;
+    const debug = ngApi && typeof ngApi.probe === 'function' ? ngApi.probe(host) : null;
     const candidates = collectCandidates(host);
     const component = candidates.find(
       value => value && value.currentMarker && value.deckService && typeof value.checkIsUserAbleToContinue === 'function',
@@ -137,7 +146,8 @@ async function activateLocation(page) {
         ok: false,
         reason: 'location component not found',
         candidateKeys: candidates.slice(0, 20).map(value => Object.keys(value).slice(0, 40)),
-        windowNgKeys: window.ng ? Object.keys(window.ng) : [],
+        windowNgKeys: ngApi ? Object.keys(ngApi) : [],
+        probeKeys: debug ? Object.keys(debug) : [],
       };
     }
 
@@ -145,28 +155,59 @@ async function activateLocation(page) {
     const before = markerInstance.getLngLat();
     const center = component.map.getCenter();
     const target = { lng: Number(before.lng) + 0.003, lat: Number(before.lat) + 0.002 };
-    markerInstance.setLngLat([target.lng, target.lat]);
     let fired = false;
-    if (typeof markerInstance.fire === 'function') {
-      markerInstance.fire('dragend');
-      fired = true;
-    }
+    let zoneUsed = false;
+    let appTicked = false;
+
+    const action = () => {
+      markerInstance.setLngLat([target.lng, target.lat]);
+      if (typeof markerInstance.fire === 'function') {
+        markerInstance.fire('dragend');
+        fired = true;
+      }
+    };
+
     try {
-      if (window.ng && typeof window.ng.applyChanges === 'function') window.ng.applyChanges(component);
+      const zoneToken = ngApi?.coreTokens?.NgZone;
+      const zone = zoneToken && debug?.injector ? debug.injector.get(zoneToken) : null;
+      if (zone && typeof zone.run === 'function') {
+        zone.run(action);
+        zoneUsed = true;
+      } else {
+        action();
+      }
+    } catch {
+      action();
+    }
+
+    try {
+      const appToken = ngApi?.coreTokens?.ApplicationRef;
+      const appRef = appToken && debug?.injector ? debug.injector.get(appToken) : null;
+      if (appRef && typeof appRef.tick === 'function') {
+        appRef.tick();
+        appTicked = true;
+      } else if (ngApi && typeof ngApi.applyChanges === 'function') {
+        ngApi.applyChanges(component);
+        appTicked = true;
+      }
     } catch {}
+
     return {
       ok: fired,
       fired,
+      zoneUsed,
+      appTicked,
       before: { lng: before.lng, lat: before.lat },
       center: { lng: center.lng, lat: center.lat },
       target,
       deckLocation: component.deckService.location,
       markerKeys: Object.keys(markerInstance).slice(0, 80),
       componentKeys: Object.keys(component).slice(0, 80),
+      coreTokenKeys: ngApi?.coreTokens ? Object.keys(ngApi.coreTokens) : [],
     };
   });
 
-  await page.waitForTimeout(300);
+  await page.waitForTimeout(400);
   if (await next.isDisabled()) {
     const debug = await page.evaluate(() => ({
       body: document.body.innerText.slice(0, 4000),
@@ -210,9 +251,16 @@ async function activateDepth(page) {
   }
 
   const componentAttempt = await page.evaluate(() => {
-    function candidates(host) {
+    function collectCandidates(host) {
       const result = [];
       const ngApi = window.ng;
+      try {
+        if (ngApi && typeof ngApi.probe === 'function') {
+          const debug = ngApi.probe(host);
+          if (debug?.componentInstance) result.push(debug.componentInstance);
+          if (debug?.context) result.push(debug.context);
+        }
+      } catch {}
       for (const method of ['getComponent', 'getOwningComponent']) {
         try {
           if (ngApi && typeof ngApi[method] === 'function') {
@@ -227,25 +275,55 @@ async function activateDepth(page) {
       }
       return [...new Set(result)];
     }
+
     const host = document.querySelector('app-depth-slider');
-    const component = candidates(host).find(
+    const ngApi = window.ng;
+    const debug = ngApi && typeof ngApi.probe === 'function' ? ngApi.probe(host) : null;
+    const component = collectCandidates(host).find(
       value => value && typeof value.dragEnd === 'function' && value.deckService && 'currentY' in value,
     );
     if (!component) return { ok: false, reason: 'depth component not found' };
-    component.currentY = 37;
-    component.depthText = '74 cm';
-    component.dragEnd({ type: 'audit-dragend' });
+
+    let zoneUsed = false;
+    let appTicked = false;
+    const action = () => {
+      component.currentY = 37;
+      component.depthText = '74 cm';
+      component.dragEnd({ type: 'audit-dragend' });
+    };
     try {
-      if (window.ng && typeof window.ng.applyChanges === 'function') window.ng.applyChanges(component);
+      const zoneToken = ngApi?.coreTokens?.NgZone;
+      const angularZone = zoneToken && debug?.injector ? debug.injector.get(zoneToken) : null;
+      if (angularZone && typeof angularZone.run === 'function') {
+        angularZone.run(action);
+        zoneUsed = true;
+      } else {
+        action();
+      }
+    } catch {
+      action();
+    }
+    try {
+      const appToken = ngApi?.coreTokens?.ApplicationRef;
+      const appRef = appToken && debug?.injector ? debug.injector.get(appToken) : null;
+      if (appRef && typeof appRef.tick === 'function') {
+        appRef.tick();
+        appTicked = true;
+      } else if (ngApi && typeof ngApi.applyChanges === 'function') {
+        ngApi.applyChanges(component);
+        appTicked = true;
+      }
     } catch {}
     return {
       ok: true,
+      zoneUsed,
+      appTicked,
       currentY: component.currentY,
       depthText: component.depthText,
       storedDepth: component.deckService.getFloodDepth(),
     };
   });
-  await page.waitForTimeout(250);
+  await page.waitForTimeout(300);
   if (await next.isDisabled()) throw new Error(`NEXT remained disabled after depth component dragEnd: ${JSON.stringify(componentAttempt)}`);
   await next.click();
   return { mode: 'depth-component-dragend', pointerAttempt, componentAttempt };
