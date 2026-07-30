@@ -1,8 +1,8 @@
 diff --git a/src/app/services/cards/deck.service.ts b/src/app/services/cards/deck.service.ts
-index a5f9f45..f81aa37 100644
+index a5f9f45..a058078 100644
 --- a/src/app/services/cards/deck.service.ts
 +++ b/src/app/services/cards/deck.service.ts
-@@ -30,8 +30,6 @@ type deckSubType =
+@@ -28,8 +28,6 @@ type deckSubType =
    | 'need'
    | 'giver';
  
@@ -11,7 +11,7 @@ index a5f9f45..f81aa37 100644
  interface LatLng {
    lat: number;
    lng: number;
-@@ -59,7 +57,6 @@ export class DeckService {
+@@ -57,7 +55,6 @@ export class DeckService {
    constructor(private http: HttpClient) {}
    finishedSubType = [];
    cardLanguage = '';
@@ -19,7 +19,7 @@ index a5f9f45..f81aa37 100644
  
    tweetID: string;
    waNumber: string;
-@@ -726,16 +723,6 @@ export class DeckService {
+@@ -723,16 +720,6 @@ export class DeckService {
      }
    }
  
@@ -36,7 +36,7 @@ index a5f9f45..f81aa37 100644
    _get_report_summary(): any {
      const cardId = this.route.snapshot['_routerState'].url.split('/')[1];
      const summary: any = {
-@@ -748,8 +735,7 @@ export class DeckService {
+@@ -746,7 +733,6 @@ export class DeckService {
        image_url: this.setImage ? cardId : '',
        location: this.location,
        partnerCode: this.partnerCode ? this.partnerCode : '',
@@ -44,7 +44,7 @@ index a5f9f45..f81aa37 100644
      };
      if (this.tweetID) {
        summary.tweetID = this.tweetID;
-@@ -820,7 +806,6 @@ export class DeckService {
+@@ -813,7 +799,6 @@ export class DeckService {
                .patch(reportURL, {
                  // TODO: match server patch handler
                  image_url: id,
