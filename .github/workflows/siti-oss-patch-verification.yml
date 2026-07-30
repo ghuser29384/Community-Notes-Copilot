@@ -25,11 +25,9 @@ jobs:
           mkdir -p artifacts
           git clone https://github.com/petabencana/sitioss-reportcards-ng.git target
           git -C target checkout eaec8b1a2bfe15745077c0e8ad5ff69fbdccc552
-          git -C target apply ../qa/siti-oss-highest-level/patches/0001-explicit-training-classification.patch
-          git -C target apply ../qa/siti-oss-highest-level/patches/0002-respect-giver-training-selection.patch
-          git -C target apply ../qa/siti-oss-highest-level/patches/0003-remove-redundant-commonjs-geosearch-global.patch
+          python qa/siti-oss-highest-level/apply-proposed-fixes.py
           git -C target diff --check
-          git -C target diff > artifacts/applied.patch
+          git -C target diff --binary > artifacts/applied.patch
           git -C target status --short > artifacts/status.txt
       - name: Install and build patched target
         shell: bash
