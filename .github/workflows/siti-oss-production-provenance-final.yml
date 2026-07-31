@@ -1,0 +1,54 @@
+name: Siti OSS production source attribution final
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-production-provenance-final.yml'
+      - 'qa/siti-oss-provenance/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  production-provenance:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install audit dependency
+        run: python -m pip install --disable-pip-version-check requests
+
+      - name: Compare current production bundles against all public PetaBencana repositories
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SITI_PROD_ORIGIN: https://petabencana.id
+          SITI_PROVENANCE_OUT: ${{ github.workspace }}/artifacts/production-provenance
+        shell: bash
+        run: |
+          set -euo pipefail
+          python qa/siti-oss-provenance/production_source_attribution.py \
+            | tee artifacts/production-provenance-console.log
+
+      - name: Index and checksum evidence
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z \
+            | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+          exit 0
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: siti-oss-production-source-attribution-final
+          path: artifacts
+          retention-days: 14
+          if-no-files-found: error
