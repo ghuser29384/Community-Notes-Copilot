@@ -1,0 +1,212 @@
+name: Siti OSS final duplicate race validation v3
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-final-duplicate-race-v3.yml'
+      - 'qa/siti-oss-final/audit_compatibility.sql'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  duplicate-race:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    services:
+      postgres:
+        image: postgis/postgis:13-3.4
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '10.24.1'
+
+      - name: Build exact isolated schema and patch only duplicate conflict normalization
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          mkdir -p targets artifacts/logs artifacts/diffs
+          git clone https://github.com/petabencana/sitioss-schema.git targets/schema
+          git -C targets/schema checkout 091229bff2a299c31b814979008ebc6df7b428e8
+          git clone https://github.com/petabencana/-Depricated-sitioss-server.git targets/server
+          git -C targets/server checkout 933f345801340027181be21d24671146e3785701
+          git -C targets/schema show -s --format='%H%x09%cI%x09%s' > artifacts/schema-commit.tsv
+          git -C targets/server show -s --format='%H%x09%cI%x09%s' > artifacts/server-commit.tsv
+
+          cd targets/schema
+          npm install --no-audit --no-fund > ../../artifacts/logs/schema-npm-install.log 2>&1
+          PGHOST=127.0.0.1 PGPORT=5432 PGUSER=postgres PGPASSWORD=postgres \
+            PGDATABASE=cognicity_duplicate_v3 PG_DEFAULT_DB=postgres \
+            COUNTRY=id DATA=true FUNCTIONS=true SCHEMA=true \
+            ./build/run.sh > ../../artifacts/logs/schema-build.log 2>&1
+          cd ../..
+          PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -d cognicity_duplicate_v3 \
+            -v ON_ERROR_STOP=1 -f qa/siti-oss-final/audit_compatibility.sql \
+            > artifacts/logs/compatibility-migration.log 2>&1
+
+          python3 - <<'PY'
+          from pathlib import Path
+          path=Path('targets/server/src/api/routes/cards/index.js')
+          text=path.read_text()
+          old='''      .catch((err) => {
+        /* istanbul ignore next */
+        logger.error(err);
+        /* istanbul ignore next */
+        next(err);
+      });
+  }
+}'''
+          new='''      .catch((err) => {
+        // Concurrent requests can both observe received=false before the first
+        // transaction commits. The legacy pg-promise BatchError exposes the
+        // unique violation in its message and, depending on version, in an
+        // errors collection. Normalize only this named constraint to 409.
+        const errors = [err].concat((err && err.errors) || []);
+        const duplicateText = String(err && (err.message || err));
+        const duplicateReport = errors.some((entry) => {
+          const candidate = entry && (entry.error || entry);
+          return candidate && candidate.code === "23505" &&
+            candidate.constraint === "reports_card_id_key";
+        }) || (duplicateText.indexOf("duplicate key value") !== -1 &&
+          duplicateText.indexOf("reports_card_id_key") !== -1);
+        if (duplicateReport) {
+          clearCache();
+          return res.status(409).json({
+            statusCode: 409,
+            cardId: req.params.cardId,
+            message: `Report already received for card '${req.params.cardId}'`,
+          });
+        }
+        /* istanbul ignore next */
+        logger.error(err);
+        /* istanbul ignore next */
+        next(err);
+      });
+  }
+}'''
+          if text.count(old)!=1:
+              raise SystemExit(f'catch anchor count={text.count(old)}')
+          path.write_text(text.replace(old,new,1))
+          PY
+          git -C targets/server diff --check
+          git -C targets/server diff --binary > artifacts/diffs/duplicate-race-fix.patch
+          cd targets/server
+          NODE_ENV=development npm install --production=false --no-audit --no-fund > ../../artifacts/logs/server-npm-install.log 2>&1
+          npm run build > ../../artifacts/logs/server-build.log 2>&1
+          cd ../..
+
+      - name: Start patched legacy server
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: cognicity_duplicate_v3
+          PGSSL: 'false'
+          PGTIMEOUT: '30000'
+          PORT: '8001'
+          LOG_CONSOLE: 'true'
+          LOG_DIR: /tmp
+          LOG_LEVEL: error
+          CORS: 'true'
+          SECURE_AUTH0: 'true'
+          AUTH0_SECRET: local-validation-secret
+          AUTH0_CLIENT_ID: local-validation-client
+          NOTIFY_ENDPOINT: http://127.0.0.1:8999/notify/
+          NOTIFY_API_KEY: local-validation
+          AWS_REGION: ap-southeast-1
+          AWS_S3_ACCESS_KEY_ID: local-validation-key
+          AWS_S3_SECRET_ACCESS_KEY: local-validation-secret
+          AWS_SIGNATURE_VERSION: v4
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > notify_stub.py <<'PY'
+          from http.server import BaseHTTPRequestHandler, HTTPServer
+          class Handler(BaseHTTPRequestHandler):
+              def do_POST(self):
+                  length=int(self.headers.get('content-length','0'))
+                  if length: self.rfile.read(length)
+                  self.send_response(200); self.end_headers(); self.wfile.write(b'{"ok":true}')
+              def log_message(self, fmt, *args): pass
+          HTTPServer(('127.0.0.1',8999),Handler).serve_forever()
+          PY
+          nohup python3 notify_stub.py > artifacts/logs/notify-stub.log 2>&1 &
+          NODE_ENV=production nohup node targets/server/dist > artifacts/logs/server.log 2>&1 &
+          echo $! > artifacts/logs/server.pid
+          for i in $(seq 1 60); do if curl -fsS http://127.0.0.1:8001/ >/dev/null; then exit 0; fi; sleep 1; done
+          cat artifacts/logs/server.log; exit 1
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run 50-way identical concurrent submission regression
+        env:
+          PGPASSWORD: postgres
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check requests psycopg2-binary
+          python - <<'PY' | tee artifacts/duplicate-race-result.json
+          import concurrent.futures, json, requests, psycopg2
+          from collections import Counter
+          base='http://127.0.0.1:8001'
+          card=requests.post(base+'/cards',json={'username':'duplicate-v3-audit','network':'twitter','language':'en','network_data':{}},timeout=20)
+          card.raise_for_status(); card_id=card.json()['cardId']
+          payload={
+            'disaster_type':'flood','partnerCode':'','tweetID':'','sub_submission':False,
+            'card_data':{'report_type':'flood','flood_depth':44},
+            'text':'duplicate race v3 audit','image_url':'',
+            'created_at':'2026-07-31T01:00:00.000Z',
+            'location':{'lat':-6.1754,'lng':106.8272},
+          }
+          def submit(_):
+              r=requests.put(base+'/cards/'+card_id,json=payload,timeout=30)
+              try: body=r.json()
+              except Exception: body=r.text
+              return {'status':r.status_code,'body':body}
+          with concurrent.futures.ThreadPoolExecutor(max_workers=50) as pool:
+              results=list(pool.map(submit,range(50)))
+          counts=Counter(r['status'] for r in results)
+          with psycopg2.connect(host='127.0.0.1',port=5432,user='postgres',password='postgres',dbname='cognicity_duplicate_v3') as conn:
+              with conn.cursor() as cur:
+                  cur.execute('SELECT count(*) FROM grasp.reports WHERE card_id=%s',(card_id,)); reports=cur.fetchone()[0]
+                  cur.execute('SELECT count(*) FROM cognicity.all_reports WHERE card_id=%s',(card_id,)); all_reports=cur.fetchone()[0]
+          output={'card_id':card_id,'attempts':50,'status_counts':dict(counts),'report_rows':reports,'all_report_rows':all_reports,'samples':results[:12]}
+          print(json.dumps(output,indent=2))
+          assert counts[200] == 1, output
+          assert counts[409] == 49, output
+          assert sum(v for k,v in counts.items() if k not in (200,409)) == 0, output
+          assert reports == 1 and all_reports == 1, output
+          PY
+
+      - name: Index and upload evidence
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: siti-oss-final-duplicate-race-v3
+          path: artifacts
+          retention-days: 14
+          if-no-files-found: error
