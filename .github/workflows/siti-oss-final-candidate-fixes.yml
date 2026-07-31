@@ -86,7 +86,7 @@ jobs:
           set -euo pipefail
           python qa/siti-oss-final/apply_candidate_fixes.py | tee artifacts/logs/apply-candidate-fixes.log
           git -C targets/server diff --check
-          git -C targets/reportcards diff --check
+          git -C targets/reportcards -c core.whitespace=cr-at-eol diff --check
           git -C targets/server diff --binary > artifacts/diffs/server-candidate-fixes.patch
           git -C targets/reportcards diff --binary > artifacts/diffs/reportcards-candidate-fixes.patch
           git -C targets/server diff --stat > artifacts/diffs/server-candidate-fixes.stat.txt
