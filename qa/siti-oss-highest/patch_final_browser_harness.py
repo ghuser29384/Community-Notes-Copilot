@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import os
+import re
 import runpy
 import subprocess
 from pathlib import Path
@@ -18,6 +19,36 @@ def replace_once(old: str, new: str, label: str) -> None:
         raise RuntimeError(f'{label}: expected one anchor, found {count}')
     text = text.replace(old, new, 1)
 
+
+# Replace the prior synthetic EXIF fixture with a valid, browser-decodable JPEG
+# containing the exact audit marker in a JPEG comment segment. Canvas
+# re-encoding should preserve the pixels while removing this container metadata.
+valid_metadata_jpeg = (
+    '/9j//gA7U0lUSV9BVURJVF9HUFNMYXRpdHVkZT0tNi4xNzUzOTI7R1BTTG9uZ2l0dWRlPTEwNi44MjcxNTM7/'
+    '+AAEEpGSUYAAQEAAAEAAQAA/9sAQwADAgIDAgIDAwMDBAMDBAUIBQUEBAUKBwcGCAwKDAwLCgsLDQ4SEA0OEQ4LCxAWEBETFBUV'
+    'FQwPFxgWFBgSFBUU/9sAQwEDBAQFBAUJBQUJFA0LDRQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUF'
+    'BQUFBQUFBQU/8AAEQgACAAIAwEiAAIRAQMRAf/EAB8AAAEFAQEBAQEBAAAAAAAAAAABAgMEBQYHCAkKC//EALUQAAIBAwMCBAMF'
+    'BQQEAAABfQECAwAEEQUSITFBBhNRYQcicRQygZGhCCNCscEVUtHwJDNicoIJChYXGBkaJSYnKCkqNDU2Nzg5OkNERUZHSElKU1RV'
+    'VldYWVpjZGVmZ2hpanN0dXZ3eHl6g4SFhoeIiYqSk5SVlpeYmZqio6Slpqeoqaqys7S1tre4ubrCw8TFxsfIycrS09TV1tfY2drh'
+    '4uPk5ebn6Onq8fLz9PX29/j5+v/EAB8BAAMBAQEBAQEBAQEAAAAAAAABAgMEBQYHCAkKC//EALURAAIBAgQEAwQHBQQEAAECdwAB'
+    'AgMRBAUhMQYSQVEHYXETIjKBCBRCkaGxwQkjM1LwFWJy0QoWJDThJfEXGBkaJicoKSo1Njc4OTpDREVGR0hJSlNUVVZXWFlaY2Rl'
+    'ZmdoaWpzdHV2d3h5eoKDhIWGh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uLj5OXm5+jp'
+    '6vLz9PX29/j5+v/aAAwDAQACEQMRAD8A+dKKKK/DD/VM/9k='
+)
+fixture_pattern = (
+    r"(const validExifJpeg = Buffer\.from\(\n\s*')([^']+)"
+    r"(',\n\s*'base64',\n\);)"
+)
+text, fixture_count = re.subn(
+    fixture_pattern,
+    lambda match: match.group(1) + valid_metadata_jpeg + match.group(3),
+    text,
+    count=1,
+)
+if fixture_count != 1:
+    raise RuntimeError(
+        f'valid metadata JPEG fixture: expected one anchor, found {fixture_count}'
+    )
 
 replace_once(
     "const apiURL = (process.env.SITI_SERVER_URL || 'http://127.0.0.1:8001').replace(/\\/$/, '');\n",
@@ -123,6 +154,6 @@ subprocess.run(
 )
 
 print({
-    'status': 'final browser harness, candidate-local lint fixes, clean diffs, and validation heap prepared',
+    'status': 'final browser harness, valid metadata fixture, candidate-local lint fixes, clean diffs, and validation heap prepared',
     'path': str(path),
 })
