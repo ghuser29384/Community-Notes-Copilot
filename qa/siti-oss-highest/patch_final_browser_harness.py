@@ -72,13 +72,13 @@ replace_once(
 path.write_text(text, encoding='utf-8')
 runpy.run_path(str(ROOT / 'style_candidate_sources.py'), run_name='__main__')
 
-server = Path(os.environ.get('SITI_SERVER_SOURCE', 'targets/server'))
-reportcards = Path(os.environ.get('SITI_REPORTCARDS_SOURCE', 'targets/reportcards'))
+server = Path(os.environ.get('SITI_SERVER_SOURCE', 'targets/server')).resolve()
+reportcards = Path(os.environ.get('SITI_REPORTCARDS_SOURCE', 'targets/reportcards')).resolve()
 
 # Apply the legacy project's own fixable TSLint rules only to files changed by
 # this candidate. This removes candidate-added semicolon, brace, whitespace and
 # inferrable-type debt without rewriting unrelated historical source files.
-tslint = reportcards / 'node_modules/.bin/tslint'
+tslint = (reportcards / 'node_modules/.bin/tslint').resolve()
 changed_typescript = [
     'src/app/components/image-uploader/image-uploader.component.ts',
     'src/app/components/location-picker/location-picker.component.ts',
