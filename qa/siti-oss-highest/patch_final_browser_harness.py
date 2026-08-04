@@ -114,7 +114,15 @@ subprocess.run(
     check=True,
 )
 
+# The legacy Angular/Karma bundle requires more than Node's default heap on the
+# current runner. Keep this as an untracked validation-only npm setting so it
+# affects lifecycle child processes without entering either candidate patch.
+(reportcards / '.npmrc').write_text(
+    'node-options=--max_old_space_size=8192\n',
+    encoding='utf-8',
+)
+
 print({
-    'status': 'final browser harness, candidate-local lint fixes, and clean diffs prepared',
+    'status': 'final browser harness, candidate-local lint fixes, clean diffs, and validation heap prepared',
     'path': str(path),
 })
