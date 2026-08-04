@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 
 SERVER = Path(os.environ.get('SITI_SERVER_SOURCE', 'targets/server'))
+REPORTCARDS = Path(os.environ.get('SITI_REPORTCARDS_SOURCE', 'targets/reportcards'))
 
 
 def edit(path: Path, replacements: list[tuple[str, str]]) -> int:
@@ -59,9 +60,19 @@ presigner_text = presigner.read_text(encoding='utf-8')
 presigner_text = presigner_text.replace('"', "'")
 presigner.write_text(presigner_text, encoding='utf-8')
 
+photo_module = REPORTCARDS / 'src/app/routes/cards/photo/photo.module.ts'
+photo_changes = edit(photo_module, [
+    ("import { CommonModule } from '@angular/common';\n",
+     "import { CommonModule } from '@angular/common';\n"
+     "import { TranslateModule } from '@ngx-translate/core';\n"),
+    ('    CommonModule,\n    PhotoRoutingModule',
+     '    CommonModule,\n    TranslateModule,\n    PhotoRoutingModule'),
+])
+
 print({
-    'status': 'candidate source style normalized',
+    'status': 'candidate source style and module dependencies normalized',
     'route_replacements': route_changes,
     'model_replacements': model_changes,
+    'photo_module_replacements': photo_changes,
     'presigner': str(presigner),
 })
