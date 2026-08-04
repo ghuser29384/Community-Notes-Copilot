@@ -2,8 +2,10 @@
 from __future__ import annotations
 
 import os
+import runpy
 from pathlib import Path
 
+ROOT = Path(__file__).resolve().parent
 path = Path(os.environ.get('SITI_BROWSER_HARNESS', 'runner/audit.mjs'))
 text = path.read_text(encoding='utf-8')
 
@@ -67,4 +69,5 @@ replace_once(
 )
 
 path.write_text(text, encoding='utf-8')
-print({'status': 'final browser harness patched', 'path': str(path)})
+runpy.run_path(str(ROOT / 'style_candidate_sources.py'), run_name='__main__')
+print({'status': 'final browser harness and candidate style patched', 'path': str(path)})
