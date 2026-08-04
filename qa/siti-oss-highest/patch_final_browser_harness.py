@@ -72,12 +72,37 @@ replace_once(
 path.write_text(text, encoding='utf-8')
 runpy.run_path(str(ROOT / 'style_candidate_sources.py'), run_name='__main__')
 
+server = Path(os.environ.get('SITI_SERVER_SOURCE', 'targets/server'))
+reportcards = Path(os.environ.get('SITI_REPORTCARDS_SOURCE', 'targets/reportcards'))
+
+# Apply the legacy project's own fixable TSLint rules only to files changed by
+# this candidate. This removes candidate-added semicolon, brace, whitespace and
+# inferrable-type debt without rewriting unrelated historical source files.
+tslint = reportcards / 'node_modules/.bin/tslint'
+changed_typescript = [
+    'src/app/components/image-uploader/image-uploader.component.ts',
+    'src/app/components/location-picker/location-picker.component.ts',
+    'src/app/components/submit-button/submit-button.component.ts',
+    'src/app/services/cards/deck.service.ts',
+    'src/app/routes/cards/photo/photo.module.ts',
+]
+fix = subprocess.run(
+    [str(tslint), '--config', 'tslint.json', '--fix', *changed_typescript],
+    cwd=reportcards,
+    check=False,
+    text=True,
+    stdout=subprocess.PIPE,
+    stderr=subprocess.STDOUT,
+)
+print({
+    'tslint_fix_exit': fix.returncode,
+    'tslint_fix_output': fix.stdout[-4000:],
+})
+
 # npm 6 rewrites lockfileVersion 2 lockfiles when it installs this legacy
 # project. The pinned Jasmine package is a validation-tool dependency, not a
 # proposed product dependency. Restore package manifests before producing the
 # submit-ready product diffs; the already-installed node_modules tree remains.
-server = Path(os.environ.get('SITI_SERVER_SOURCE', 'targets/server'))
-reportcards = Path(os.environ.get('SITI_REPORTCARDS_SOURCE', 'targets/reportcards'))
 subprocess.run(
     ['git', 'checkout', '--', 'package-lock.json'],
     cwd=server,
@@ -90,6 +115,6 @@ subprocess.run(
 )
 
 print({
-    'status': 'final browser harness, candidate style, and clean diffs prepared',
+    'status': 'final browser harness, candidate-local lint fixes, and clean diffs prepared',
     'path': str(path),
 })
