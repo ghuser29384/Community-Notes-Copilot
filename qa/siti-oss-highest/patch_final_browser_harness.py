@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import os
 import runpy
+import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -70,4 +71,25 @@ replace_once(
 
 path.write_text(text, encoding='utf-8')
 runpy.run_path(str(ROOT / 'style_candidate_sources.py'), run_name='__main__')
-print({'status': 'final browser harness and candidate style patched', 'path': str(path)})
+
+# npm 6 rewrites lockfileVersion 2 lockfiles when it installs this legacy
+# project. The pinned Jasmine package is a validation-tool dependency, not a
+# proposed product dependency. Restore package manifests before producing the
+# submit-ready product diffs; the already-installed node_modules tree remains.
+server = Path(os.environ.get('SITI_SERVER_SOURCE', 'targets/server'))
+reportcards = Path(os.environ.get('SITI_REPORTCARDS_SOURCE', 'targets/reportcards'))
+subprocess.run(
+    ['git', 'checkout', '--', 'package-lock.json'],
+    cwd=server,
+    check=True,
+)
+subprocess.run(
+    ['git', 'checkout', '--', 'package.json', 'package-lock.json'],
+    cwd=reportcards,
+    check=True,
+)
+
+print({
+    'status': 'final browser harness, candidate style, and clean diffs prepared',
+    'path': str(path),
+})
