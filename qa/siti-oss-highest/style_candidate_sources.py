@@ -6,6 +6,7 @@ from pathlib import Path
 
 SERVER = Path(os.environ.get('SITI_SERVER_SOURCE', 'targets/server'))
 REPORTCARDS = Path(os.environ.get('SITI_REPORTCARDS_SOURCE', 'targets/reportcards'))
+HARNESS_VALUE = os.environ.get('SITI_BROWSER_HARNESS', '')
 
 
 def edit(path: Path, replacements: list[tuple[str, str]]) -> int:
@@ -69,10 +70,33 @@ photo_changes = edit(photo_module, [
      '    CommonModule,\n    TranslateModule,\n    PhotoRoutingModule'),
 ])
 
+harness_changes = 0
+if HARNESS_VALUE:
+    harness = Path(HARNESS_VALUE)
+    if harness.exists():
+        harness_changes = edit(harness, [
+            (
+                "    viewport: scenario.viewport || { width: 1365, height: 900 },\n"
+                "    geolocation: { latitude: -6.175392, longitude: 106.827153 },",
+                "    viewport: scenario.viewport || { width: 1365, height: 900 },\n"
+                "    isMobile: Boolean(scenario.viewport && scenario.viewport.width <= 480),\n"
+                "    hasTouch: Boolean(scenario.viewport && scenario.viewport.width <= 480),\n"
+                "    deviceScaleFactor: scenario.viewport && scenario.viewport.width <= 480 ? 2 : 1,\n"
+                "    geolocation: { latitude: -6.175392, longitude: 106.827153 },"
+            ),
+            (
+                "      id: result.scenario.id,\n      errors: result.errors.length,",
+                "      id: result.scenario.id,\n"
+                "      viewport: result.scenario.viewport || { width: 1365, height: 900 },\n"
+                "      errors: result.errors.length,"
+            ),
+        ])
+
 print({
-    'status': 'candidate source style and module dependencies normalized',
+    'status': 'candidate source style, module dependencies, and mobile evidence normalized',
     'route_replacements': route_changes,
     'model_replacements': model_changes,
     'photo_module_replacements': photo_changes,
+    'browser_harness_replacements': harness_changes,
     'presigner': str(presigner),
 })
