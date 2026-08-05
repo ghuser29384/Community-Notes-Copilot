@@ -1,0 +1,166 @@
+name: Siti OSS final engineering gate
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-final-engineering-gate.yml'
+      - 'qa/siti-oss-highest/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reportcards-engineering:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 75
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Materialize reviewed helpers and exact public sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin 3899fa0720639af6eacbf1ffe10d940ceebad366
+          mkdir -p qa/siti-oss-final runner artifacts/{logs,engineering,diffs}
+          for file in \
+            apply_candidate_fixes.py \
+            apply_gate_fixes_v2.py \
+            apply_gate_fixes_v3.py \
+            patch_gate_b_harness_v2.py \
+            reportcards_fix_e2e.mjs; do
+            git show 3899fa0720639af6eacbf1ffe10d940ceebad366:qa/siti-oss-final/$file \
+              > qa/siti-oss-final/$file
+          done
+          git clone https://github.com/petabencana/-Depricated-sitioss-server.git targets/server
+          git -C targets/server checkout 933f345801340027181be21d24671146e3785701
+          git clone https://github.com/petabencana/sitioss-reportcards-ng.git targets/reportcards
+          git -C targets/reportcards checkout eaec8b1a2bfe15745077c0e8ad5ff69fbdccc552
+          git -C targets/server show -s --format='%H%x09%cI%x09%s' > artifacts/server-commit.tsv
+          git -C targets/reportcards show -s --format='%H%x09%cI%x09%s' > artifacts/reportcards-commit.tsv
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '14.21.3'
+
+      - name: Install reproducible Report Cards toolchain
+        working-directory: targets/reportcards
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-audit --no-fund > ../../artifacts/logs/reportcards-install.log 2>&1
+          npm install --save-dev --save-exact @types/jasmine@2.8.16 --no-audit --no-fund \
+            > ../../artifacts/logs/reportcards-pin-jasmine.log 2>&1
+
+      - name: Apply final candidate without changing dependency manifests
+        shell: bash
+        run: |
+          set -euo pipefail
+          SITI_LEGACY_AUDIT_SCRIPTS="$PWD/qa/siti-oss-final" \
+          SITI_SERVER_SOURCE="$PWD/targets/server" \
+          SITI_REPORTCARDS_SOURCE="$PWD/targets/reportcards" \
+            python qa/siti-oss-highest/apply_completion_fixes.py \
+            > artifacts/logs/apply-completion.log
+          cp qa/siti-oss-final/reportcards_fix_e2e.mjs runner/audit.mjs
+          SITI_BROWSER_HARNESS="$PWD/runner/audit.mjs" \
+            python qa/siti-oss-final/patch_gate_b_harness_v2.py \
+            > artifacts/logs/patch-harness-v2.log
+          SITI_BROWSER_HARNESS="$PWD/runner/audit.mjs" \
+            python qa/siti-oss-highest/patch_final_browser_harness.py \
+            > artifacts/logs/patch-final-harness.log
+          git -C targets/reportcards -c core.whitespace=cr-at-eol diff --check
+          git -C targets/reportcards diff --binary > artifacts/diffs/reportcards-engineering-candidate.patch
+
+      - name: Configure deterministic low-memory test compilation
+        working-directory: targets/reportcards
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for name in ['environment.json','environment.prod.json']:
+              path=Path('src/environments/id')/name
+              data=json.loads(path.read_text())
+              data['data_server']='http://127.0.0.1:8001/'
+              data['app']='http://127.0.0.1:4200/'
+              path.write_text(json.dumps(data,indent=2))
+          path=Path('angular.json')
+          data=json.loads(path.read_text())
+          options=data['projects']['Cards']['architect']['test']['options']
+          options['sourceMap']=False
+          options['progress']=False
+          options['codeCoverage']=False
+          path.write_text(json.dumps(data,indent=2))
+          PY
+
+      - name: Run builds, lint, and full unit suite with real exits
+        working-directory: targets/reportcards
+        shell: bash
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+          NODE_OPTIONS: --max_old_space_size=6144
+          NG_BUILD_MAX_WORKERS: '1'
+        run: |
+          set +e
+          npm run build-dev-id > ../../artifacts/engineering/build-dev.log 2>&1
+          echo $? > ../../artifacts/engineering/build-dev.exit
+          npm run build-prod-id > ../../artifacts/engineering/build-prod.log 2>&1
+          echo $? > ../../artifacts/engineering/build-prod.exit
+          npm run lint > ../../artifacts/engineering/lint.log 2>&1
+          echo $? > ../../artifacts/engineering/lint.exit
+          timeout 30m node --max_old_space_size=6144 ./node_modules/@angular/cli/bin/ng \
+            test --watch=false --browsers=ChromeHeadlessNoSandbox \
+            --code-coverage=false --source-map=false --progress=false \
+            > ../../artifacts/engineering/unit.log 2>&1
+          echo $? > ../../artifacts/engineering/unit.exit
+          exit 0
+
+      - name: Enforce final engineering criteria
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json,re
+          from pathlib import Path
+          root=Path('artifacts/engineering')
+          code=lambda name:int((root/name).read_text().strip())
+          lint=(root/'lint.log').read_text(errors='replace')
+          matches=re.findall(r'ERROR:',lint)
+          result={
+            'build_dev':code('build-dev.exit'),
+            'build_prod':code('build-prod.exit'),
+            'lint_exit':code('lint.exit'),
+            'lint_errors':len(matches),
+            'recorded_exact_source_lint_baseline':1086,
+            'unit_exit':code('unit.exit'),
+            'unit_oom': 'heap out of memory' in (root/'unit.log').read_text(errors='replace').lower(),
+          }
+          result['pass']=(
+            result['build_dev']==0 and
+            result['build_prod']==0 and
+            result['lint_errors']<=result['recorded_exact_source_lint_baseline'] and
+            result['unit_exit']==0
+          )
+          (root/'engineering-summary.json').write_text(json.dumps(result,indent=2))
+          print(json.dumps(result,indent=2))
+          assert result['pass'], result
+          PY
+
+      - name: Capture evidence
+        if: always()
+        shell: bash
+        run: |
+          set +e
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > artifacts/SHA256SUMS.txt
+          exit 0
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: siti-oss-final-engineering-gate
+          path: artifacts
+          retention-days: 30
+          if-no-files-found: error
