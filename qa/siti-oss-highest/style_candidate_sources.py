@@ -70,6 +70,21 @@ photo_changes = edit(photo_module, [
      '    CommonModule,\n    TranslateModule,\n    PhotoRoutingModule'),
 ])
 
+karma = REPORTCARDS / 'karma.conf.js'
+karma_changes = edit(karma, [
+    (
+        "    browsers: ['Chrome'],\n    singleRun: false",
+        "    browsers: ['Chrome'],\n"
+        "    customLaunchers: {\n"
+        "      ChromeHeadlessNoSandbox: {\n"
+        "        base: 'ChromeHeadless',\n"
+        "        flags: ['--no-sandbox', '--disable-dev-shm-usage']\n"
+        "      }\n"
+        "    },\n"
+        "    singleRun: false"
+    ),
+])
+
 harness_changes = 0
 if HARNESS_VALUE:
     harness = Path(HARNESS_VALUE)
@@ -93,10 +108,11 @@ if HARNESS_VALUE:
         ])
 
 print({
-    'status': 'candidate source style, module dependencies, and mobile evidence normalized',
+    'status': 'candidate source style, module dependencies, Karma launcher, and mobile evidence normalized',
     'route_replacements': route_changes,
     'model_replacements': model_changes,
     'photo_module_replacements': photo_changes,
+    'karma_replacements': karma_changes,
     'browser_harness_replacements': harness_changes,
     'presigner': str(presigner),
 })
