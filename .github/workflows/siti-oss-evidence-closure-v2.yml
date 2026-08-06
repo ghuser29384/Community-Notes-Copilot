@@ -1,0 +1,622 @@
+name: Siti OSS evidence closure v2
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-evidence-closure-v2.yml'
+      - 'qa/siti-oss-evidence-closure-v2/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  evidence-closure:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    services:
+      postgres:
+        image: postgis/postgis:13-3.4
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Materialize reviewed helpers and exact public-source heads
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin \
+            3899fa0720639af6eacbf1ffe10d940ceebad366 \
+            e0ac0eed09fa623aa7edd224f8cc2696f28bb700
+          mkdir -p qa/siti-oss-final qa/siti-oss-highest runner validation artifacts/{logs,diffs,browser-v2,engineering-v2,concurrency,s3-contract,exif}
+          for file in \
+            apply_candidate_fixes.py \
+            apply_gate_fixes_v2.py \
+            apply_gate_fixes_v3.py \
+            audit_compatibility.sql \
+            patch_gate_b_harness_v2.py \
+            reportcards_fix_e2e.mjs; do
+            git show 3899fa0720639af6eacbf1ffe10d940ceebad366:qa/siti-oss-final/$file \
+              > qa/siti-oss-final/$file
+          done
+          for file in \
+            apply_completion_fixes.py \
+            patch_final_browser_harness.py \
+            s3_signature_contract.mjs \
+            style_candidate_sources.py; do
+            git show e0ac0eed09fa623aa7edd224f8cc2696f28bb700:qa/siti-oss-highest/$file \
+              > qa/siti-oss-highest/$file
+          done
+          git clone https://github.com/petabencana/sitioss-schema.git targets/schema
+          git -C targets/schema checkout 091229bff2a299c31b814979008ebc6df7b428e8
+          git clone https://github.com/petabencana/-Depricated-sitioss-server.git targets/server
+          git -C targets/server checkout 933f345801340027181be21d24671146e3785701
+          git clone https://github.com/petabencana/sitioss-reportcards-ng.git targets/reportcards
+          git -C targets/reportcards checkout eaec8b1a2bfe15745077c0e8ad5ff69fbdccc552
+          for repo in schema server reportcards; do
+            git -C "targets/$repo" show -s --format='%H%x09%cI%x09%s' \
+              > "artifacts/${repo}-commit.tsv"
+          done
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Start MinIO, create bucket, and generate a standards-compliant EXIF GPS JPEG
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run -d --name siti-minio \
+            -p 9000:9000 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin123 \
+            -e MINIO_API_CORS_ALLOW_ORIGIN=http://127.0.0.1:4200 \
+            minio/minio:latest server /data \
+            > artifacts/logs/minio-container-id.txt
+          for i in $(seq 1 90); do
+            if curl -fsS http://127.0.0.1:9000/minio/health/live >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:9000/minio/health/live >/dev/null
+          python -m pip install --disable-pip-version-check pillow==10.4.0 boto3==1.34.162 \
+            > artifacts/logs/python-tools-install.log 2>&1
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          import boto3
+          from botocore.config import Config
+          from PIL import Image, TiffImagePlugin
+
+          s3 = boto3.client(
+              's3',
+              endpoint_url='http://127.0.0.1:9000',
+              aws_access_key_id='minioadmin',
+              aws_secret_access_key='minioadmin123',
+              region_name='us-east-1',
+              config=Config(signature_version='s3v4', s3={'addressing_style': 'path'}),
+          )
+          bucket = 'petabencana-image-uploads'
+          s3.create_bucket(Bucket=bucket)
+          s3.put_bucket_cors(
+              Bucket=bucket,
+              CORSConfiguration={
+                  'CORSRules': [{
+                      'AllowedHeaders': ['*'],
+                      'AllowedMethods': ['GET', 'HEAD', 'PUT'],
+                      'AllowedOrigins': ['http://127.0.0.1:4200'],
+                      'ExposeHeaders': ['ETag'],
+                      'MaxAgeSeconds': 3600,
+                  }]
+              },
+          )
+
+          image = Image.new('RGB', (16, 16), (53, 105, 142))
+          exif = Image.Exif()
+          gps = {
+              1: 'S',
+              2: (
+                  TiffImagePlugin.IFDRational(6, 1),
+                  TiffImagePlugin.IFDRational(10, 1),
+                  TiffImagePlugin.IFDRational(3141, 100),
+              ),
+              3: 'E',
+              4: (
+                  TiffImagePlugin.IFDRational(106, 1),
+                  TiffImagePlugin.IFDRational(49, 1),
+                  TiffImagePlugin.IFDRational(3771, 100),
+              ),
+          }
+          exif[34853] = gps
+          path = Path('runner/true-gps-exif.jpg')
+          image.save(path, format='JPEG', quality=92, exif=exif)
+          reopened = Image.open(path)
+          parsed_gps = reopened.getexif().get_ifd(34853)
+          raw = path.read_bytes()
+          result = {
+              'path': str(path),
+              'bytes': len(raw),
+              'has_exif_header': b'Exif\x00\x00' in raw,
+              'gps_ifd': {str(key): str(value) for key, value in parsed_gps.items()},
+              'gps_tag_present': bool(parsed_gps),
+          }
+          Path('artifacts/exif/original-exif-verification.json').write_text(
+              json.dumps(result, indent=2),
+              encoding='utf-8',
+          )
+          assert result['has_exif_header'], result
+          assert result['gps_tag_present'], result
+          PY
+          docker logs siti-minio > artifacts/logs/minio.log 2>&1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '14.21.3'
+
+      - name: Install reproducible Report Cards toolchain
+        working-directory: targets/reportcards
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-audit --no-fund > ../../artifacts/logs/reportcards-install.log 2>&1
+          npm install --save-dev --save-exact @types/jasmine@2.8.16 --no-audit --no-fund \
+            > ../../artifacts/logs/reportcards-pin-jasmine.log 2>&1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '10.24.1'
+
+      - name: Build isolated schema and install legacy server
+        shell: bash
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: cognicity_evidence_closure_v2
+          PG_DEFAULT_DB: postgres
+          COUNTRY: id
+          DATA: 'true'
+          FUNCTIONS: 'true'
+          SCHEMA: 'true'
+        run: |
+          set -euo pipefail
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          cd targets/schema
+          npm install --no-audit --no-fund > ../../artifacts/logs/schema-install.log 2>&1
+          ./build/run.sh > ../../artifacts/logs/schema-build.log 2>&1
+          cd ../..
+          psql -h 127.0.0.1 -U postgres -d cognicity_evidence_closure_v2 \
+            -v ON_ERROR_STOP=1 -f qa/siti-oss-final/audit_compatibility.sql \
+            > artifacts/logs/compatibility.log 2>&1
+          cd targets/server
+          NODE_ENV=development npm install --production=false --no-audit --no-fund \
+            > ../../artifacts/logs/server-install.log 2>&1
+
+      - name: Apply candidate, upgrade the evidence harness, and assemble complete product patches
+        shell: bash
+        run: |
+          set -euo pipefail
+          SITI_LEGACY_AUDIT_SCRIPTS="$PWD/qa/siti-oss-final" \
+          SITI_SERVER_SOURCE="$PWD/targets/server" \
+          SITI_REPORTCARDS_SOURCE="$PWD/targets/reportcards" \
+            python qa/siti-oss-highest/apply_completion_fixes.py \
+            > artifacts/logs/apply-completion.log
+          cp qa/siti-oss-final/reportcards_fix_e2e.mjs runner/audit-v2.mjs
+          cp qa/siti-oss-highest/s3_signature_contract.mjs runner/s3-contract.mjs
+          SITI_BROWSER_HARNESS="$PWD/runner/audit-v2.mjs" \
+            python qa/siti-oss-final/patch_gate_b_harness_v2.py \
+            > artifacts/logs/patch-harness-v2.log
+          SITI_BROWSER_HARNESS="$PWD/runner/audit-v2.mjs" \
+            python qa/siti-oss-highest/patch_final_browser_harness.py \
+            > artifacts/logs/patch-final-harness.log
+          SITI_BROWSER_HARNESS="$PWD/runner/audit-v2.mjs" \
+            python qa/siti-oss-evidence-closure-v2/patch_audit_v2.py \
+            > artifacts/logs/patch-evidence-closure-v2.log
+
+          git -C targets/server diff --check
+          git -C targets/reportcards -c core.whitespace=cr-at-eol diff --check
+          git -C targets/server diff --binary > artifacts/diffs/server-tracked.patch
+          (
+            cd targets/server
+            git diff --no-index --binary /dev/null src/lib/presignPutObject.js || true
+          ) > ../../artifacts/diffs/server-new-file.patch
+          cat artifacts/diffs/server-tracked.patch artifacts/diffs/server-new-file.patch \
+            > artifacts/diffs/server-candidate-complete.patch
+          git -C targets/reportcards diff --binary > artifacts/diffs/reportcards-candidate.patch
+          cd targets/server
+          npm run build > ../../artifacts/logs/server-build.log 2>&1
+
+      - name: Prove complete patches apply to clean exact snapshots and compile
+        shell: bash
+        run: |
+          set -euo pipefail
+          git clone https://github.com/petabencana/-Depricated-sitioss-server.git validation/server-clean
+          git -C validation/server-clean checkout 933f345801340027181be21d24671146e3785701
+          git -C validation/server-clean apply --check ../../artifacts/diffs/server-candidate-complete.patch
+          git -C validation/server-clean apply ../../artifacts/diffs/server-candidate-complete.patch
+          cp -a targets/server/node_modules validation/server-clean/
+          (cd validation/server-clean && npm run build) \
+            > artifacts/logs/server-clean-patch-build.log 2>&1
+
+          git clone https://github.com/petabencana/sitioss-reportcards-ng.git validation/reportcards-clean
+          git -C validation/reportcards-clean checkout eaec8b1a2bfe15745077c0e8ad5ff69fbdccc552
+          git -C validation/reportcards-clean apply --check ../../artifacts/diffs/reportcards-candidate.patch
+          git -C validation/reportcards-clean apply ../../artifacts/diffs/reportcards-candidate.patch
+          cp -a targets/reportcards/node_modules validation/reportcards-clean/
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for root in [Path('validation/reportcards-clean')]:
+              for name in ['environment.json', 'environment.prod.json']:
+                  path = root / 'src/environments/id' / name
+                  data = json.loads(path.read_text())
+                  data['data_server'] = 'http://127.0.0.1:8001/'
+                  data['app'] = 'http://127.0.0.1:4200/'
+                  path.write_text(json.dumps(data, indent=2))
+          PY
+          (
+            cd validation/reportcards-clean
+            NODE_OPTIONS=--max_old_space_size=6144 npm run build-dev-id
+            NODE_OPTIONS=--max_old_space_size=6144 npm run build-prod-id
+          ) > artifacts/logs/reportcards-clean-patch-builds.log 2>&1
+
+      - name: Start patched backend against MinIO
+        shell: bash
+        env:
+          PGHOST: 127.0.0.1
+          PGPORT: '5432'
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: cognicity_evidence_closure_v2
+          PGSSL: 'false'
+          PGTIMEOUT: '30000'
+          PORT: '8001'
+          LOG_CONSOLE: 'true'
+          LOG_DIR: /tmp
+          LOG_LEVEL: error
+          CORS: 'true'
+          SECURE_AUTH0: 'true'
+          AUTH0_SECRET: local-validation-secret
+          AUTH0_CLIENT_ID: local-validation-client
+          NOTIFY_ENDPOINT: http://127.0.0.1:8999/notify/
+          NOTIFY_API_KEY: local-validation
+          AWS_REGION: us-east-1
+          AWS_S3_ACCESS_KEY_ID: minioadmin
+          AWS_S3_SECRET_ACCESS_KEY: minioadmin123
+          AWS_SIGNATURE_VERSION: v4
+          AWS_S3_ENDPOINT: http://127.0.0.1:9000
+          AWS_S3_FORCE_PATH_STYLE: 'true'
+          IMAGES_BUCKET: petabencana-image-uploads
+          IMAGES_HOST: 127.0.0.1:9000/petabencana-image-uploads
+          IMAGE_MIME_TYPES: image/png,image/jpeg
+        run: |
+          set -euo pipefail
+          cat > notify_stub.py <<'PY'
+          from http.server import BaseHTTPRequestHandler, HTTPServer
+          class H(BaseHTTPRequestHandler):
+              def do_POST(self):
+                  length = int(self.headers.get('content-length', '0'))
+                  if length:
+                      self.rfile.read(length)
+                  self.send_response(200)
+                  self.send_header('content-type', 'application/json')
+                  self.end_headers()
+                  self.wfile.write(b'{"ok":true}')
+              def log_message(self, fmt, *args):
+                  pass
+          HTTPServer(('127.0.0.1', 8999), H).serve_forever()
+          PY
+          nohup python3 notify_stub.py > artifacts/logs/notify-stub.log 2>&1 &
+          NODE_ENV=production nohup node targets/server/dist > artifacts/logs/server.log 2>&1 &
+          echo $! > artifacts/logs/server.pid
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8001/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat artifacts/logs/server.log
+          exit 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '14.21.3'
+
+      - name: Build patched Report Cards and run focused changed-area unit specs
+        working-directory: targets/reportcards
+        shell: bash
+        env:
+          NODE_OPTIONS: --max_old_space_size=6144
+          CHROME_BIN: /usr/bin/google-chrome
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          for name in ['environment.json', 'environment.prod.json']:
+              path = Path('src/environments/id') / name
+              data = json.loads(path.read_text())
+              data['data_server'] = 'http://127.0.0.1:8001/'
+              data['app'] = 'http://127.0.0.1:4200/'
+              path.write_text(json.dumps(data, indent=2))
+          PY
+          npm run build-dev-id > ../../artifacts/logs/reportcards-build-dev.log 2>&1
+          npm run build-prod-id > ../../artifacts/logs/reportcards-build-prod.log 2>&1
+          cp src/test.ts ../../artifacts/engineering-v2/test.ts.original
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('src/test.ts')
+          text = path.read_text()
+          old = r"/\.spec\.ts$/"
+          new = r"/(image-uploader\.component\.spec|location-picker\.component\.spec)\.ts$/"
+          if text.count(old) != 1:
+              raise RuntimeError(f'expected one unit-test regex, found {text.count(old)}')
+          path.write_text(text.replace(old, new, 1))
+          PY
+          set +e
+          timeout 15m node --max_old_space_size=6144 ./node_modules/@angular/cli/bin/ng \
+            test --watch=false --browsers=ChromeHeadlessNoSandbox \
+            --code-coverage=false --source-map=false --progress=false \
+            > ../../artifacts/engineering-v2/focused-unit.log 2>&1
+          echo $? > ../../artifacts/engineering-v2/focused-unit.exit
+          set -e
+          git checkout -- src/test.ts
+
+      - name: Start SPA with history fallback
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > spa_server.py <<'PY'
+          import http.server, os, socketserver
+          ROOT = os.path.abspath('targets/reportcards/dist/dev-id')
+          class Handler(http.server.SimpleHTTPRequestHandler):
+              def translate_path(self, path):
+                  original = super().translate_path(path)
+                  rel = os.path.relpath(original, os.getcwd())
+                  return os.path.join(ROOT, rel)
+              def do_GET(self):
+                  clean = self.path.split('?', 1)[0].split('#', 1)[0]
+                  candidate = os.path.join(ROOT, clean.lstrip('/'))
+                  if clean != '/' and not os.path.exists(candidate):
+                      self.path = '/index.html'
+                  return super().do_GET()
+              def end_headers(self):
+                  self.send_header('Cache-Control', 'no-store')
+                  super().end_headers()
+          os.chdir(ROOT)
+          with socketserver.TCPServer(('127.0.0.1', 4200), Handler) as httpd:
+              httpd.serve_forever()
+          PY
+          nohup python3 spa_server.py > artifacts/logs/reportcards-static-server.log 2>&1 &
+          echo $! > artifacts/logs/reportcards-static-server.pid
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:4200/ >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          cat artifacts/logs/reportcards-static-server.log
+          exit 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20.19.1'
+
+      - name: Run real-mode, training-mode, device-emulated, recovery, media, and real-storage browser gates
+        working-directory: runner
+        shell: bash
+        env:
+          REPORTCARDS_URL: http://127.0.0.1:4200
+          SITI_SERVER_URL: http://127.0.0.1:8001
+          SITI_OBJECT_STORAGE_ORIGIN: http://127.0.0.1:9000
+          SITI_TRUE_EXIF_JPEG: ${{ github.workspace }}/runner/true-gps-exif.jpg
+          SITI_VALIDATION_OUT: ${{ github.workspace }}/artifacts/browser-v2
+        run: |
+          set -euo pipefail
+          npm init -y >/dev/null
+          npm install --no-save playwright@1.54.1
+          npx playwright install --with-deps chromium
+          node audit-v2.mjs | tee ../artifacts/logs/browser-v2-console.log
+          node - <<'NODE'
+          const fs = require('fs');
+          const summary = JSON.parse(
+            fs.readFileSync('../artifacts/browser-v2/reportcards-fix-e2e-summary.json', 'utf8')
+          );
+          if (!Object.values(summary.assertions).every(Boolean)) {
+            throw new Error(JSON.stringify(summary.assertions));
+          }
+          const mobile = summary.scenarioResults.find(
+            item => item.id === 'real-mobile-device-success'
+          );
+          if (!mobile || mobile.clientProfile.maxTouchPoints < 1 ||
+              !/iPhone/.test(mobile.clientProfile.userAgent) ||
+              mobile.viewport.width !== 390 || mobile.viewport.height !== 844) {
+            throw new Error('device emulation not proven: ' + JSON.stringify(mobile));
+          }
+          console.log(JSON.stringify({ pass: true, assertions: summary.assertions, mobile }, null, 2));
+          NODE
+
+      - name: Re-run the Content-Type enforcement contract at the same candidate head
+        working-directory: runner
+        shell: bash
+        env:
+          SITI_SERVER_URL: http://127.0.0.1:8001
+          SITI_S3_CONTRACT_OUT: ${{ github.workspace }}/artifacts/s3-contract
+        run: |
+          set -euo pipefail
+          node s3-contract.mjs | tee ../artifacts/logs/s3-contract-v2.log
+          node -e "const x=require('../artifacts/s3-contract/s3-content-type-contract.json'); if(!x.pass) process.exit(2)"
+
+      - name: Re-run the 50-way duplicate contract at the same candidate head in real-report mode
+        shell: bash
+        env:
+          PGPASSWORD: postgres
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check requests psycopg2-binary \
+            > artifacts/logs/concurrency-python-install.log 2>&1
+          python - <<'PY' | tee artifacts/concurrency/same-head-concurrency.json
+          import concurrent.futures
+          import json
+          from collections import Counter
+          import psycopg2
+          import requests
+
+          base = 'http://127.0.0.1:8001'
+          card = requests.post(base + '/cards', json={
+              'username': 'evidence-closure-v2-race',
+              'network': 'twitter',
+              'language': 'en',
+              'network_data': {},
+          }, timeout=20)
+          card.raise_for_status()
+          card_id = card.json()['cardId']
+          payload = {
+              'disaster_type': 'flood',
+              'partnerCode': '',
+              'tweetID': '',
+              'is_training': False,
+              'sub_submission': False,
+              'card_data': {'report_type': 'flood', 'flood_depth': 44},
+              'text': 'Evidence closure v2 real-report concurrency',
+              'image_url': '',
+              'created_at': '2026-08-06T16:00:00.000Z',
+              'location': {'lat': -6.1754, 'lng': 106.8272},
+          }
+
+          def submit(_index):
+              response = requests.put(base + '/cards/' + card_id, json=payload, timeout=30)
+              try:
+                  body = response.json()
+              except Exception:
+                  body = response.text
+              return {'status': response.status_code, 'body': body}
+
+          with concurrent.futures.ThreadPoolExecutor(max_workers=50) as pool:
+              results = list(pool.map(submit, range(50)))
+          counts = Counter(item['status'] for item in results)
+
+          with psycopg2.connect(
+              host='127.0.0.1', port=5432, user='postgres', password='postgres',
+              dbname='cognicity_evidence_closure_v2',
+          ) as connection:
+              with connection.cursor() as cursor:
+                  cursor.execute('SELECT count(*) FROM grasp.reports WHERE card_id=%s', (card_id,))
+                  report_rows = cursor.fetchone()[0]
+                  cursor.execute('SELECT count(*) FROM cognicity.all_reports WHERE card_id=%s', (card_id,))
+                  all_report_rows = cursor.fetchone()[0]
+                  cursor.execute(
+                      "SELECT count(*) FROM grasp.log WHERE card_id=%s AND event_type='REPORT SUBMITTED'",
+                      (card_id,),
+                  )
+                  submitted_log_rows = cursor.fetchone()[0]
+
+          output = {
+              'card_id': card_id,
+              'report_mode': 'real',
+              'attempts': 50,
+              'status_counts': dict(counts),
+              'report_rows': report_rows,
+              'all_report_rows': all_report_rows,
+              'submitted_log_rows': submitted_log_rows,
+              'sample_results': results[:10],
+          }
+          print(json.dumps(output, indent=2))
+          assert counts[200] == 1, output
+          assert counts[409] == 49, output
+          assert counts[500] == 0, output
+          assert sum(value for key, value in counts.items() if key not in (200, 409)) == 0, output
+          assert report_rows == 1, output
+          assert all_report_rows == 1, output
+          assert submitted_log_rows == 1, output
+          PY
+
+      - name: Produce the closure summary and enforce core criteria
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          browser = json.loads(
+              Path('artifacts/browser-v2/reportcards-fix-e2e-summary.json').read_text()
+          )
+          concurrency = json.loads(
+              Path('artifacts/concurrency/same-head-concurrency.json').read_text()
+          )
+          s3 = json.loads(
+              Path('artifacts/s3-contract/s3-content-type-contract.json').read_text()
+          )
+          original_exif = json.loads(
+              Path('artifacts/exif/original-exif-verification.json').read_text()
+          )
+          focused_unit_exit = int(
+              Path('artifacts/engineering-v2/focused-unit.exit').read_text().strip()
+          )
+          result = {
+              'generated_at': '2026-08-06',
+              'exact_public_sources': {
+                  'schema': '091229bff2a299c31b814979008ebc6df7b428e8',
+                  'server': '933f345801340027181be21d24671146e3785701',
+                  'reportcards': 'eaec8b1a2bfe15745077c0e8ad5ff69fbdccc552',
+              },
+              'browser': {
+                  'scenario_count': browser['scenarioCount'],
+                  'assertions': browser['assertions'],
+                  'all_pass': all(browser['assertions'].values()),
+              },
+              'concurrency': concurrency,
+              's3_contract': s3,
+              'original_exif_fixture': original_exif,
+              'focused_unit_exit': focused_unit_exit,
+              'fresh_patch_application_and_builds': True,
+          }
+          result['core_pass'] = (
+              result['browser']['all_pass'] and
+              concurrency['status_counts'] == {'200': 1, '409': 49} and
+              concurrency['report_rows'] == 1 and
+              concurrency['all_report_rows'] == 1 and
+              concurrency['submitted_log_rows'] == 1 and
+              s3['pass'] and
+              original_exif['has_exif_header'] and
+              original_exif['gps_tag_present'] and
+              result['fresh_patch_application_and_builds']
+          )
+          Path('artifacts/evidence-closure-v2-summary.json').write_text(
+              json.dumps(result, indent=2)
+          )
+          print(json.dumps(result, indent=2))
+          assert result['core_pass'], result
+          PY
+
+      - name: Capture final evidence
+        if: always()
+        shell: bash
+        env:
+          PGPASSWORD: postgres
+        run: |
+          set +e
+          psql -h 127.0.0.1 -U postgres -d cognicity_evidence_closure_v2 \
+            -c 'SELECT count(*) AS cards FROM grasp.cards; SELECT count(*) AS reports FROM grasp.reports; SELECT count(*) AS all_reports FROM cognicity.all_reports;' \
+            > artifacts/database-end-state.txt 2>&1
+          docker logs siti-minio > artifacts/logs/minio-final.log 2>&1
+          find artifacts -type f -printf '%P\t%s bytes\n' | sort > artifacts/ARTIFACT-INDEX.txt
+          find artifacts -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum \
+            > artifacts/SHA256SUMS.txt
+          exit 0
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: siti-oss-evidence-closure-v2
+          path: artifacts
+          retention-days: 30
+          if-no-files-found: error
