@@ -26,6 +26,30 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
 
+      - name: Normalize ExifTool group-prefixed JSON keys in the closure script
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          path = Path('qa/siti-oss-evidence-closure-v3/reproduce_v3.sh')
+          text = path.read_text(encoding='utf-8')
+          old = """source_keys = {key.split(']')[-1].lstrip(':'): value for key, value in source.items()}
+stored_keys = {key.split(']')[-1].lstrip(':'): value for key, value in stored.items()}
+"""
+          new = """def bare_tag(key):
+    if ':' in key:
+        return key.rsplit(':', 1)[-1]
+    if ']' in key:
+        return key.split(']', 1)[-1].strip()
+    return key
+source_keys = {bare_tag(key): value for key, value in source.items()}
+stored_keys = {bare_tag(key): value for key, value in stored.items()}
+"""
+          if text.count(old) != 1:
+              raise RuntimeError(f'expected one ExifTool normalization anchor, found {text.count(old)}')
+          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          PY
+
       - name: Run independent reproducibility closure
         shell: bash
         run: bash qa/siti-oss-evidence-closure-v3/reproduce_v3.sh
