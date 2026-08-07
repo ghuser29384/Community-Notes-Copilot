@@ -1,28 +1,20 @@
 {
-  "card_id": "49f148c0-8d7b-4268-b3fd-32fc10329475",
+  "card_id": "0322d3df-0027-4952-a9c4-00d8d3cb9582",
   "report_mode": "real",
   "attempts": 50,
   "status_counts": {
-    "409": 49,
-    "200": 1
+    "200": 1,
+    "409": 49
   },
   "report_rows": 1,
   "all_report_rows": 1,
   "submitted_log_rows": 1,
   "sample_results": [
     {
-      "status": 409,
-      "body": {
-        "statusCode": 409,
-        "cardId": "49f148c0-8d7b-4268-b3fd-32fc10329475",
-        "message": "Report already received for card '49f148c0-8d7b-4268-b3fd-32fc10329475'"
-      }
-    },
-    {
       "status": 200,
       "body": {
         "statusCode": 200,
-        "cardId": "49f148c0-8d7b-4268-b3fd-32fc10329475",
+        "cardId": "0322d3df-0027-4952-a9c4-00d8d3cb9582",
         "created": true
       }
     },
@@ -30,64 +22,72 @@
       "status": 409,
       "body": {
         "statusCode": 409,
-        "cardId": "49f148c0-8d7b-4268-b3fd-32fc10329475",
-        "message": "Report already received for card '49f148c0-8d7b-4268-b3fd-32fc10329475'"
+        "cardId": "0322d3df-0027-4952-a9c4-00d8d3cb9582",
+        "message": "Report already received for card '0322d3df-0027-4952-a9c4-00d8d3cb9582'"
       }
     },
     {
       "status": 409,
       "body": {
         "statusCode": 409,
-        "cardId": "49f148c0-8d7b-4268-b3fd-32fc10329475",
-        "message": "Report already received for card '49f148c0-8d7b-4268-b3fd-32fc10329475'"
+        "cardId": "0322d3df-0027-4952-a9c4-00d8d3cb9582",
+        "message": "Report already received for card '0322d3df-0027-4952-a9c4-00d8d3cb9582'"
       }
     },
     {
       "status": 409,
       "body": {
         "statusCode": 409,
-        "cardId": "49f148c0-8d7b-4268-b3fd-32fc10329475",
-        "message": "Report already received for card '49f148c0-8d7b-4268-b3fd-32fc10329475'"
+        "cardId": "0322d3df-0027-4952-a9c4-00d8d3cb9582",
+        "message": "Report already received for card '0322d3df-0027-4952-a9c4-00d8d3cb9582'"
       }
     },
     {
       "status": 409,
       "body": {
         "statusCode": 409,
-        "cardId": "49f148c0-8d7b-4268-b3fd-32fc10329475",
-        "message": "Report already received for card '49f148c0-8d7b-4268-b3fd-32fc10329475'"
+        "cardId": "0322d3df-0027-4952-a9c4-00d8d3cb9582",
+        "message": "Report already received for card '0322d3df-0027-4952-a9c4-00d8d3cb9582'"
       }
     },
     {
       "status": 409,
       "body": {
         "statusCode": 409,
-        "cardId": "49f148c0-8d7b-4268-b3fd-32fc10329475",
-        "message": "Report already received for card '49f148c0-8d7b-4268-b3fd-32fc10329475'"
+        "cardId": "0322d3df-0027-4952-a9c4-00d8d3cb9582",
+        "message": "Report already received for card '0322d3df-0027-4952-a9c4-00d8d3cb9582'"
       }
     },
     {
       "status": 409,
       "body": {
         "statusCode": 409,
-        "cardId": "49f148c0-8d7b-4268-b3fd-32fc10329475",
-        "message": "Report already received for card '49f148c0-8d7b-4268-b3fd-32fc10329475'"
+        "cardId": "0322d3df-0027-4952-a9c4-00d8d3cb9582",
+        "message": "Report already received for card '0322d3df-0027-4952-a9c4-00d8d3cb9582'"
       }
     },
     {
       "status": 409,
       "body": {
         "statusCode": 409,
-        "cardId": "49f148c0-8d7b-4268-b3fd-32fc10329475",
-        "message": "Report already received for card '49f148c0-8d7b-4268-b3fd-32fc10329475'"
+        "cardId": "0322d3df-0027-4952-a9c4-00d8d3cb9582",
+        "message": "Report already received for card '0322d3df-0027-4952-a9c4-00d8d3cb9582'"
       }
     },
     {
       "status": 409,
       "body": {
         "statusCode": 409,
-        "cardId": "49f148c0-8d7b-4268-b3fd-32fc10329475",
-        "message": "Report already received for card '49f148c0-8d7b-4268-b3fd-32fc10329475'"
+        "cardId": "0322d3df-0027-4952-a9c4-00d8d3cb9582",
+        "message": "Report already received for card '0322d3df-0027-4952-a9c4-00d8d3cb9582'"
+      }
+    },
+    {
+      "status": 409,
+      "body": {
+        "statusCode": 409,
+        "cardId": "0322d3df-0027-4952-a9c4-00d8d3cb9582",
+        "message": "Report already received for card '0322d3df-0027-4952-a9c4-00d8d3cb9582'"
       }
     }
   ]
