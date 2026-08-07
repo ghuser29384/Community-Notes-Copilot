@@ -29,7 +29,7 @@ jobs:
           --health-retries 12
 
     steps:
-      - name: Execute the evidence-closure script with MinIO compatibility patch
+      - name: Execute the evidence-closure script with strict closure patches
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -51,6 +51,7 @@ jobs:
           lines = source.read_text(encoding='utf-8').splitlines()
           marker = next(i for i, line in enumerate(lines) if line.strip() == 'run: |')
           script = textwrap.dedent('\n'.join(lines[marker + 1:])) + '\n'
+
           cors_block = """s3.put_bucket_cors(
               Bucket=bucket,
               CORSConfiguration={
@@ -68,11 +69,25 @@ jobs:
               raise RuntimeError(f'expected one MinIO-incompatible PutBucketCors block, found {script.count(cors_block)}')
           script = script.replace(
               cors_block,
-              "# MinIO's API-level CORS is configured by MINIO_API_CORS_ALLOW_ORIGIN;\n# its S3 PutBucketCors endpoint is not implemented in this image.\n",
+              "# MinIO API CORS is configured by MINIO_API_CORS_ALLOW_ORIGIN;\n# this image does not implement the S3 PutBucketCors API.\n",
               1,
           )
+
+          core_tail = """    storage['object_count'] >= 2 and
+              result['fresh_patch_application_and_builds']
+          )
+          """
+          strict_tail = """    storage['object_count'] >= 2 and
+              result['fresh_patch_application_and_builds'] and
+              focused_unit_exit == 0
+          )
+          """
+          if script.count(core_tail) != 1:
+              raise RuntimeError(f'expected one core-pass tail, found {script.count(core_tail)}')
+          script = script.replace(core_tail, strict_tail, 1)
+
           output = Path('/tmp/siti-oss-evidence-closure-v2.sh')
           output.write_text(script, encoding='utf-8')
-          print({'source': str(source), 'output': str(output), 'bytes': output.stat().st_size})
+          print({'source': str(source), 'output': str(output), 'bytes': output.stat().st_size, 'focused_unit_required': True})
           PY
           bash /tmp/siti-oss-evidence-closure-v2.sh
