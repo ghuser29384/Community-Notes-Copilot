@@ -1,0 +1,37 @@
+name: Siti OSS extract focused unit log
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-extract-focused-log.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  extract-log:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Extract and commit focused-unit log
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -Eeuo pipefail
+          git clone --single-branch --branch "$HEAD_BRANCH" \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" repo
+          cd repo
+          rm -rf /tmp/siti-focused && mkdir -p /tmp/siti-focused
+          unzip -q qa/siti-oss-evidence-closure-v2/results/evidence-closure-v2.zip -d /tmp/siti-focused
+          find /tmp/siti-focused -type f -print | sort
+          log=$(find /tmp/siti-focused -type f -path '*/engineering-v2/focused-unit.log' -print -quit)
+          test -n "$log"
+          cp "$log" qa/siti-oss-evidence-closure-v2/results/focused-unit.log
+          git config user.name ghuser29384
+          git config user.email 262476329+ghuser29384@users.noreply.github.com
+          git add qa/siti-oss-evidence-closure-v2/results/focused-unit.log
+          git commit -m 'Record focused unit failure log' || true
+          git push origin HEAD:"$HEAD_BRANCH"
