@@ -51,18 +51,20 @@ jobs:
               raise RuntimeError(f'expected one ExifTool normalization anchor, found {text.count(old_exif)}')
           text = text.replace(old_exif, new_exif, 1)
 
-          old_capture = '''  set +e
-  printf '%s\\n' "$status" > "$ART/workflow-exit.txt"
-  find "$ART" -type f -printf '%P\\t%s bytes\\n' | sort > "$ART/ARTIFACT-INDEX.txt"
-  find "$ART" -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > "$ART/SHA256SUMS.txt"
-'''
-          new_capture = '''  set +e
-  exec >/dev/null 2>&1
-  sleep 1
-  printf '%s\\n' "$status" > "$ART/workflow-exit.txt"
-  (cd "$ART" && find . -type f -printf '%P\\t%s bytes\\n' | sort) > "$ART/ARTIFACT-INDEX.txt"
-  (cd "$ART" && find . -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum) > "$ART/SHA256SUMS.txt"
-'''
+          old_capture = (
+              "  set +e\n"
+              "  printf '%s\\n' \"$status\" > \"$ART/workflow-exit.txt\"\n"
+              "  find \"$ART\" -type f -printf '%P\\t%s bytes\\n' | sort > \"$ART/ARTIFACT-INDEX.txt\"\n"
+              "  find \"$ART\" -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > \"$ART/SHA256SUMS.txt\"\n"
+          )
+          new_capture = (
+              "  set +e\n"
+              "  exec >/dev/null 2>&1\n"
+              "  sleep 1\n"
+              "  printf '%s\\n' \"$status\" > \"$ART/workflow-exit.txt\"\n"
+              "  (cd \"$ART\" && find . -type f -printf '%P\\t%s bytes\\n' | sort) > \"$ART/ARTIFACT-INDEX.txt\"\n"
+              "  (cd \"$ART\" && find . -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum) > \"$ART/SHA256SUMS.txt\"\n"
+          )
           if text.count(old_capture) != 1:
               raise RuntimeError(f'expected one capture anchor, found {text.count(old_capture)}')
           text = text.replace(old_capture, new_capture, 1)
