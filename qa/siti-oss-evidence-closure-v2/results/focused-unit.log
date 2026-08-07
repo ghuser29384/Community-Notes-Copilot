@@ -1,6 +1,6 @@
-[32m07 08 2026 05:16:20.964:INFO [karma-server]: [39mKarma v3.1.4 server started at http://0.0.0.0:9876/
-[32m07 08 2026 05:16:20.966:INFO [launcher]: [39mLaunching browsers ChromeHeadlessNoSandbox with concurrency unlimited
-[32m07 08 2026 05:16:20.970:INFO [launcher]: [39mStarting browser ChromeHeadless
+[32m07 08 2026 05:34:21.920:INFO [karma-server]: [39mKarma v3.1.4 server started at http://0.0.0.0:9876/
+[32m07 08 2026 05:34:21.922:INFO [launcher]: [39mLaunching browsers ChromeHeadlessNoSandbox with concurrency unlimited
+[32m07 08 2026 05:34:21.925:INFO [launcher]: [39mStarting browser ChromeHeadless
 DEPRECATION WARNING [legacy-js-api]: The legacy JS API is deprecated and will be removed in Dart Sass 2.0.0.
 
 More info: https://sass-lang.com/d/legacy-js-api
@@ -20,7 +20,7 @@ More info: https://sass-lang.com/d/legacy-js-api
 Browserslist: browsers data (caniuse-lite) is 8 months old. Please run:
   npx update-browserslist-db@latest
   Why you should do it regularly: https://github.com/browserslist/update-db#readme
-[32m07 08 2026 05:16:26.180:INFO [HeadlessChrome 150.0.0 (Linux 0.0.0)]: [39mConnected on socket Z9ZVZ2l1eogod4iiAAAA with id 35980897
+[32m07 08 2026 05:34:27.922:INFO [HeadlessChrome 150.0.0 (Linux 0.0.0)]: [39mConnected on socket L-klONETMJdcQ5bdAAAA with id 7808093
 HeadlessChrome 150.0.0 (Linux 0.0.0) ERROR: 'DEPRECATION: Setting specFilter directly on Env is deprecated and will be removed in a future version of Jasmine. Please use the specFilter option in `configure` instead.
     at <Jasmine>
     at createSpecFilter (http://localhost:9876/base/node_modules/karma-jasmine/lib/adapter.js?6cf71867f538f40db053c1775b2c56a83696375c:320:25)
@@ -36,20 +36,20 @@ HeadlessChrome 150.0.0 (Linux 0.0.0) ERROR: 'DEPRECATION: Setting specFilter dir
 Note: This message will be shown only once. Set the verboseDeprecations config property to true to see every occurrence.'
 
 [1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 0 of 14 SUCCESS (0 secs / 0 secs)
-[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 1 of 14 SUCCESS (0 secs / 0.002 secs)
-[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 2 of 14 SUCCESS (0 secs / 0.004 secs)
-[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 3 of 14 SUCCESS (0 secs / 0.004 secs)
-[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 4 of 14 SUCCESS (0 secs / 0.005 secs)
-[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 5 of 14 SUCCESS (0 secs / 0.012 secs)
-[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 6 of 14 SUCCESS (0 secs / 0.013 secs)
-[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 7 of 14 SUCCESS (0 secs / 0.016 secs)
-[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 8 of 14 SUCCESS (0 secs / 0.018 secs)
-[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 9 of 14 SUCCESS (0 secs / 0.019 secs)
-[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 10 of 14 SUCCESS (0 secs / 0.019 secs)
-[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 11 of 14 SUCCESS (0 secs / 0.02 secs)
-[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 12 of 14 SUCCESS (0 secs / 0.021 secs)
-[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 13 of 14 SUCCESS (0 secs / 0.025 secs)
-[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 14 of 14 SUCCESS (0 secs / 0.026 secs)
-[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 14 of 14 SUCCESS (0.045 secs / 0.026 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 1 of 14 SUCCESS (0 secs / 0.003 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 2 of 14 SUCCESS (0 secs / 0.005 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 3 of 14 SUCCESS (0 secs / 0.007 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 4 of 14 SUCCESS (0 secs / 0.008 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 5 of 14 SUCCESS (0 secs / 0.008 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 6 of 14 SUCCESS (0 secs / 0.01 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 7 of 14 SUCCESS (0 secs / 0.01 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 8 of 14 SUCCESS (0 secs / 0.011 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 9 of 14 SUCCESS (0 secs / 0.011 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 10 of 14 SUCCESS (0 secs / 0.011 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 11 of 14 SUCCESS (0 secs / 0.013 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 12 of 14 SUCCESS (0 secs / 0.014 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 13 of 14 SUCCESS (0 secs / 0.015 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 14 of 14 SUCCESS (0 secs / 0.017 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 14 of 14 SUCCESS (0.025 secs / 0.017 secs)
 TOTAL: 14 SUCCESS
 TOTAL: 14 SUCCESS
