@@ -3,19 +3,19 @@
   "object_count": 3,
   "objects": [
     {
-      "key": "originals/39cdd831-8215-4e0d-95c5-a413d0311dcb.jpeg",
-      "size": 761,
-      "content_type": "image/jpeg",
-      "etag": "\"1b208feeb48d474f0c2bf21a313c56a1\""
-    },
-    {
-      "key": "originals/4d835d03-2f8a-4569-8adb-40e79cd2578b.png",
+      "key": "originals/212f3465-e205-4c28-8f53-227fde93f0f4.png",
       "size": 89,
       "content_type": "image/png",
       "etag": "\"0dde272d34880ce56a4e26b44abab97a\""
     },
     {
-      "key": "originals/65232d8e-d509-4317-971c-81df31fcfa19.png",
+      "key": "originals/416b53e5-9834-4758-b1e4-73397a59baf6.jpeg",
+      "size": 761,
+      "content_type": "image/jpeg",
+      "etag": "\"1b208feeb48d474f0c2bf21a313c56a1\""
+    },
+    {
+      "key": "originals/92b21d72-a7e0-48d3-a49c-b292959ef852.png",
       "size": 30,
       "content_type": "image/png",
       "etag": "\"e18e99074b39a4ceddad8de14fa180a3\""

@@ -1,5 +1,5 @@
 {
-  "card_id": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
+  "card_id": "49f148c0-8d7b-4268-b3fd-32fc10329475",
   "report_mode": "real",
   "attempts": 50,
   "status_counts": {
@@ -14,23 +14,15 @@
       "status": 409,
       "body": {
         "statusCode": 409,
-        "cardId": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
-        "message": "Report already received for card 'bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99'"
-      }
-    },
-    {
-      "status": 409,
-      "body": {
-        "statusCode": 409,
-        "cardId": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
-        "message": "Report already received for card 'bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99'"
+        "cardId": "49f148c0-8d7b-4268-b3fd-32fc10329475",
+        "message": "Report already received for card '49f148c0-8d7b-4268-b3fd-32fc10329475'"
       }
     },
     {
       "status": 200,
       "body": {
         "statusCode": 200,
-        "cardId": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
+        "cardId": "49f148c0-8d7b-4268-b3fd-32fc10329475",
         "created": true
       }
     },
@@ -38,56 +30,64 @@
       "status": 409,
       "body": {
         "statusCode": 409,
-        "cardId": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
-        "message": "Report already received for card 'bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99'"
+        "cardId": "49f148c0-8d7b-4268-b3fd-32fc10329475",
+        "message": "Report already received for card '49f148c0-8d7b-4268-b3fd-32fc10329475'"
       }
     },
     {
       "status": 409,
       "body": {
         "statusCode": 409,
-        "cardId": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
-        "message": "Report already received for card 'bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99'"
+        "cardId": "49f148c0-8d7b-4268-b3fd-32fc10329475",
+        "message": "Report already received for card '49f148c0-8d7b-4268-b3fd-32fc10329475'"
       }
     },
     {
       "status": 409,
       "body": {
         "statusCode": 409,
-        "cardId": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
-        "message": "Report already received for card 'bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99'"
+        "cardId": "49f148c0-8d7b-4268-b3fd-32fc10329475",
+        "message": "Report already received for card '49f148c0-8d7b-4268-b3fd-32fc10329475'"
       }
     },
     {
       "status": 409,
       "body": {
         "statusCode": 409,
-        "cardId": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
-        "message": "Report already received for card 'bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99'"
+        "cardId": "49f148c0-8d7b-4268-b3fd-32fc10329475",
+        "message": "Report already received for card '49f148c0-8d7b-4268-b3fd-32fc10329475'"
       }
     },
     {
       "status": 409,
       "body": {
         "statusCode": 409,
-        "cardId": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
-        "message": "Report already received for card 'bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99'"
+        "cardId": "49f148c0-8d7b-4268-b3fd-32fc10329475",
+        "message": "Report already received for card '49f148c0-8d7b-4268-b3fd-32fc10329475'"
       }
     },
     {
       "status": 409,
       "body": {
         "statusCode": 409,
-        "cardId": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
-        "message": "Report already received for card 'bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99'"
+        "cardId": "49f148c0-8d7b-4268-b3fd-32fc10329475",
+        "message": "Report already received for card '49f148c0-8d7b-4268-b3fd-32fc10329475'"
       }
     },
     {
       "status": 409,
       "body": {
         "statusCode": 409,
-        "cardId": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
-        "message": "Report already received for card 'bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99'"
+        "cardId": "49f148c0-8d7b-4268-b3fd-32fc10329475",
+        "message": "Report already received for card '49f148c0-8d7b-4268-b3fd-32fc10329475'"
+      }
+    },
+    {
+      "status": 409,
+      "body": {
+        "statusCode": 409,
+        "cardId": "49f148c0-8d7b-4268-b3fd-32fc10329475",
+        "message": "Report already received for card '49f148c0-8d7b-4268-b3fd-32fc10329475'"
       }
     }
   ]
