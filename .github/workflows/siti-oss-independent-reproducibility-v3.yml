@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/siti-oss-independent-reproducibility-v3.yml'
       - 'qa/siti-oss-evidence-closure-v3/reproduce_v3.sh'
+      - 'qa/siti-oss-evidence-closure-v3/rerun-v3.txt'
   workflow_dispatch:
 
 permissions:
