@@ -9,6 +9,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: siti-oss-evidence-closure-v2-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   evidence-closure-wrapper:
     runs-on: ubuntu-24.04
@@ -45,10 +49,16 @@ jobs:
           python3 - <<'PY'
           from pathlib import Path
           import os
+          import subprocess
           import textwrap
 
-          source = Path(os.environ['BOOT']) / '.github/workflows/siti-oss-evidence-closure-v2-pure.yml'
-          lines = source.read_text(encoding='utf-8').splitlines()
+          source_commit = 'a3ddd632b5985adf1a7abefa9ba32b376e69c10e'
+          source_path = '.github/workflows/siti-oss-evidence-closure-v2-pure.yml'
+          source_text = subprocess.check_output(
+              ['git', '-C', os.environ['BOOT'], 'show', f'{source_commit}:{source_path}'],
+              text=True,
+          )
+          lines = source_text.splitlines()
           marker = next(i for i, line in enumerate(lines) if line.strip() == 'run: |')
           script = textwrap.dedent('\n'.join(lines[marker + 1:])) + '\n'
 
@@ -88,6 +98,12 @@ jobs:
 
           output = Path('/tmp/siti-oss-evidence-closure-v2.sh')
           output.write_text(script, encoding='utf-8')
-          print({'source': str(source), 'output': str(output), 'bytes': output.stat().st_size, 'focused_unit_required': True})
+          print({
+              'source_commit': source_commit,
+              'source_path': source_path,
+              'output': str(output),
+              'bytes': output.stat().st_size,
+              'focused_unit_required': True,
+          })
           PY
           bash /tmp/siti-oss-evidence-closure-v2.sh
