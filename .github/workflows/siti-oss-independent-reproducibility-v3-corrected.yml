@@ -25,18 +25,19 @@ jobs:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           fetch-depth: 0
 
-      - name: Normalize ExifTool group-prefixed JSON keys in the closure script
+      - name: Apply strict evidence-harness corrections
         shell: bash
         run: |
           python3 - <<'PY'
           from pathlib import Path
           path = Path('qa/siti-oss-evidence-closure-v3/reproduce_v3.sh')
           text = path.read_text(encoding='utf-8')
-          old = (
+
+          old_exif = (
               "source_keys = {key.split(']')[-1].lstrip(':'): value for key, value in source.items()}\n"
               "stored_keys = {key.split(']')[-1].lstrip(':'): value for key, value in stored.items()}\n"
           )
-          new = (
+          new_exif = (
               "def bare_tag(key):\n"
               "    if ':' in key:\n"
               "        return key.rsplit(':', 1)[-1]\n"
@@ -46,9 +47,27 @@ jobs:
               "source_keys = {bare_tag(key): value for key, value in source.items()}\n"
               "stored_keys = {bare_tag(key): value for key, value in stored.items()}\n"
           )
-          if text.count(old) != 1:
-              raise RuntimeError(f'expected one ExifTool normalization anchor, found {text.count(old)}')
-          path.write_text(text.replace(old, new, 1), encoding='utf-8')
+          if text.count(old_exif) != 1:
+              raise RuntimeError(f'expected one ExifTool normalization anchor, found {text.count(old_exif)}')
+          text = text.replace(old_exif, new_exif, 1)
+
+          old_capture = '''  set +e
+  printf '%s\\n' "$status" > "$ART/workflow-exit.txt"
+  find "$ART" -type f -printf '%P\\t%s bytes\\n' | sort > "$ART/ARTIFACT-INDEX.txt"
+  find "$ART" -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum > "$ART/SHA256SUMS.txt"
+'''
+          new_capture = '''  set +e
+  exec >/dev/null 2>&1
+  sleep 1
+  printf '%s\\n' "$status" > "$ART/workflow-exit.txt"
+  (cd "$ART" && find . -type f -printf '%P\\t%s bytes\\n' | sort) > "$ART/ARTIFACT-INDEX.txt"
+  (cd "$ART" && find . -type f ! -name SHA256SUMS.txt -print0 | sort -z | xargs -0 sha256sum) > "$ART/SHA256SUMS.txt"
+'''
+          if text.count(old_capture) != 1:
+              raise RuntimeError(f'expected one capture anchor, found {text.count(old_capture)}')
+          text = text.replace(old_capture, new_capture, 1)
+
+          path.write_text(text, encoding='utf-8')
           PY
 
       - name: Run independent reproducibility closure
@@ -59,7 +78,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: siti-oss-independent-reproducibility-v3-corrected
+          name: siti-oss-independent-reproducibility-v3-final
           path: |
             siti-oss-v3-evidence
             siti-oss-independent-reproducibility-v3.zip
