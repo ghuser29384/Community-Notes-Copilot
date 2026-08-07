@@ -1,0 +1,45 @@
+name: Siti OSS publish final evidence
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-publish-final-evidence.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish-evidence:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify preserved passing result
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s qa/siti-oss-evidence-closure-v2/results/evidence-closure-v2.zip
+          test -s qa/siti-oss-evidence-closure-v2/results/evidence-closure-v2-summary.json
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path('qa/siti-oss-evidence-closure-v2/results/evidence-closure-v2-summary.json').read_text())
+          assert data['core_pass'] is True
+          assert data['focused_unit_exit'] == 0
+          assert data['fresh_patch_application_and_builds'] is True
+          assert data['browser']['all_pass'] is True
+          assert data['concurrency']['status_counts'] == {'409': 49, '200': 1}
+          assert data['s3_contract']['pass'] is True
+          assert data['original_exif_fixture']['gps_tag_present'] is True
+          assert data['uploaded_exif']['gps_tag_present'] is False
+          print(json.dumps({'verified_result_commit':'a675a25b5919a30919468db107210b4fe7ed9701','core_pass':True},indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: siti-oss-final-evidence-closure
+          path: |
+            qa/siti-oss-evidence-closure-v2/results/evidence-closure-v2.zip
+            qa/siti-oss-evidence-closure-v2/results/evidence-closure-v2-summary.json
+          retention-days: 30
+          if-no-files-found: error
