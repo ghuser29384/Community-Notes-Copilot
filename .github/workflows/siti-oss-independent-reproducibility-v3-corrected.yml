@@ -32,18 +32,20 @@ jobs:
           from pathlib import Path
           path = Path('qa/siti-oss-evidence-closure-v3/reproduce_v3.sh')
           text = path.read_text(encoding='utf-8')
-          old = """source_keys = {key.split(']')[-1].lstrip(':'): value for key, value in source.items()}
-stored_keys = {key.split(']')[-1].lstrip(':'): value for key, value in stored.items()}
-"""
-          new = """def bare_tag(key):
-    if ':' in key:
-        return key.rsplit(':', 1)[-1]
-    if ']' in key:
-        return key.split(']', 1)[-1].strip()
-    return key
-source_keys = {bare_tag(key): value for key, value in source.items()}
-stored_keys = {bare_tag(key): value for key, value in stored.items()}
-"""
+          old = (
+              "source_keys = {key.split(']')[-1].lstrip(':'): value for key, value in source.items()}\n"
+              "stored_keys = {key.split(']')[-1].lstrip(':'): value for key, value in stored.items()}\n"
+          )
+          new = (
+              "def bare_tag(key):\n"
+              "    if ':' in key:\n"
+              "        return key.rsplit(':', 1)[-1]\n"
+              "    if ']' in key:\n"
+              "        return key.split(']', 1)[-1].strip()\n"
+              "    return key\n"
+              "source_keys = {bare_tag(key): value for key, value in source.items()}\n"
+              "stored_keys = {bare_tag(key): value for key, value in stored.items()}\n"
+          )
           if text.count(old) != 1:
               raise RuntimeError(f'expected one ExifTool normalization anchor, found {text.count(old)}')
           path.write_text(text.replace(old, new, 1), encoding='utf-8')
