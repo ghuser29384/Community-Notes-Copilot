@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-08-07T04:53:58.521Z",
+  "generatedAt": "2026-08-07T05:17:42.144Z",
   "scenarioCount": 10,
   "assertions": {
     "real_desktop_success": true,
@@ -34,7 +34,7 @@
         "hoverNone": false
       },
       "errors": 0,
-      "finalURL": "http://127.0.0.1:4200/4ebafe2c-7ede-4f8c-bd85-4e7820bbd28d/flood/thank",
+      "finalURL": "http://127.0.0.1:4200/7bed81af-2742-45c5-839b-36d9aa15437c/flood/thank",
       "reportPutCount": 1,
       "reportPatchCount": 0,
       "reportPayloads": [
@@ -45,8 +45,8 @@
             "flood_depth": 49
           },
           "sub_submission": false,
-          "text": "SITI FIX E2E no-image 2026-08-07T04:53:11.577Z",
-          "created_at": "2026-08-07T04:53:11.655Z",
+          "text": "SITI FIX E2E no-image 2026-08-07T05:16:52.183Z",
+          "created_at": "2026-08-07T05:16:52.293Z",
           "image_url": "",
           "location": {
             "lat": "-6.170100",
@@ -81,7 +81,7 @@
         "hoverNone": true
       },
       "errors": 0,
-      "finalURL": "http://127.0.0.1:4200/3c906910-0a5b-45f2-a701-73cecd1c5d7b/flood/thank",
+      "finalURL": "http://127.0.0.1:4200/ebb4da71-2e2b-467e-a825-deb23079de1c/flood/thank",
       "reportPutCount": 1,
       "reportPatchCount": 0,
       "reportPayloads": [
@@ -92,8 +92,8 @@
             "flood_depth": 49
           },
           "sub_submission": false,
-          "text": "SITI FIX E2E no-image 2026-08-07T04:53:15.893Z",
-          "created_at": "2026-08-07T04:53:15.971Z",
+          "text": "SITI FIX E2E no-image 2026-08-07T05:16:56.800Z",
+          "created_at": "2026-08-07T05:16:56.909Z",
           "image_url": "",
           "location": {
             "lat": "-6.170100",
@@ -128,7 +128,7 @@
         "hoverNone": false
       },
       "errors": 0,
-      "finalURL": "http://127.0.0.1:4200/0c3ad863-a8f8-4558-8e93-ffbe47b8b794/flood/thank",
+      "finalURL": "http://127.0.0.1:4200/bb5a2b70-0a84-4359-8c95-ab44cf019637/flood/thank",
       "reportPutCount": 1,
       "reportPatchCount": 0,
       "reportPayloads": [
@@ -139,8 +139,8 @@
             "flood_depth": 49
           },
           "sub_submission": false,
-          "text": "SITI FIX E2E no-image 2026-08-07T04:53:20.027Z",
-          "created_at": "2026-08-07T04:53:20.104Z",
+          "text": "SITI FIX E2E no-image 2026-08-07T05:17:01.434Z",
+          "created_at": "2026-08-07T05:17:01.543Z",
           "image_url": "",
           "location": {
             "lat": "-6.170100",
@@ -175,7 +175,7 @@
         "hoverNone": false
       },
       "errors": 0,
-      "finalURL": "http://127.0.0.1:4200/6d968d41-b45e-4895-8c12-38e8f6d08615/flood/thank",
+      "finalURL": "http://127.0.0.1:4200/cc38e9cd-2051-46c4-864c-23ec02bdbd15/flood/thank",
       "reportPutCount": 1,
       "reportPatchCount": 0,
       "reportPayloads": [
@@ -186,8 +186,8 @@
             "flood_depth": 49
           },
           "sub_submission": false,
-          "text": "SITI FIX E2E no-image 2026-08-07T04:53:24.209Z",
-          "created_at": "2026-08-07T04:53:24.305Z",
+          "text": "SITI FIX E2E no-image 2026-08-07T05:17:05.966Z",
+          "created_at": "2026-08-07T05:17:06.076Z",
           "image_url": "",
           "location": {
             "lat": "-6.170100",
@@ -222,7 +222,7 @@
         "hoverNone": false
       },
       "errors": 0,
-      "finalURL": "http://127.0.0.1:4200/1234ea0f-232b-4e9d-b14f-889148dbe739/flood/thank",
+      "finalURL": "http://127.0.0.1:4200/c80d7b06-8612-41f1-908b-8025f5ee94bc/flood/thank",
       "reportPutCount": 2,
       "reportPatchCount": 0,
       "reportPayloads": [
@@ -233,8 +233,8 @@
             "flood_depth": 49
           },
           "sub_submission": false,
-          "text": "SITI FIX E2E no-image 2026-08-07T04:53:28.426Z",
-          "created_at": "2026-08-07T04:53:28.504Z",
+          "text": "SITI FIX E2E no-image 2026-08-07T05:17:10.332Z",
+          "created_at": "2026-08-07T05:17:10.442Z",
           "image_url": "",
           "location": {
             "lat": "-6.170100",
@@ -250,8 +250,8 @@
             "flood_depth": 49
           },
           "sub_submission": false,
-          "text": "SITI FIX E2E no-image 2026-08-07T04:53:28.426Z",
-          "created_at": "2026-08-07T04:53:30.320Z",
+          "text": "SITI FIX E2E no-image 2026-08-07T05:17:10.332Z",
+          "created_at": "2026-08-07T05:17:12.275Z",
           "image_url": "",
           "location": {
             "lat": "-6.170100",
@@ -286,7 +286,7 @@
         "hoverNone": false
       },
       "errors": 0,
-      "finalURL": "http://127.0.0.1:4200/d3cf2a7d-f941-416f-b764-28e29314b3b1/flood/thank",
+      "finalURL": "http://127.0.0.1:4200/c54339fd-5395-4f0a-9038-fc03e8c7d362/flood/thank",
       "reportPutCount": 1,
       "reportPatchCount": 0,
       "reportPayloads": [
@@ -297,8 +297,8 @@
             "flood_depth": 49
           },
           "sub_submission": false,
-          "text": "SITI FIX E2E no-image 2026-08-07T04:53:34.308Z",
-          "created_at": "2026-08-07T04:53:34.387Z",
+          "text": "SITI FIX E2E no-image 2026-08-07T05:17:16.515Z",
+          "created_at": "2026-08-07T05:17:16.625Z",
           "image_url": "",
           "location": {
             "lat": "-6.170100",
@@ -314,7 +314,7 @@
         "status": 200,
         "body": {
           "statusCode": 200,
-          "cardId": "d3cf2a7d-f941-416f-b764-28e29314b3b1",
+          "cardId": "c54339fd-5395-4f0a-9038-fc03e8c7d362",
           "created": true
         }
       },
@@ -340,7 +340,7 @@
         "hoverNone": false
       },
       "errors": 0,
-      "finalURL": "http://127.0.0.1:4200/85dcc97b-9007-4d96-a438-97dee75ef01c/flood/thank",
+      "finalURL": "http://127.0.0.1:4200/4d835d03-2f8a-4569-8adb-40e79cd2578b/flood/thank",
       "reportPutCount": 1,
       "reportPatchCount": 1,
       "reportPayloads": [
@@ -351,9 +351,9 @@
             "flood_depth": 49
           },
           "sub_submission": false,
-          "text": "SITI FIX E2E valid 2026-08-07T04:53:39.359Z",
-          "created_at": "2026-08-07T04:53:39.437Z",
-          "image_url": "85dcc97b-9007-4d96-a438-97dee75ef01c",
+          "text": "SITI FIX E2E valid 2026-08-07T05:17:21.880Z",
+          "created_at": "2026-08-07T05:17:21.991Z",
+          "image_url": "4d835d03-2f8a-4569-8adb-40e79cd2578b",
           "location": {
             "lat": "-6.170100",
             "lng": "106.831000"
@@ -363,12 +363,12 @@
         }
       ],
       "reportPersisted": true,
-      "reportImageURL": "https://127.0.0.1:9000/petabencana-image-uploads/85dcc97b-9007-4d96-a438-97dee75ef01c.png",
+      "reportImageURL": "https://127.0.0.1:9000/petabencana-image-uploads/4d835d03-2f8a-4569-8adb-40e79cd2578b.png",
       "acceptedThenLost": null,
       "imageErrors": [],
       "s3Uploads": [
         {
-          "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/85dcc97b-9007-4d96-a438-97dee75ef01c.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T045338Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=94d7465de777d921df83aeb8de744abc14de2c5cec81706aa74e9d548aa6ef37",
+          "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/4d835d03-2f8a-4569-8adb-40e79cd2578b.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T051720Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=5e8084cff2a7073e615db91dfdc9c0fad0addd844e3341c1e7483dce8c6699e8",
           "signedHeaders": "content-type;host",
           "contentType": "image/png",
           "bytes": 89,
@@ -381,7 +381,7 @@
       "storageResponses": [
         {
           "status": 200,
-          "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/85dcc97b-9007-4d96-a438-97dee75ef01c.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T045338Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=94d7465de777d921df83aeb8de744abc14de2c5cec81706aa74e9d548aa6ef37",
+          "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/4d835d03-2f8a-4569-8adb-40e79cd2578b.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T051720Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=5e8084cff2a7073e615db91dfdc9c0fad0addd844e3341c1e7483dce8c6699e8",
           "contentType": null
         }
       ],
@@ -404,7 +404,7 @@
         "hoverNone": false
       },
       "errors": 0,
-      "finalURL": "http://127.0.0.1:4200/8d4e4a76-1c83-4f83-aef0-90d53495ef6e/flood/thank",
+      "finalURL": "http://127.0.0.1:4200/a3f83a3e-85ad-4bc6-bea6-921d7c9c4ccb/flood/thank",
       "reportPutCount": 1,
       "reportPatchCount": 0,
       "reportPayloads": [
@@ -415,8 +415,8 @@
             "flood_depth": 49
           },
           "sub_submission": false,
-          "text": "SITI FIX E2E disguised 2026-08-07T04:53:44.425Z",
-          "created_at": "2026-08-07T04:53:44.504Z",
+          "text": "SITI FIX E2E disguised 2026-08-07T05:17:27.283Z",
+          "created_at": "2026-08-07T05:17:27.374Z",
           "image_url": "",
           "location": {
             "lat": "-6.170100",
@@ -453,7 +453,7 @@
         "hoverNone": false
       },
       "errors": 0,
-      "finalURL": "http://127.0.0.1:4200/e83e3a08-2e89-4ff3-8741-96da54a2d704/flood/thank",
+      "finalURL": "http://127.0.0.1:4200/43b6ae3d-469a-4c41-8a02-ce6aecfa8a95/flood/thank",
       "reportPutCount": 1,
       "reportPatchCount": 0,
       "reportPayloads": [
@@ -464,8 +464,8 @@
             "flood_depth": 49
           },
           "sub_submission": false,
-          "text": "SITI FIX E2E oversized 2026-08-07T04:53:51.525Z",
-          "created_at": "2026-08-07T04:53:51.603Z",
+          "text": "SITI FIX E2E oversized 2026-08-07T05:17:34.830Z",
+          "created_at": "2026-08-07T05:17:34.924Z",
           "image_url": "",
           "location": {
             "lat": "-6.170100",
@@ -502,7 +502,7 @@
         "hoverNone": false
       },
       "errors": 0,
-      "finalURL": "http://127.0.0.1:4200/26375ef8-c583-47ea-9e7f-439429975c86/flood/thank",
+      "finalURL": "http://127.0.0.1:4200/39cdd831-8215-4e0d-95c5-a413d0311dcb/flood/thank",
       "reportPutCount": 1,
       "reportPatchCount": 1,
       "reportPayloads": [
@@ -513,9 +513,9 @@
             "flood_depth": 49
           },
           "sub_submission": false,
-          "text": "SITI FIX E2E exif 2026-08-07T04:53:56.558Z",
-          "created_at": "2026-08-07T04:53:56.636Z",
-          "image_url": "26375ef8-c583-47ea-9e7f-439429975c86",
+          "text": "SITI FIX E2E exif 2026-08-07T05:17:40.166Z",
+          "created_at": "2026-08-07T05:17:40.257Z",
+          "image_url": "39cdd831-8215-4e0d-95c5-a413d0311dcb",
           "location": {
             "lat": "-6.170100",
             "lng": "106.831000"
@@ -525,12 +525,12 @@
         }
       ],
       "reportPersisted": true,
-      "reportImageURL": "https://127.0.0.1:9000/petabencana-image-uploads/26375ef8-c583-47ea-9e7f-439429975c86.jpeg",
+      "reportImageURL": "https://127.0.0.1:9000/petabencana-image-uploads/39cdd831-8215-4e0d-95c5-a413d0311dcb.jpeg",
       "acceptedThenLost": null,
       "imageErrors": [],
       "s3Uploads": [
         {
-          "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/26375ef8-c583-47ea-9e7f-439429975c86.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T045355Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=fb8147ad358fa3cecfc525adc8d70f2f48c9bb4f192f9b9106056828f6ba751b",
+          "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/39cdd831-8215-4e0d-95c5-a413d0311dcb.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T051739Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=366838f3ed333366f172827c4779891aa1505f781d8ac8e96e231098d84b1d64",
           "signedHeaders": "content-type;host",
           "contentType": "image/jpeg",
           "bytes": 761,
@@ -543,7 +543,7 @@
       "storageResponses": [
         {
           "status": 200,
-          "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/26375ef8-c583-47ea-9e7f-439429975c86.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T045355Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=fb8147ad358fa3cecfc525adc8d70f2f48c9bb4f192f9b9106056828f6ba751b",
+          "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/39cdd831-8215-4e0d-95c5-a413d0311dcb.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T051739Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=366838f3ed333366f172827c4779891aa1505f781d8ac8e96e231098d84b1d64",
           "contentType": null
         }
       ],

@@ -1,5 +1,5 @@
 {
-  "tested_head": "1101775ed5135034c24d4272337a7a1a2bd37826",
+  "tested_head": "d3f97708468506d5cd5ea2984805e31fa23be4c8",
   "exact_public_sources": {
     "schema": "091229bff2a299c31b814979008ebc6df7b428e8",
     "server": "933f345801340027181be21d24671146e3785701",
@@ -25,7 +25,7 @@
     "all_pass": true
   },
   "concurrency": {
-    "card_id": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+    "card_id": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
     "report_mode": "real",
     "attempts": 50,
     "status_counts": {
@@ -40,23 +40,23 @@
         "status": 409,
         "body": {
           "statusCode": 409,
-          "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
-          "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+          "cardId": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
+          "message": "Report already received for card 'bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99'"
         }
       },
       {
         "status": 409,
         "body": {
           "statusCode": 409,
-          "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
-          "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+          "cardId": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
+          "message": "Report already received for card 'bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99'"
         }
       },
       {
         "status": 200,
         "body": {
           "statusCode": 200,
-          "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+          "cardId": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
           "created": true
         }
       },
@@ -64,76 +64,76 @@
         "status": 409,
         "body": {
           "statusCode": 409,
-          "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
-          "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+          "cardId": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
+          "message": "Report already received for card 'bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99'"
         }
       },
       {
         "status": 409,
         "body": {
           "statusCode": 409,
-          "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
-          "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+          "cardId": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
+          "message": "Report already received for card 'bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99'"
         }
       },
       {
         "status": 409,
         "body": {
           "statusCode": 409,
-          "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
-          "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+          "cardId": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
+          "message": "Report already received for card 'bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99'"
         }
       },
       {
         "status": 409,
         "body": {
           "statusCode": 409,
-          "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
-          "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+          "cardId": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
+          "message": "Report already received for card 'bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99'"
         }
       },
       {
         "status": 409,
         "body": {
           "statusCode": 409,
-          "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
-          "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+          "cardId": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
+          "message": "Report already received for card 'bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99'"
         }
       },
       {
         "status": 409,
         "body": {
           "statusCode": 409,
-          "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
-          "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+          "cardId": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
+          "message": "Report already received for card 'bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99'"
         }
       },
       {
         "status": 409,
         "body": {
           "statusCode": 409,
-          "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
-          "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+          "cardId": "bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99",
+          "message": "Report already received for card 'bbc2303a-1c2d-4d2b-9bc6-2511cbaf1b99'"
         }
       }
     ]
   },
   "s3_contract": {
-    "generatedAt": "2026-08-07T04:53:58.614Z",
+    "generatedAt": "2026-08-07T05:17:42.243Z",
     "matching": {
       "status": 200,
-      "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/eda8953a-d4e3-4b20-9892-dfd8c17ae80f.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T045358Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=c19592da9e070fb7778e5f21f30acf5d02c2ebb82a7011fb58a21a3b018bfc52",
+      "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/65232d8e-d509-4317-971c-81df31fcfa19.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T051742Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=05335a53d9e28c979845dd8932052b36831885da78238b6d5a6d0c888237cee7",
       "responseText": ""
     },
     "mismatched": {
       "status": 403,
-      "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/64cfa47e-37a3-4f86-bb1b-6009dae44890.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T045358Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=f56deaea50eeaf4d52d87c3d2919b995d41e5b6e65b007035f31fdbe4da00988",
-      "responseText": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Error><Code>SignatureDoesNotMatch</Code><Message>The request signature we calculated does not match the signature you provided. Check your key and signing method.</Message><Key>originals/64cfa47e-37a3-4f86-bb1b-6009dae44890.png</Key><BucketName>petabencana-image-uploads</BucketName><Resource>/petabencana-image-uploads/originals/64cfa47e-37a3-4f86-bb1b-6009dae44890.png</Resource><RequestId>18C96CE07A26E75E</RequestId><HostId>dd9025bab4ad464b049177c95eb6ebf374d3b3fd1af9251148b658df7ac2e3e8</HostId></Error>"
+      "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/d4f30705-ad3f-42fd-809c-8eca5a04c983.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T051742Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=36c7ebdeb71ead9a2e386117b26f1df5b7d7644212bfd4a69293af06cefb8a77",
+      "responseText": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Error><Code>SignatureDoesNotMatch</Code><Message>The request signature we calculated does not match the signature you provided. Check your key and signing method.</Message><Key>originals/d4f30705-ad3f-42fd-809c-8eca5a04c983.png</Key><BucketName>petabencana-image-uploads</BucketName><Resource>/petabencana-image-uploads/originals/d4f30705-ad3f-42fd-809c-8eca5a04c983.png</Resource><RequestId>18C96E2BF0D55FC2</RequestId><HostId>dd9025bab4ad464b049177c95eb6ebf374d3b3fd1af9251148b658df7ac2e3e8</HostId></Error>"
     },
     "omitted": {
       "status": 400,
-      "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/408e328e-29ce-4d06-8254-0fdbae477f3b.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T045358Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=522b3ce131c0766accdb835c51fe6519f60fe76c26f9a1333523d0023159c8c0",
-      "responseText": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Error><Code>AccessDenied</Code><Message>There were headers present in the request which were not signed</Message><Key>originals/408e328e-29ce-4d06-8254-0fdbae477f3b.png</Key><BucketName>petabencana-image-uploads</BucketName><Resource>/petabencana-image-uploads/originals/408e328e-29ce-4d06-8254-0fdbae477f3b.png</Resource><RequestId>18C96CE07A8B5216</RequestId><HostId>dd9025bab4ad464b049177c95eb6ebf374d3b3fd1af9251148b658df7ac2e3e8</HostId></Error>"
+      "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/c2cd3841-f527-4429-9a0c-ee4f3be10938.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T051742Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=da2d2ef236e8c308bd01a7d0c931c43ef9205fbae6533a16bb6e6b0636ab0969",
+      "responseText": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Error><Code>AccessDenied</Code><Message>There were headers present in the request which were not signed</Message><Key>originals/c2cd3841-f527-4429-9a0c-ee4f3be10938.png</Key><BucketName>petabencana-image-uploads</BucketName><Resource>/petabencana-image-uploads/originals/c2cd3841-f527-4429-9a0c-ee4f3be10938.png</Resource><RequestId>18C96E2BF1718004</RequestId><HostId>dd9025bab4ad464b049177c95eb6ebf374d3b3fd1af9251148b658df7ac2e3e8</HostId></Error>"
     },
     "pass": true
   },
@@ -161,26 +161,26 @@
     "object_count": 3,
     "objects": [
       {
-        "key": "originals/26375ef8-c583-47ea-9e7f-439429975c86.jpeg",
+        "key": "originals/39cdd831-8215-4e0d-95c5-a413d0311dcb.jpeg",
         "size": 761,
         "content_type": "image/jpeg",
         "etag": "\"1b208feeb48d474f0c2bf21a313c56a1\""
       },
       {
-        "key": "originals/85dcc97b-9007-4d96-a438-97dee75ef01c.png",
+        "key": "originals/4d835d03-2f8a-4569-8adb-40e79cd2578b.png",
         "size": 89,
         "content_type": "image/png",
         "etag": "\"0dde272d34880ce56a4e26b44abab97a\""
       },
       {
-        "key": "originals/eda8953a-d4e3-4b20-9892-dfd8c17ae80f.png",
+        "key": "originals/65232d8e-d509-4317-971c-81df31fcfa19.png",
         "size": 30,
         "content_type": "image/png",
         "etag": "\"e18e99074b39a4ceddad8de14fa180a3\""
       }
     ]
   },
-  "focused_unit_exit": 1,
+  "focused_unit_exit": 0,
   "fresh_patch_application_and_builds": true,
-  "core_pass": false
+  "core_pass": true
 }
