@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/siti-oss-evidence-closure-v2-wrapper.yml'
+      - 'qa/siti-oss-evidence-closure-v2/patch_audit_v3.py'
   workflow_dispatch:
 
 permissions:
@@ -83,44 +84,11 @@ jobs:
               1,
           )
 
-          final_harness_command = """SITI_BROWSER_HARNESS="$REPO/runner/audit-v2.mjs" \\
-            python qa/siti-oss-highest/patch_final_browser_harness.py \\
-            > artifacts/logs/patch-final-harness.log
-          SITI_BROWSER_HARNESS="$REPO/runner/audit-v2.mjs" \\
-            python qa/siti-oss-evidence-closure-v2/patch_audit_v2.py \\
-            > artifacts/logs/patch-evidence-closure-v2.log
-          """
-          adapted_harness_command = """SITI_BROWSER_HARNESS="$REPO/runner/audit-v2.mjs" \\
-            python qa/siti-oss-highest/patch_final_browser_harness.py \\
-            > artifacts/logs/patch-final-harness.log
-          python - <<'PY2'
-          from pathlib import Path
-          path = Path('qa/siti-oss-evidence-closure-v2/patch_audit_v2.py')
-          text = path.read_text(encoding='utf-8')
-          old = """  const context = await browser.newContext({
-            viewport: scenario.viewport || { width: 1365, height: 900 },
-            geolocation: { latitude: -6.175392, longitude: 106.827153 },
-            permissions: ['geolocation'],
-          });"""
-          styled = """  const context = await browser.newContext({
-            viewport: scenario.viewport || { width: 1365, height: 900 },
-            isMobile: Boolean(scenario.viewport && scenario.viewport.width <= 480),
-            hasTouch: Boolean(scenario.viewport && scenario.viewport.width <= 480),
-            deviceScaleFactor: scenario.viewport && scenario.viewport.width <= 480 ? 2 : 1,
-            geolocation: { latitude: -6.175392, longitude: 106.827153 },
-            permissions: ['geolocation'],
-          });"""
-          if text.count(old) != 1:
-              raise RuntimeError(f'expected one original mobile anchor in helper, found {text.count(old)}')
-          path.write_text(text.replace(old, styled, 1), encoding='utf-8')
-          PY2
-          SITI_BROWSER_HARNESS="$REPO/runner/audit-v2.mjs" \\
-            python qa/siti-oss-evidence-closure-v2/patch_audit_v2.py \\
-            > artifacts/logs/patch-evidence-closure-v2.log
-          """
-          if script.count(final_harness_command) != 1:
-              raise RuntimeError(f'expected one final harness command block, found {script.count(final_harness_command)}')
-          script = script.replace(final_harness_command, adapted_harness_command, 1)
+          old_invocation = 'python qa/siti-oss-evidence-closure-v2/patch_audit_v2.py'
+          new_invocation = 'python qa/siti-oss-evidence-closure-v2/patch_audit_v3.py'
+          if script.count(old_invocation) != 1:
+              raise RuntimeError(f'expected one v2 helper invocation, found {script.count(old_invocation)}')
+          script = script.replace(old_invocation, new_invocation, 1)
 
           core_tail = """    storage['object_count'] >= 2 and
               result['fresh_patch_application_and_builds']
@@ -143,7 +111,7 @@ jobs:
               'output': str(output),
               'bytes': output.stat().st_size,
               'focused_unit_required': True,
-              'styled_mobile_anchor_adapted': True,
+              'helper': new_invocation,
           })
           PY
           bash /tmp/siti-oss-evidence-closure-v2.sh
