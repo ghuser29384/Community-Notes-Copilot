@@ -1,0 +1,24 @@
+{
+  "bucket": "petabencana-image-uploads",
+  "object_count": 3,
+  "objects": [
+    {
+      "key": "originals/26375ef8-c583-47ea-9e7f-439429975c86.jpeg",
+      "size": 761,
+      "content_type": "image/jpeg",
+      "etag": "\"1b208feeb48d474f0c2bf21a313c56a1\""
+    },
+    {
+      "key": "originals/85dcc97b-9007-4d96-a438-97dee75ef01c.png",
+      "size": 89,
+      "content_type": "image/png",
+      "etag": "\"0dde272d34880ce56a4e26b44abab97a\""
+    },
+    {
+      "key": "originals/eda8953a-d4e3-4b20-9892-dfd8c17ae80f.png",
+      "size": 30,
+      "content_type": "image/png",
+      "etag": "\"e18e99074b39a4ceddad8de14fa180a3\""
+    }
+  ]
+}

@@ -1,0 +1,553 @@
+{
+  "generatedAt": "2026-08-07T04:53:58.521Z",
+  "scenarioCount": 10,
+  "assertions": {
+    "real_desktop_success": true,
+    "real_mobile_device_success": true,
+    "training_mode_success": true,
+    "double_submit_one_put": true,
+    "network_drop_retry": true,
+    "accepted_response_loss_reconciled": true,
+    "valid_image_real_storage": true,
+    "signed_content_type_bound": true,
+    "disguised_image_blocked": true,
+    "oversized_image_blocked": true,
+    "true_exif_gps_removed": true,
+    "no_page_errors": true,
+    "no_flow_errors": true
+  },
+  "scenarioResults": [
+    {
+      "id": "real-desktop-success",
+      "reportType": "real",
+      "deviceName": null,
+      "viewport": {
+        "width": 1365,
+        "height": 900
+      },
+      "clientProfile": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/139.0.7258.5 Safari/537.36",
+        "maxTouchPoints": 0,
+        "innerWidth": 1365,
+        "innerHeight": 900,
+        "coarsePointer": false,
+        "hoverNone": false
+      },
+      "errors": 0,
+      "finalURL": "http://127.0.0.1:4200/4ebafe2c-7ede-4f8c-bd85-4e7820bbd28d/flood/thank",
+      "reportPutCount": 1,
+      "reportPatchCount": 0,
+      "reportPayloads": [
+        {
+          "disaster_type": "flood",
+          "card_data": {
+            "report_type": "flood",
+            "flood_depth": 49
+          },
+          "sub_submission": false,
+          "text": "SITI FIX E2E no-image 2026-08-07T04:53:11.577Z",
+          "created_at": "2026-08-07T04:53:11.655Z",
+          "image_url": "",
+          "location": {
+            "lat": "-6.170100",
+            "lng": "106.831000"
+          },
+          "partnerCode": "",
+          "is_training": false
+        }
+      ],
+      "reportPersisted": true,
+      "reportImageURL": null,
+      "acceptedThenLost": null,
+      "imageErrors": [],
+      "s3Uploads": [],
+      "storageResponses": [],
+      "pageErrors": []
+    },
+    {
+      "id": "real-mobile-device-success",
+      "reportType": "real",
+      "deviceName": "iPhone 13",
+      "viewport": {
+        "width": 390,
+        "height": 844
+      },
+      "clientProfile": {
+        "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/26.0 Mobile/15E148 Safari/604.1",
+        "maxTouchPoints": 1,
+        "innerWidth": 390,
+        "innerHeight": 844,
+        "coarsePointer": true,
+        "hoverNone": true
+      },
+      "errors": 0,
+      "finalURL": "http://127.0.0.1:4200/3c906910-0a5b-45f2-a701-73cecd1c5d7b/flood/thank",
+      "reportPutCount": 1,
+      "reportPatchCount": 0,
+      "reportPayloads": [
+        {
+          "disaster_type": "flood",
+          "card_data": {
+            "report_type": "flood",
+            "flood_depth": 49
+          },
+          "sub_submission": false,
+          "text": "SITI FIX E2E no-image 2026-08-07T04:53:15.893Z",
+          "created_at": "2026-08-07T04:53:15.971Z",
+          "image_url": "",
+          "location": {
+            "lat": "-6.170100",
+            "lng": "106.831000"
+          },
+          "partnerCode": "",
+          "is_training": false
+        }
+      ],
+      "reportPersisted": true,
+      "reportImageURL": null,
+      "acceptedThenLost": null,
+      "imageErrors": [],
+      "s3Uploads": [],
+      "storageResponses": [],
+      "pageErrors": []
+    },
+    {
+      "id": "training-desktop-success",
+      "reportType": "training",
+      "deviceName": null,
+      "viewport": {
+        "width": 1365,
+        "height": 900
+      },
+      "clientProfile": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/139.0.7258.5 Safari/537.36",
+        "maxTouchPoints": 0,
+        "innerWidth": 1365,
+        "innerHeight": 900,
+        "coarsePointer": false,
+        "hoverNone": false
+      },
+      "errors": 0,
+      "finalURL": "http://127.0.0.1:4200/0c3ad863-a8f8-4558-8e93-ffbe47b8b794/flood/thank",
+      "reportPutCount": 1,
+      "reportPatchCount": 0,
+      "reportPayloads": [
+        {
+          "disaster_type": "flood",
+          "card_data": {
+            "report_type": "flood",
+            "flood_depth": 49
+          },
+          "sub_submission": false,
+          "text": "SITI FIX E2E no-image 2026-08-07T04:53:20.027Z",
+          "created_at": "2026-08-07T04:53:20.104Z",
+          "image_url": "",
+          "location": {
+            "lat": "-6.170100",
+            "lng": "106.831000"
+          },
+          "partnerCode": "",
+          "is_training": true
+        }
+      ],
+      "reportPersisted": true,
+      "reportImageURL": null,
+      "acceptedThenLost": null,
+      "imageErrors": [],
+      "s3Uploads": [],
+      "storageResponses": [],
+      "pageErrors": []
+    },
+    {
+      "id": "double-submit-real",
+      "reportType": "real",
+      "deviceName": null,
+      "viewport": {
+        "width": 1365,
+        "height": 900
+      },
+      "clientProfile": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/139.0.7258.5 Safari/537.36",
+        "maxTouchPoints": 0,
+        "innerWidth": 1365,
+        "innerHeight": 900,
+        "coarsePointer": false,
+        "hoverNone": false
+      },
+      "errors": 0,
+      "finalURL": "http://127.0.0.1:4200/6d968d41-b45e-4895-8c12-38e8f6d08615/flood/thank",
+      "reportPutCount": 1,
+      "reportPatchCount": 0,
+      "reportPayloads": [
+        {
+          "disaster_type": "flood",
+          "card_data": {
+            "report_type": "flood",
+            "flood_depth": 49
+          },
+          "sub_submission": false,
+          "text": "SITI FIX E2E no-image 2026-08-07T04:53:24.209Z",
+          "created_at": "2026-08-07T04:53:24.305Z",
+          "image_url": "",
+          "location": {
+            "lat": "-6.170100",
+            "lng": "106.831000"
+          },
+          "partnerCode": "",
+          "is_training": false
+        }
+      ],
+      "reportPersisted": true,
+      "reportImageURL": null,
+      "acceptedThenLost": null,
+      "imageErrors": [],
+      "s3Uploads": [],
+      "storageResponses": [],
+      "pageErrors": []
+    },
+    {
+      "id": "network-drop-before-server-real",
+      "reportType": "real",
+      "deviceName": null,
+      "viewport": {
+        "width": 1365,
+        "height": 900
+      },
+      "clientProfile": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/139.0.7258.5 Safari/537.36",
+        "maxTouchPoints": 0,
+        "innerWidth": 1365,
+        "innerHeight": 900,
+        "coarsePointer": false,
+        "hoverNone": false
+      },
+      "errors": 0,
+      "finalURL": "http://127.0.0.1:4200/1234ea0f-232b-4e9d-b14f-889148dbe739/flood/thank",
+      "reportPutCount": 2,
+      "reportPatchCount": 0,
+      "reportPayloads": [
+        {
+          "disaster_type": "flood",
+          "card_data": {
+            "report_type": "flood",
+            "flood_depth": 49
+          },
+          "sub_submission": false,
+          "text": "SITI FIX E2E no-image 2026-08-07T04:53:28.426Z",
+          "created_at": "2026-08-07T04:53:28.504Z",
+          "image_url": "",
+          "location": {
+            "lat": "-6.170100",
+            "lng": "106.831000"
+          },
+          "partnerCode": "",
+          "is_training": false
+        },
+        {
+          "disaster_type": "flood",
+          "card_data": {
+            "report_type": "flood",
+            "flood_depth": 49
+          },
+          "sub_submission": false,
+          "text": "SITI FIX E2E no-image 2026-08-07T04:53:28.426Z",
+          "created_at": "2026-08-07T04:53:30.320Z",
+          "image_url": "",
+          "location": {
+            "lat": "-6.170100",
+            "lng": "106.831000"
+          },
+          "partnerCode": "",
+          "is_training": false
+        }
+      ],
+      "reportPersisted": true,
+      "reportImageURL": null,
+      "acceptedThenLost": null,
+      "imageErrors": [],
+      "s3Uploads": [],
+      "storageResponses": [],
+      "pageErrors": []
+    },
+    {
+      "id": "accepted-response-lost-real",
+      "reportType": "real",
+      "deviceName": null,
+      "viewport": {
+        "width": 1365,
+        "height": 900
+      },
+      "clientProfile": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/139.0.7258.5 Safari/537.36",
+        "maxTouchPoints": 0,
+        "innerWidth": 1365,
+        "innerHeight": 900,
+        "coarsePointer": false,
+        "hoverNone": false
+      },
+      "errors": 0,
+      "finalURL": "http://127.0.0.1:4200/d3cf2a7d-f941-416f-b764-28e29314b3b1/flood/thank",
+      "reportPutCount": 1,
+      "reportPatchCount": 0,
+      "reportPayloads": [
+        {
+          "disaster_type": "flood",
+          "card_data": {
+            "report_type": "flood",
+            "flood_depth": 49
+          },
+          "sub_submission": false,
+          "text": "SITI FIX E2E no-image 2026-08-07T04:53:34.308Z",
+          "created_at": "2026-08-07T04:53:34.387Z",
+          "image_url": "",
+          "location": {
+            "lat": "-6.170100",
+            "lng": "106.831000"
+          },
+          "partnerCode": "",
+          "is_training": false
+        }
+      ],
+      "reportPersisted": true,
+      "reportImageURL": null,
+      "acceptedThenLost": {
+        "status": 200,
+        "body": {
+          "statusCode": 200,
+          "cardId": "d3cf2a7d-f941-416f-b764-28e29314b3b1",
+          "created": true
+        }
+      },
+      "imageErrors": [],
+      "s3Uploads": [],
+      "storageResponses": [],
+      "pageErrors": []
+    },
+    {
+      "id": "valid-image-real",
+      "reportType": "real",
+      "deviceName": null,
+      "viewport": {
+        "width": 1365,
+        "height": 900
+      },
+      "clientProfile": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/139.0.7258.5 Safari/537.36",
+        "maxTouchPoints": 0,
+        "innerWidth": 1365,
+        "innerHeight": 900,
+        "coarsePointer": false,
+        "hoverNone": false
+      },
+      "errors": 0,
+      "finalURL": "http://127.0.0.1:4200/85dcc97b-9007-4d96-a438-97dee75ef01c/flood/thank",
+      "reportPutCount": 1,
+      "reportPatchCount": 1,
+      "reportPayloads": [
+        {
+          "disaster_type": "flood",
+          "card_data": {
+            "report_type": "flood",
+            "flood_depth": 49
+          },
+          "sub_submission": false,
+          "text": "SITI FIX E2E valid 2026-08-07T04:53:39.359Z",
+          "created_at": "2026-08-07T04:53:39.437Z",
+          "image_url": "85dcc97b-9007-4d96-a438-97dee75ef01c",
+          "location": {
+            "lat": "-6.170100",
+            "lng": "106.831000"
+          },
+          "partnerCode": "",
+          "is_training": false
+        }
+      ],
+      "reportPersisted": true,
+      "reportImageURL": "https://127.0.0.1:9000/petabencana-image-uploads/85dcc97b-9007-4d96-a438-97dee75ef01c.png",
+      "acceptedThenLost": null,
+      "imageErrors": [],
+      "s3Uploads": [
+        {
+          "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/85dcc97b-9007-4d96-a438-97dee75ef01c.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T045338Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=94d7465de777d921df83aeb8de744abc14de2c5cec81706aa74e9d548aa6ef37",
+          "signedHeaders": "content-type;host",
+          "contentType": "image/png",
+          "bytes": 89,
+          "containsAuditGPS": false,
+          "containsExifHeader": false,
+          "containsHTMLScript": false,
+          "prefixHex": "89504e470d0a1a0a0000000d49484452000000010000000108060000001f15c4890000000e49444154780162faffffff7f00000000ffff0ec8d5cc000000064944415403000a0503ffd93bf5af0000000049454e44ae426082"
+        }
+      ],
+      "storageResponses": [
+        {
+          "status": 200,
+          "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/85dcc97b-9007-4d96-a438-97dee75ef01c.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T045338Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=94d7465de777d921df83aeb8de744abc14de2c5cec81706aa74e9d548aa6ef37",
+          "contentType": null
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "id": "disguised-image-real",
+      "reportType": "real",
+      "deviceName": null,
+      "viewport": {
+        "width": 1365,
+        "height": 900
+      },
+      "clientProfile": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/139.0.7258.5 Safari/537.36",
+        "maxTouchPoints": 0,
+        "innerWidth": 1365,
+        "innerHeight": 900,
+        "coarsePointer": false,
+        "hoverNone": false
+      },
+      "errors": 0,
+      "finalURL": "http://127.0.0.1:4200/8d4e4a76-1c83-4f83-aef0-90d53495ef6e/flood/thank",
+      "reportPutCount": 1,
+      "reportPatchCount": 0,
+      "reportPayloads": [
+        {
+          "disaster_type": "flood",
+          "card_data": {
+            "report_type": "flood",
+            "flood_depth": 49
+          },
+          "sub_submission": false,
+          "text": "SITI FIX E2E disguised 2026-08-07T04:53:44.425Z",
+          "created_at": "2026-08-07T04:53:44.504Z",
+          "image_url": "",
+          "location": {
+            "lat": "-6.170100",
+            "lng": "106.831000"
+          },
+          "partnerCode": "",
+          "is_training": false
+        }
+      ],
+      "reportPersisted": true,
+      "reportImageURL": null,
+      "acceptedThenLost": null,
+      "imageErrors": [
+        "The selected file could not be decoded as a safe image."
+      ],
+      "s3Uploads": [],
+      "storageResponses": [],
+      "pageErrors": []
+    },
+    {
+      "id": "oversized-image-real",
+      "reportType": "real",
+      "deviceName": null,
+      "viewport": {
+        "width": 1365,
+        "height": 900
+      },
+      "clientProfile": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/139.0.7258.5 Safari/537.36",
+        "maxTouchPoints": 0,
+        "innerWidth": 1365,
+        "innerHeight": 900,
+        "coarsePointer": false,
+        "hoverNone": false
+      },
+      "errors": 0,
+      "finalURL": "http://127.0.0.1:4200/e83e3a08-2e89-4ff3-8741-96da54a2d704/flood/thank",
+      "reportPutCount": 1,
+      "reportPatchCount": 0,
+      "reportPayloads": [
+        {
+          "disaster_type": "flood",
+          "card_data": {
+            "report_type": "flood",
+            "flood_depth": 49
+          },
+          "sub_submission": false,
+          "text": "SITI FIX E2E oversized 2026-08-07T04:53:51.525Z",
+          "created_at": "2026-08-07T04:53:51.603Z",
+          "image_url": "",
+          "location": {
+            "lat": "-6.170100",
+            "lng": "106.831000"
+          },
+          "partnerCode": "",
+          "is_training": false
+        }
+      ],
+      "reportPersisted": true,
+      "reportImageURL": null,
+      "acceptedThenLost": null,
+      "imageErrors": [
+        "The image must be 10 MB or smaller."
+      ],
+      "s3Uploads": [],
+      "storageResponses": [],
+      "pageErrors": []
+    },
+    {
+      "id": "true-exif-gps-image-real",
+      "reportType": "real",
+      "deviceName": null,
+      "viewport": {
+        "width": 1365,
+        "height": 900
+      },
+      "clientProfile": {
+        "userAgent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/139.0.7258.5 Safari/537.36",
+        "maxTouchPoints": 0,
+        "innerWidth": 1365,
+        "innerHeight": 900,
+        "coarsePointer": false,
+        "hoverNone": false
+      },
+      "errors": 0,
+      "finalURL": "http://127.0.0.1:4200/26375ef8-c583-47ea-9e7f-439429975c86/flood/thank",
+      "reportPutCount": 1,
+      "reportPatchCount": 1,
+      "reportPayloads": [
+        {
+          "disaster_type": "flood",
+          "card_data": {
+            "report_type": "flood",
+            "flood_depth": 49
+          },
+          "sub_submission": false,
+          "text": "SITI FIX E2E exif 2026-08-07T04:53:56.558Z",
+          "created_at": "2026-08-07T04:53:56.636Z",
+          "image_url": "26375ef8-c583-47ea-9e7f-439429975c86",
+          "location": {
+            "lat": "-6.170100",
+            "lng": "106.831000"
+          },
+          "partnerCode": "",
+          "is_training": false
+        }
+      ],
+      "reportPersisted": true,
+      "reportImageURL": "https://127.0.0.1:9000/petabencana-image-uploads/26375ef8-c583-47ea-9e7f-439429975c86.jpeg",
+      "acceptedThenLost": null,
+      "imageErrors": [],
+      "s3Uploads": [
+        {
+          "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/26375ef8-c583-47ea-9e7f-439429975c86.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T045355Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=fb8147ad358fa3cecfc525adc8d70f2f48c9bb4f192f9b9106056828f6ba751b",
+          "signedHeaders": "content-type;host",
+          "contentType": "image/jpeg",
+          "bytes": 761,
+          "containsAuditGPS": false,
+          "containsExifHeader": false,
+          "containsHTMLScript": false,
+          "prefixHex": "ffd8ffe000104a46494600010100000100010000ffe201d84943435f50524f46494c45000101000001c800000000043000006d6e74725247422058595a2007e00001000100000000000061637370000000000000000000000000000000000000000000000000000000010000f6d6000100000000d32d000000000000000000000000000000000000000000000000000000000000000000000000000000000000"
+        }
+      ],
+      "storageResponses": [
+        {
+          "status": 200,
+          "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/26375ef8-c583-47ea-9e7f-439429975c86.jpeg?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T045355Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=fb8147ad358fa3cecfc525adc8d70f2f48c9bb4f192f9b9106056828f6ba751b",
+          "contentType": null
+        }
+      ],
+      "pageErrors": []
+    }
+  ]
+}

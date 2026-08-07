@@ -1,0 +1,94 @@
+{
+  "card_id": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+  "report_mode": "real",
+  "attempts": 50,
+  "status_counts": {
+    "409": 49,
+    "200": 1
+  },
+  "report_rows": 1,
+  "all_report_rows": 1,
+  "submitted_log_rows": 1,
+  "sample_results": [
+    {
+      "status": 409,
+      "body": {
+        "statusCode": 409,
+        "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+        "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+      }
+    },
+    {
+      "status": 409,
+      "body": {
+        "statusCode": 409,
+        "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+        "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+      }
+    },
+    {
+      "status": 200,
+      "body": {
+        "statusCode": 200,
+        "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+        "created": true
+      }
+    },
+    {
+      "status": 409,
+      "body": {
+        "statusCode": 409,
+        "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+        "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+      }
+    },
+    {
+      "status": 409,
+      "body": {
+        "statusCode": 409,
+        "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+        "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+      }
+    },
+    {
+      "status": 409,
+      "body": {
+        "statusCode": 409,
+        "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+        "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+      }
+    },
+    {
+      "status": 409,
+      "body": {
+        "statusCode": 409,
+        "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+        "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+      }
+    },
+    {
+      "status": 409,
+      "body": {
+        "statusCode": 409,
+        "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+        "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+      }
+    },
+    {
+      "status": 409,
+      "body": {
+        "statusCode": 409,
+        "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+        "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+      }
+    },
+    {
+      "status": 409,
+      "body": {
+        "statusCode": 409,
+        "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+        "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+      }
+    }
+  ]
+}

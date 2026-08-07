@@ -1,0 +1,186 @@
+{
+  "tested_head": "1101775ed5135034c24d4272337a7a1a2bd37826",
+  "exact_public_sources": {
+    "schema": "091229bff2a299c31b814979008ebc6df7b428e8",
+    "server": "933f345801340027181be21d24671146e3785701",
+    "reportcards": "eaec8b1a2bfe15745077c0e8ad5ff69fbdccc552"
+  },
+  "browser": {
+    "scenario_count": 10,
+    "assertions": {
+      "real_desktop_success": true,
+      "real_mobile_device_success": true,
+      "training_mode_success": true,
+      "double_submit_one_put": true,
+      "network_drop_retry": true,
+      "accepted_response_loss_reconciled": true,
+      "valid_image_real_storage": true,
+      "signed_content_type_bound": true,
+      "disguised_image_blocked": true,
+      "oversized_image_blocked": true,
+      "true_exif_gps_removed": true,
+      "no_page_errors": true,
+      "no_flow_errors": true
+    },
+    "all_pass": true
+  },
+  "concurrency": {
+    "card_id": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+    "report_mode": "real",
+    "attempts": 50,
+    "status_counts": {
+      "409": 49,
+      "200": 1
+    },
+    "report_rows": 1,
+    "all_report_rows": 1,
+    "submitted_log_rows": 1,
+    "sample_results": [
+      {
+        "status": 409,
+        "body": {
+          "statusCode": 409,
+          "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+          "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+        }
+      },
+      {
+        "status": 409,
+        "body": {
+          "statusCode": 409,
+          "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+          "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+        }
+      },
+      {
+        "status": 200,
+        "body": {
+          "statusCode": 200,
+          "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+          "created": true
+        }
+      },
+      {
+        "status": 409,
+        "body": {
+          "statusCode": 409,
+          "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+          "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+        }
+      },
+      {
+        "status": 409,
+        "body": {
+          "statusCode": 409,
+          "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+          "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+        }
+      },
+      {
+        "status": 409,
+        "body": {
+          "statusCode": 409,
+          "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+          "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+        }
+      },
+      {
+        "status": 409,
+        "body": {
+          "statusCode": 409,
+          "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+          "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+        }
+      },
+      {
+        "status": 409,
+        "body": {
+          "statusCode": 409,
+          "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+          "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+        }
+      },
+      {
+        "status": 409,
+        "body": {
+          "statusCode": 409,
+          "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+          "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+        }
+      },
+      {
+        "status": 409,
+        "body": {
+          "statusCode": 409,
+          "cardId": "f1dfaea7-3e85-4286-8af8-de6ef92c95d6",
+          "message": "Report already received for card 'f1dfaea7-3e85-4286-8af8-de6ef92c95d6'"
+        }
+      }
+    ]
+  },
+  "s3_contract": {
+    "generatedAt": "2026-08-07T04:53:58.614Z",
+    "matching": {
+      "status": 200,
+      "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/eda8953a-d4e3-4b20-9892-dfd8c17ae80f.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T045358Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=c19592da9e070fb7778e5f21f30acf5d02c2ebb82a7011fb58a21a3b018bfc52",
+      "responseText": ""
+    },
+    "mismatched": {
+      "status": 403,
+      "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/64cfa47e-37a3-4f86-bb1b-6009dae44890.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T045358Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=f56deaea50eeaf4d52d87c3d2919b995d41e5b6e65b007035f31fdbe4da00988",
+      "responseText": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Error><Code>SignatureDoesNotMatch</Code><Message>The request signature we calculated does not match the signature you provided. Check your key and signing method.</Message><Key>originals/64cfa47e-37a3-4f86-bb1b-6009dae44890.png</Key><BucketName>petabencana-image-uploads</BucketName><Resource>/petabencana-image-uploads/originals/64cfa47e-37a3-4f86-bb1b-6009dae44890.png</Resource><RequestId>18C96CE07A26E75E</RequestId><HostId>dd9025bab4ad464b049177c95eb6ebf374d3b3fd1af9251148b658df7ac2e3e8</HostId></Error>"
+    },
+    "omitted": {
+      "status": 400,
+      "url": "http://127.0.0.1:9000/petabencana-image-uploads/originals/408e328e-29ce-4d06-8254-0fdbae477f3b.png?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=minioadmin%2F20260807%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20260807T045358Z&X-Amz-Expires=900&X-Amz-SignedHeaders=content-type%3Bhost&X-Amz-Signature=522b3ce131c0766accdb835c51fe6519f60fe76c26f9a1333523d0023159c8c0",
+      "responseText": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<Error><Code>AccessDenied</Code><Message>There were headers present in the request which were not signed</Message><Key>originals/408e328e-29ce-4d06-8254-0fdbae477f3b.png</Key><BucketName>petabencana-image-uploads</BucketName><Resource>/petabencana-image-uploads/originals/408e328e-29ce-4d06-8254-0fdbae477f3b.png</Resource><RequestId>18C96CE07A8B5216</RequestId><HostId>dd9025bab4ad464b049177c95eb6ebf374d3b3fd1af9251148b658df7ac2e3e8</HostId></Error>"
+    },
+    "pass": true
+  },
+  "original_exif_fixture": {
+    "path": "runner/true-gps-exif.jpg",
+    "bytes": 772,
+    "has_exif_header": true,
+    "gps_ifd": {
+      "1": "S",
+      "2": "(6.0, 10.0, 31.41)",
+      "3": "E",
+      "4": "(106.0, 49.0, 37.71)"
+    },
+    "gps_tag_present": true
+  },
+  "uploaded_exif": {
+    "path": "artifacts/browser-v2/true-exif-gps-image-real-storage-upload-1.bin",
+    "bytes": 761,
+    "has_exif_header": false,
+    "gps_ifd": {},
+    "gps_tag_present": false
+  },
+  "minio_storage": {
+    "bucket": "petabencana-image-uploads",
+    "object_count": 3,
+    "objects": [
+      {
+        "key": "originals/26375ef8-c583-47ea-9e7f-439429975c86.jpeg",
+        "size": 761,
+        "content_type": "image/jpeg",
+        "etag": "\"1b208feeb48d474f0c2bf21a313c56a1\""
+      },
+      {
+        "key": "originals/85dcc97b-9007-4d96-a438-97dee75ef01c.png",
+        "size": 89,
+        "content_type": "image/png",
+        "etag": "\"0dde272d34880ce56a4e26b44abab97a\""
+      },
+      {
+        "key": "originals/eda8953a-d4e3-4b20-9892-dfd8c17ae80f.png",
+        "size": 30,
+        "content_type": "image/png",
+        "etag": "\"e18e99074b39a4ceddad8de14fa180a3\""
+      }
+    ]
+  },
+  "focused_unit_exit": 1,
+  "fresh_patch_application_and_builds": true,
+  "core_pass": false
+}

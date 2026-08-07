@@ -1,0 +1,7 @@
+{
+  "path": "artifacts/browser-v2/true-exif-gps-image-real-storage-upload-1.bin",
+  "bytes": 761,
+  "has_exif_header": false,
+  "gps_ifd": {},
+  "gps_tag_present": false
+}
