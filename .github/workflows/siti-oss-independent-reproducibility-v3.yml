@@ -1,0 +1,42 @@
+name: Siti OSS independent reproducibility closure v3
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-independent-reproducibility-v3.yml'
+      - 'qa/siti-oss-evidence-closure-v3/reproduce_v3.sh'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: siti-oss-independent-reproducibility-v3-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  independent-reproducibility-v3:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+
+    steps:
+      - name: Check out the exact QA head with history
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+
+      - name: Run independent reproducibility closure
+        shell: bash
+        run: bash qa/siti-oss-evidence-closure-v3/reproduce_v3.sh
+
+      - name: Upload independent reproducibility evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: siti-oss-independent-reproducibility-v3
+          path: |
+            siti-oss-v3-evidence
+            siti-oss-independent-reproducibility-v3.zip
+          if-no-files-found: error
+          retention-days: 30
