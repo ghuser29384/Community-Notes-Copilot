@@ -6,6 +6,7 @@ on:
       - '.github/workflows/siti-oss-evidence-closure-v2-wrapper.yml'
       - 'qa/siti-oss-evidence-closure-v2/patch_audit_v3.py'
       - 'qa/siti-oss-evidence-closure-v2/write_focused_specs.py'
+      - 'qa/siti-oss-evidence-closure-v2/patch_focused_specs_v2.py'
   workflow_dispatch:
 
 permissions:
@@ -99,6 +100,8 @@ jobs:
               'cd targets/reportcards\n'
               'python "$REPO/qa/siti-oss-evidence-closure-v2/write_focused_specs.py" "$REPO/targets/reportcards" '
               '> ../../artifacts/logs/write-focused-specs.log\n'
+              'python "$REPO/qa/siti-oss-evidence-closure-v2/patch_focused_specs_v2.py" "$REPO/targets/reportcards" '
+              '> ../../artifacts/logs/patch-focused-specs-v2.log\n'
               'cp src/test.ts ../../artifacts/engineering-v2/test.ts.original\n'
           )
           if script.count(focused_anchor) != 1:
@@ -134,6 +137,7 @@ jobs:
               'focused_unit_required': True,
               'helper': new_invocation,
               'focused_specs_written': True,
+              'focused_specs_patched': True,
           })
           PY
           bash /tmp/siti-oss-evidence-closure-v2.sh
