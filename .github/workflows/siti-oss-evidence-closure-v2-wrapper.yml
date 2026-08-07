@@ -5,6 +5,7 @@ on:
     paths:
       - '.github/workflows/siti-oss-evidence-closure-v2-wrapper.yml'
       - 'qa/siti-oss-evidence-closure-v2/patch_audit_v3.py'
+      - 'qa/siti-oss-evidence-closure-v2/write_focused_specs.py'
   workflow_dispatch:
 
 permissions:
@@ -90,6 +91,25 @@ jobs:
               raise RuntimeError(f'expected one v2 helper invocation, found {script.count(old_invocation)}')
           script = script.replace(old_invocation, new_invocation, 1)
 
+          focused_anchor = """cd targets/reportcards
+          cp src/test.ts ../../artifacts/engineering-v2/test.ts.original
+          """
+          focused_replacement = """cd targets/reportcards
+          python "$REPO/qa/siti-oss-evidence-closure-v2/write_focused_specs.py" \\
+            "$REPO/targets/reportcards" \\
+            > ../../artifacts/logs/write-focused-specs.log
+          cp src/test.ts ../../artifacts/engineering-v2/test.ts.original
+          """
+          if script.count(focused_anchor) != 1:
+              raise RuntimeError(f'expected one focused-test anchor, found {script.count(focused_anchor)}')
+          script = script.replace(focused_anchor, focused_replacement, 1)
+
+          old_regex = "new = r\"/(image-uploader\\\\.component\\\\.spec|location-picker\\\\.component\\\\.spec)\\\\.ts$/\""
+          new_regex = "new = r\"/(image-uploader\\\\.component\\\\.spec|location-picker\\\\.component\\\\.spec|submit-button\\\\.component\\\\.focused\\\\.spec|deck\\\\.service\\\\.focused\\\\.spec)\\\\.ts$/\""
+          if script.count(old_regex) != 1:
+              raise RuntimeError(f'expected one focused-test regex, found {script.count(old_regex)}')
+          script = script.replace(old_regex, new_regex, 1)
+
           core_tail = """    storage['object_count'] >= 2 and
               result['fresh_patch_application_and_builds']
           )
@@ -112,6 +132,7 @@ jobs:
               'bytes': output.stat().st_size,
               'focused_unit_required': True,
               'helper': new_invocation,
+              'focused_specs_written': True,
           })
           PY
           bash /tmp/siti-oss-evidence-closure-v2.sh
