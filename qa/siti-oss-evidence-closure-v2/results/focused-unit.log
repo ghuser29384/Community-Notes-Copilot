@@ -1,0 +1,121 @@
+[32m07 08 2026 04:52:43.221:INFO [karma-server]: [39mKarma v3.1.4 server started at http://0.0.0.0:9876/
+[32m07 08 2026 04:52:43.222:INFO [launcher]: [39mLaunching browsers ChromeHeadlessNoSandbox with concurrency unlimited
+[32m07 08 2026 04:52:43.226:INFO [launcher]: [39mStarting browser ChromeHeadless
+DEPRECATION WARNING [legacy-js-api]: The legacy JS API is deprecated and will be removed in Dart Sass 2.0.0.
+
+More info: https://sass-lang.com/d/legacy-js-api
+
+DEPRECATION WARNING [legacy-js-api]: The legacy JS API is deprecated and will be removed in Dart Sass 2.0.0.
+
+More info: https://sass-lang.com/d/legacy-js-api
+
+DEPRECATION WARNING [legacy-js-api]: The legacy JS API is deprecated and will be removed in Dart Sass 2.0.0.
+
+More info: https://sass-lang.com/d/legacy-js-api
+
+DEPRECATION WARNING [legacy-js-api]: The legacy JS API is deprecated and will be removed in Dart Sass 2.0.0.
+
+More info: https://sass-lang.com/d/legacy-js-api
+
+Browserslist: browsers data (caniuse-lite) is 8 months old. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+[32m07 08 2026 04:52:48.667:INFO [HeadlessChrome 150.0.0 (Linux 0.0.0)]: [39mConnected on socket X9xk84VC6oKclWV9AAAA with id 39872487
+HeadlessChrome 150.0.0 (Linux 0.0.0) ERROR: 'DEPRECATION: Setting specFilter directly on Env is deprecated and will be removed in a future version of Jasmine. Please use the specFilter option in `configure` instead.
+    at <Jasmine>
+    at createSpecFilter (http://localhost:9876/base/node_modules/karma-jasmine/lib/adapter.js?6cf71867f538f40db053c1775b2c56a83696375c:320:25)
+    at http://localhost:9876/base/node_modules/karma-jasmine/lib/adapter.js?6cf71867f538f40db053c1775b2c56a83696375c:405:1
+    at http://localhost:9876/base/node_modules/karma-jasmine/lib/adapter.js?6cf71867f538f40db053c1775b2c56a83696375c:408:3
+Note: This message will be shown only once. Set the verboseDeprecations config property to true to see every occurrence.'
+
+HeadlessChrome 150.0.0 (Linux 0.0.0) ERROR: 'DEPRECATION: Setting specFilter directly on Env is deprecated and will be removed in a future version of Jasmine. Please use the specFilter option in `configure` instead.
+    at <Jasmine>
+    at createSpecFilter (http://localhost:9876/base/node_modules/karma-jasmine/lib/adapter.js?6cf71867f538f40db053c1775b2c56a83696375c:320:25)
+    at http://localhost:9876/base/node_modules/karma-jasmine/lib/adapter.js?6cf71867f538f40db053c1775b2c56a83696375c:405:1
+    at http://localhost:9876/base/node_modules/karma-jasmine/lib/adapter.js?6cf71867f538f40db053c1775b2c56a83696375c:408:3
+Note: This message will be shown only once. Set the verboseDeprecations config property to true to see every occurrence.'
+
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 0 of 14 SUCCESS (0 secs / 0 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 1 of 14 SUCCESS (0 secs / 0.003 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 2 of 14 SUCCESS (0 secs / 0.005 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 3 of 14 SUCCESS (0 secs / 0.006 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 4 of 14 SUCCESS (0 secs / 0.007 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 5 of 14 SUCCESS (0 secs / 0.007 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 6 of 14 SUCCESS (0 secs / 0.008 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 7 of 14 SUCCESS (0 secs / 0.009 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 8 of 14 SUCCESS (0 secs / 0.011 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0) LocationPickerComponent focused candidate behavior records a selected search result immediately without requiring marker drag FAILED
+	Error: <spyOn> : could not find an object to spy upon for Marker()
+	Usage: spyOn(<object>, <methodName>)
+	    at <Jasmine>
+	    at UserContext.<anonymous> (http://localhost:9876/_karma_webpack_/main.js:740:9)
+	    at ./node_modules/zone.js/dist/zone.js.ZoneDelegate.invoke (http://localhost:9876/_karma_webpack_/polyfills.js:2870:26)
+	    at push../node_modules/zone.js/dist/zone-testing.js.ProxyZoneSpec.onInvoke (http://localhost:9876/_karma_webpack_/vendor.js:108533:39)
+	    at ./node_modules/zone.js/dist/zone.js.ZoneDelegate.invoke (http://localhost:9876/_karma_webpack_/polyfills.js:2869:52)
+	    at ./node_modules/zone.js/dist/zone.js.Zone.run (http://localhost:9876/_karma_webpack_/polyfills.js:2629:43)
+	    at runInTestZone (http://localhost:9876/_karma_webpack_/vendor.js:108754:34)
+	    at UserContext.<anonymous> (http://localhost:9876/_karma_webpack_/vendor.js:108769:20)
+	TypeError: Cannot read properties of undefined (reading 'Marker')
+	    at LocationPickerComponent.<anonymous> (http://localhost:9876/_karma_webpack_/main.js:959:58)
+	    at step (http://localhost:9876/_karma_webpack_/main.js:824:23)
+	    at Object.next (http://localhost:9876/_karma_webpack_/main.js:805:53)
+	    at fulfilled (http://localhost:9876/_karma_webpack_/main.js:796:58)
+	    at ./node_modules/zone.js/dist/zone.js.ZoneDelegate.invoke (http://localhost:9876/_karma_webpack_/polyfills.js:2870:26)
+	    at push../node_modules/zone.js/dist/zone-testing.js.ProxyZoneSpec.onInvoke (http://localhost:9876/_karma_webpack_/vendor.js:108533:39)
+	    at ./node_modules/zone.js/dist/zone.js.ZoneDelegate.invoke (http://localhost:9876/_karma_webpack_/polyfills.js:2869:52)
+	    at ./node_modules/zone.js/dist/zone.js.Zone.run (http://localhost:9876/_karma_webpack_/polyfills.js:2629:43)
+	    at http://localhost:9876/_karma_webpack_/polyfills.js:3368:34
+	    at ./node_modules/zone.js/dist/zone.js.ZoneDelegate.invokeTask (http://localhost:9876/_karma_webpack_/polyfills.js:2902:31)
+HeadlessChrome 150.0.0 (Linux 0.0.0): Executed 9 of 14 (1 FAILED) (0 secs / 0.013 secs)
+HeadlessChrome 150.0.0 (Linux 0.0.0) LocationPickerComponent focused candidate behavior records a selected search result immediately without requiring marker drag FAILED
+	Error: <spyOn> : could not find an object to spy upon for Marker()
+	Usage: spyOn(<object>, <methodName>)
+	    at <Jasmine>
+	    at UserContext.<anonymous> (http://localhost:9876/_karma_webpack_/main.js:740:9)
+	    at ./node_modules/zone.js/dist/zone.js.ZoneDelegate.invoke (http://localhost:9876/_karma_webpack_/polyfills.js:2870:26)
+	    at push../node_modules/zone.js/dist/zone-testing.js.ProxyZoneSpec.onInvoke (http://localhost:9876/_karma_webpack_/vendor.js:108533:39)
+	    at ./node_modules/zone.js/dist/zone.js.ZoneDelegate.invoke (http://localhost:9876/_karma_webpack_/polyfills.js:2869:52)
+	    at ./node_modules/zone.js/dist/zone.js.Zone.run (http://localhost:9876/_karma_webpack_/polyfills.js:2629:43)
+	    at runInTestZone (http://localhost:9876/_karma_webpack_/vendor.js:108754:34)
+	    at UserContext.<anonymous> (http://localhost:9876/_karma_webpack_/vendor.js:108769:20)
+	TypeError: Cannot read properties of undefined (reading 'Marker')
+	    at LocationPickerComponent.<anonymous> (http://localhost:9876/_karma_webpack_/main.js:959:58)
+	    at step (http://localhost:9876/_karma_webpack_/main.js:824:23)
+	    at Object.next (http://localhost:9876/_karma_webpack_/main.js:805:53)
+	    at fulfilled (http://localhost:9876/_karma_webpack_/main.js:796:58)
+	    at ./node_modules/zone.js/dist/zone.js.ZoneDelegate.invoke (http://localhost:9876/_karma_webpack_/polyfills.js:2870:26)
+	    at push../node_modules/zone.js/dist/zone-testing.js.ProxyZoneSpec.onInvoke (http://localhost:9876/_karma_webpack_/vendor.js:108533:39)
+	    at ./node_modules/zone.js/dist/zone.js.ZoneDelegate.invoke (http://localhost:9876/_karma_webpack_/polyfills.js:2869:52)
+	    at ./node_modules/zone.js/dist/zone.js.Zone.run (http://localhost:9876/_karma_webpack_/polyfills.js:2629:43)
+	    at http://localhost:9876/_karma_webpack_/polyfills.js:3368:34
+	    at ./node_modules/zone.js/dist/zone.js.ZoneDelegate.invokeTask (http://localhost:9876/_karma_webpack_/polyfills.js:2902:31)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0) LocationPickerComponent focused candidate behavior allows continuation only when a location is already stored FAILED
+	Error: <spyOn> : could not find an object to spy upon for Marker()
+	Usage: spyOn(<object>, <methodName>)
+	    at <Jasmine>
+	    at UserContext.<anonymous> (http://localhost:9876/_karma_webpack_/main.js:740:9)
+	    at ./node_modules/zone.js/dist/zone.js.ZoneDelegate.invoke (http://localhost:9876/_karma_webpack_/polyfills.js:2870:26)
+	    at push../node_modules/zone.js/dist/zone-testing.js.ProxyZoneSpec.onInvoke (http://localhost:9876/_karma_webpack_/vendor.js:108533:39)
+	    at ./node_modules/zone.js/dist/zone.js.ZoneDelegate.invoke (http://localhost:9876/_karma_webpack_/polyfills.js:2869:52)
+	    at ./node_modules/zone.js/dist/zone.js.Zone.run (http://localhost:9876/_karma_webpack_/polyfills.js:2629:43)
+	    at runInTestZone (http://localhost:9876/_karma_webpack_/vendor.js:108754:34)
+	    at UserContext.<anonymous> (http://localhost:9876/_karma_webpack_/vendor.js:108769:20)
+HeadlessChrome 150.0.0 (Linux 0.0.0): Executed 10 of 14 (2 FAILED) (0 secs / 0.014 secs)
+HeadlessChrome 150.0.0 (Linux 0.0.0) LocationPickerComponent focused candidate behavior allows continuation only when a location is already stored FAILED
+	Error: <spyOn> : could not find an object to spy upon for Marker()
+	Usage: spyOn(<object>, <methodName>)
+	    at <Jasmine>
+	    at UserContext.<anonymous> (http://localhost:9876/_karma_webpack_/main.js:740:9)
+	    at ./node_modules/zone.js/dist/zone.js.ZoneDelegate.invoke (http://localhost:9876/_karma_webpack_/polyfills.js:2870:26)
+	    at push../node_modules/zone.js/dist/zone-testing.js.ProxyZoneSpec.onInvoke (http://localhost:9876/_karma_webpack_/vendor.js:108533:39)
+	    at ./node_modules/zone.js/dist/zone.js.ZoneDelegate.invoke (http://localhost:9876/_karma_webpack_/polyfills.js:2869:52)
+	    at ./node_modules/zone.js/dist/zone.js.Zone.run (http://localhost:9876/_karma_webpack_/polyfills.js:2629:43)
+	    at runInTestZone (http://localhost:9876/_karma_webpack_/vendor.js:108754:34)
+	    at UserContext.<anonymous> (http://localhost:9876/_karma_webpack_/vendor.js:108769:20)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 11 of 14 (2 FAILED) (0 secs / 0.014 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 12 of 14 (2 FAILED) (0 secs / 0.016 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 13 of 14 (2 FAILED) (0 secs / 0.018 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 14 of 14 (2 FAILED) (0 secs / 0.019 secs)
+[1A[2KHeadlessChrome 150.0.0 (Linux 0.0.0): Executed 14 of 14 (2 FAILED) (0.033 secs / 0.019 secs)
+TOTAL: 2 FAILED, 12 SUCCESS
+TOTAL: 2 FAILED, 12 SUCCESS
