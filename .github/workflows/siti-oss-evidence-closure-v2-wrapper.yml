@@ -1,0 +1,78 @@
+name: Siti OSS evidence closure v2 wrapper
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/siti-oss-evidence-closure-v2-wrapper.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  evidence-closure-wrapper:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    services:
+      postgres:
+        image: postgis/postgis:13-3.4
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+
+    steps:
+      - name: Execute the evidence-closure script with MinIO compatibility patch
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          HEAD_BRANCH: ${{ github.event.pull_request.head.ref }}
+          TESTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -Eeuo pipefail
+          BOOT="$GITHUB_WORKSPACE/bootstrap"
+          git clone --single-branch --branch "$HEAD_BRANCH" \
+            "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            "$BOOT"
+          export BOOT
+          python3 - <<'PY'
+          from pathlib import Path
+          import os
+          import textwrap
+
+          source = Path(os.environ['BOOT']) / '.github/workflows/siti-oss-evidence-closure-v2-pure.yml'
+          lines = source.read_text(encoding='utf-8').splitlines()
+          marker = next(i for i, line in enumerate(lines) if line.strip() == 'run: |')
+          script = textwrap.dedent('\n'.join(lines[marker + 1:])) + '\n'
+          cors_block = """s3.put_bucket_cors(
+              Bucket=bucket,
+              CORSConfiguration={
+                  'CORSRules': [{
+                      'AllowedHeaders': ['*'],
+                      'AllowedMethods': ['GET', 'HEAD', 'PUT'],
+                      'AllowedOrigins': ['http://127.0.0.1:4200'],
+                      'ExposeHeaders': ['ETag'],
+                      'MaxAgeSeconds': 3600,
+                  }]
+              },
+          )
+          """
+          if script.count(cors_block) != 1:
+              raise RuntimeError(f'expected one MinIO-incompatible PutBucketCors block, found {script.count(cors_block)}')
+          script = script.replace(
+              cors_block,
+              "# MinIO's API-level CORS is configured by MINIO_API_CORS_ALLOW_ORIGIN;\n# its S3 PutBucketCors endpoint is not implemented in this image.\n",
+              1,
+          )
+          output = Path('/tmp/siti-oss-evidence-closure-v2.sh')
+          output.write_text(script, encoding='utf-8')
+          print({'source': str(source), 'output': str(output), 'bytes': output.stat().st_size})
+          PY
+          bash /tmp/siti-oss-evidence-closure-v2.sh
