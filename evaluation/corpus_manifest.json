@@ -1,0 +1,12 @@
+{
+  "generated_on": "2026-08-16",
+  "seed": 20260816,
+  "total_cases": 300,
+  "development_cases": 200,
+  "heldout_cases": 100,
+  "blind_comparison_cases": 50,
+  "sha256": "198b7b17aacbcabd8fcac798d81168623bc346f14fc17eb477916d2d08484588",
+  "gzip_sha256": "1478c8fdb57d10c4ee7f68eb2319506e9396b4451f2342b8fee1903cfb850e9f",
+  "synthetic_only": true,
+  "contains_real_x_content": false
+}
