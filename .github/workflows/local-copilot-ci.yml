@@ -1,0 +1,31 @@
+name: Local ephemeral copilot CI
+
+on:
+  push:
+    branches:
+      - agent/local-ephemeral-community-notes-copilot
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Compile baseline Python
+        run: make lint
+      - name: Run existing unit tests
+        run: make test
+      - name: Run existing fixture E2E
+        run: make e2e
+      - name: Check existing browser JavaScript
+        run: node --check apps/web/app/app.js
