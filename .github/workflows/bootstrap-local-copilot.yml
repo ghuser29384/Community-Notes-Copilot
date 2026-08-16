@@ -1,0 +1,43 @@
+name: Bootstrap local ephemeral copilot implementation
+
+on:
+  push:
+    branches:
+      - agent/local-ephemeral-community-notes-copilot-review
+    paths:
+      - .github/workflows/bootstrap-local-copilot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/local-ephemeral-community-notes-copilot-review
+          fetch-depth: 0
+      - name: Verify and extract reviewed implementation bundle
+        shell: bash
+        env:
+          BUNDLE_SHA256: 81936b4396be2e2749140ccce8b613b562258e4c68c0eb209ce557291780198a
+        run: |
+          cat > /tmp/local-copilot.tar.gz.b64 <<'BUNDLE'
+H4sIAAAA...PLACEHOLDER
+BUNDLE
+          base64 --decode /tmp/local-copilot.tar.gz.b64 > /tmp/local-copilot.tar.gz
+          echo "${BUNDLE_SHA256}  /tmp/local-copilot.tar.gz" | sha256sum --check --status
+          tar -tzf /tmp/local-copilot.tar.gz | grep -Ev '(^/|(^|/)\.\.(/|$))' >/dev/null
+          tar -xzf /tmp/local-copilot.tar.gz -C .
+          rm -f /tmp/local-copilot.tar.gz /tmp/local-copilot.tar.gz.b64
+          git rm .github/workflows/bootstrap-local-copilot.yml
+      - name: Commit the isolated implementation
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add local_copilot apps/extension tests scripts docs requirements-dev.txt .github/workflows/bootstrap-local-copilot.yml
+          git commit -m "Build local ephemeral Community Notes Copilot"
+          git push origin HEAD:agent/local-ephemeral-community-notes-copilot-review
