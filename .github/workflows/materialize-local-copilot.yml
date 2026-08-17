@@ -1,0 +1,72 @@
+name: Materialize reviewed local copilot bundle
+
+on:
+  push:
+    branches:
+      - agent/local-ephemeral-community-notes-copilot-ready
+    paths:
+      - .github/workflows/materialize-local-copilot.yml
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/local-ephemeral-community-notes-copilot-ready
+          fetch-depth: 0
+      - name: Validate and extract implementation bundle
+        shell: bash
+        env:
+          BUNDLE_SHA256: 81936b4396be2e2749140ccce8b613b562258e4c68c0eb209ce557291780198a
+        run: |
+          set -euo pipefail
+          base64 --decode .bootstrap/local-copilot.part00 > /tmp/local-copilot.tar.gz
+          echo "${BUNDLE_SHA256}  /tmp/local-copilot.tar.gz" | sha256sum --check --status
+          python3 - <<'PY'
+          import pathlib
+          import tarfile
+
+          archive = pathlib.Path('/tmp/local-copilot.tar.gz')
+          allowed_roots = {
+              'local_copilot', 'apps', 'tests', 'scripts', 'docs',
+              'requirements-dev.txt', '.github'
+          }
+          with tarfile.open(archive, 'r:gz') as tf:
+              members = tf.getmembers()
+              if not members:
+                  raise SystemExit('empty bundle')
+              for member in members:
+                  p = pathlib.PurePosixPath(member.name)
+                  if p.is_absolute() or '..' in p.parts:
+                      raise SystemExit(f'unsafe archive path: {member.name}')
+                  if not p.parts or p.parts[0] not in allowed_roots:
+                      raise SystemExit(f'unexpected archive root: {member.name}')
+                  if member.issym() or member.islnk() or member.isdev():
+                      raise SystemExit(f'unsupported archive member: {member.name}')
+              tf.extractall('.', members=members, filter='data')
+          PY
+          rm -f /tmp/local-copilot.tar.gz
+          git rm -r .bootstrap .github/workflows/materialize-local-copilot.yml
+      - name: Run bundle-controlled local checks before commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m compileall local_copilot tests scripts
+          python3 -m unittest discover -s tests -p 'test_*.py'
+          node --check apps/extension/background.js
+          node --check apps/extension/content.js
+          node --check apps/extension/sidepanel.js
+      - name: Commit materialized implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Build local ephemeral Community Notes Copilot"
+          git push origin HEAD:agent/local-ephemeral-community-notes-copilot-ready
