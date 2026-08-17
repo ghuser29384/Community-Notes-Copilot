@@ -1,0 +1,35 @@
+name: Export local copilot source snapshot
+
+on:
+  push:
+    branches:
+      - agent/local-ephemeral-community-notes-copilot
+    paths:
+      - .github/workflows/export-local-copilot-source.yml
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/local-ephemeral-community-notes-copilot
+          fetch-depth: 0
+      - name: Create deterministic source archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          git archive --format=tar.gz --output=community-notes-copilot-source.tar.gz HEAD
+          sha256sum community-notes-copilot-source.tar.gz > community-notes-copilot-source.tar.gz.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: community-notes-copilot-source
+          path: |
+            community-notes-copilot-source.tar.gz
+            community-notes-copilot-source.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 1
