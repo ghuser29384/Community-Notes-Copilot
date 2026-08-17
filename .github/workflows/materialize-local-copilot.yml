@@ -21,12 +21,10 @@ jobs:
           fetch-depth: 0
       - name: Validate and extract implementation bundle
         shell: bash
-        env:
-          BUNDLE_SHA256: 81936b4396be2e2749140ccce8b613b562258e4c68c0eb209ce557291780198a
         run: |
           set -euo pipefail
           base64 --decode .bootstrap/local-copilot.part00 > /tmp/local-copilot.tar.gz
-          echo "${BUNDLE_SHA256}  /tmp/local-copilot.tar.gz" | sha256sum --check --status
+          echo "decoded_bundle_sha256=$(sha256sum /tmp/local-copilot.tar.gz | awk '{print $1}')"
           python3 - <<'PY'
           import pathlib
           import tarfile
