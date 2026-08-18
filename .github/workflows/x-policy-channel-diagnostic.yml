@@ -8,7 +8,7 @@ on:
       - .github/workflows/x-policy-channel-diagnostic.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   diagnose:
@@ -16,11 +16,15 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ops/x-policy-support-channel-diagnostic-20260818
+          fetch-depth: 0
 
       - name: Inspect official X support routes without user data
         shell: bash
         run: |
           set -euo pipefail
+          rm -rf artifacts/x-policy-channel-diagnostic
           mkdir -p artifacts/x-policy-channel-diagnostic
           CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
           if [[ -z "$CHROME" ]]; then
@@ -133,3 +137,17 @@ jobs:
           path: artifacts/x-policy-channel-diagnostic
           retention-days: 1
           if-no-files-found: error
+
+      - name: Commit sanitized diagnostic summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add artifacts/x-policy-channel-diagnostic/summary.json \
+                  artifacts/x-policy-channel-diagnostic/browser-version.txt \
+                  artifacts/x-policy-channel-diagnostic/*-requested-url.txt \
+                  artifacts/x-policy-channel-diagnostic/*-curl-meta.txt \
+                  artifacts/x-policy-channel-diagnostic/*-screenshot.png
+          git commit -m "Record sanitized X policy channel diagnostic"
+          git push origin HEAD:ops/x-policy-support-channel-diagnostic-20260818
