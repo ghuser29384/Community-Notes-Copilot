@@ -1,0 +1,107 @@
+name: Diagnose X developer forum authentication
+
+on:
+  push:
+    branches:
+      - ops/x-policy-support-channel-diagnostic-20260818
+    paths:
+      - .github/workflows/x-forum-auth-diagnostic.yml
+
+permissions:
+  contents: write
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ops/x-policy-support-channel-diagnostic-20260818
+          fetch-depth: 0
+
+      - name: Inspect public Discourse authentication metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          out=artifacts/x-forum-auth-diagnostic
+          rm -rf "$out"
+          mkdir -p "$out"
+
+          curl --silent --show-error --location --max-time 30 \
+            -H 'Accept: application/json' \
+            https://devcommunity.x.com/site.json > "$out/site.json"
+          curl --silent --show-error --location --max-time 30 \
+            -H 'Accept: application/json' \
+            https://devcommunity.x.com/about.json > "$out/about.json"
+          curl --silent --show-error --location --max-time 30 \
+            -H 'Accept: application/json' \
+            https://devcommunity.x.com/session/csrf.json > "$out/csrf.json"
+          curl --silent --show-error --location --max-time 30 \
+            https://devcommunity.x.com/login > "$out/login.html"
+          curl --silent --show-error --location --max-time 30 \
+            -H 'Accept: application/json' \
+            https://devcommunity.x.com/c/dev-rules-and-policies/rules-and-policies/13.json > "$out/category.json"
+
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          import re
+
+          root = Path('artifacts/x-forum-auth-diagnostic')
+          site = json.loads((root/'site.json').read_text())
+          about = json.loads((root/'about.json').read_text())
+          category = json.loads((root/'category.json').read_text())
+          login = (root/'login.html').read_text(errors='replace')
+
+          settings = site.get('site_settings', {})
+          users = site.get('users', [])
+          auth = site.get('auth_providers') or settings.get('auth_providers') or []
+          if isinstance(auth, dict):
+              auth = list(auth.values())
+
+          def safe_provider(item):
+              if not isinstance(item, dict):
+                  return str(item)
+              return {k: item.get(k) for k in ('name','pretty_name','title','icon','frame_width','frame_height') if k in item}
+
+          summary = {
+              'base_url': 'https://devcommunity.x.com',
+              'site_title': site.get('title') or settings.get('title'),
+              'auth_providers': [safe_provider(x) for x in auth],
+              'enable_local_logins': settings.get('enable_local_logins'),
+              'enable_local_logins_via_email': settings.get('enable_local_logins_via_email'),
+              'allow_new_registrations': settings.get('allow_new_registrations'),
+              'invite_only': settings.get('invite_only'),
+              'login_required': settings.get('login_required'),
+              'must_approve_users': settings.get('must_approve_users'),
+              'signup_cta_visible': bool(re.search(r'create-account|sign.?up|signup', login, re.I)),
+              'login_cta_visible': bool(re.search(r'log.?in|signin|sign.?in', login, re.I)),
+              'twitter_or_x_auth_visible': bool(re.search(r'twitter|x\.com|oauth', login, re.I)),
+              'csrf_endpoint_returned_token': bool(json.loads((root/'csrf.json').read_text()).get('csrf')),
+              'rules_category': {
+                  'id': (category.get('category') or {}).get('id'),
+                  'name': (category.get('category') or {}).get('name'),
+                  'slug': (category.get('category') or {}).get('slug'),
+                  'read_restricted': (category.get('category') or {}).get('read_restricted'),
+                  'permission': (category.get('category') or {}).get('permission'),
+                  'can_create_topic': (category.get('category') or {}).get('can_create_topic'),
+              },
+              'about_admin_usernames': [u.get('username') for u in (about.get('about') or {}).get('admins', []) if isinstance(u, dict)][:20],
+              'about_moderator_usernames': [u.get('username') for u in (about.get('about') or {}).get('moderators', []) if isinstance(u, dict)][:20],
+          }
+          (root/'summary.json').write_text(json.dumps(summary, indent=2, ensure_ascii=False))
+          print(json.dumps(summary, indent=2, ensure_ascii=False))
+          PY
+
+          rm -f "$out/site.json" "$out/about.json" "$out/csrf.json" "$out/login.html" "$out/category.json"
+
+      - name: Commit sanitized forum authentication summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add artifacts/x-forum-auth-diagnostic/summary.json
+          git commit -m "Record X developer forum authentication metadata"
+          git push origin HEAD:ops/x-policy-support-channel-diagnostic-20260818
