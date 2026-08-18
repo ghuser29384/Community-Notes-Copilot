@@ -1,0 +1,36 @@
+{
+  "base_url": "https://devcommunity.x.com",
+  "site_title": null,
+  "auth_providers": [
+    {
+      "name": "twitter",
+      "frame_width": null,
+      "frame_height": null
+    },
+    {
+      "name": "oidc",
+      "frame_width": null,
+      "frame_height": null
+    }
+  ],
+  "enable_local_logins": null,
+  "enable_local_logins_via_email": null,
+  "allow_new_registrations": null,
+  "invite_only": null,
+  "login_required": null,
+  "must_approve_users": null,
+  "signup_cta_visible": false,
+  "login_cta_visible": true,
+  "twitter_or_x_auth_visible": true,
+  "csrf_endpoint_returned_token": true,
+  "rules_category": {
+    "id": null,
+    "name": null,
+    "slug": null,
+    "read_restricted": null,
+    "permission": null,
+    "can_create_topic": null
+  },
+  "about_admin_usernames": [],
+  "about_moderator_usernames": []
+}
