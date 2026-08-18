@@ -1,0 +1,653 @@
+[
+  {
+    "index": 1,
+    "requested_url": "https://help.x.com/forms/platform",
+    "curl_meta": [
+      "https://help.x.com/forms/platform",
+      "403",
+      "text/html; charset=UTF-8"
+    ],
+    "title": "Just a moment...",
+    "forms": [],
+    "inputs": [
+      {
+        "type": "hidden",
+        "name": "cf-turnstile-response",
+        "id": "cf-chl-widget-gez4t_response",
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      }
+    ],
+    "links_matching_policy_or_login": [
+      "https://www.cloudflare.com/privacypolicy/"
+    ],
+    "visible_text_excerpt": "Just a moment... *{box-sizing:border-box;margin:0;padding:0}html{line-height:1.15;-webkit-text-size-adjust:100%;color:#313131;font-family:system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,\"Noto Sans\",sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\",\"Noto Color Emoji\"}body{display:flex;flex-direction:column;height:100vh;min-height:100vh}.main-content{margin:8rem auto;padding-left:1.5rem;max-width:60rem}@media (width @keyframes spin{100%{transform:rotate(360deg)}}@keyframes scale{0%, 100%{transform:none}50%{transform:scale3d(1, 1, 1)}}@keyframes stroke{100%{stroke-dashoffset:0}}@keyframes scale-up-center{0%{transform:scale(.01)}100%{transform:scale(1)}}@keyframes fade-in{0%{opacity:0}100%{opacity:1}}@keyframes fireworks{0%{transform:scale(0);opacity:0}50%{transform:scale(1.5);opacity:1}100%{transform:scale(2);opacity:0}}@keyframes firework{0%{opacity:0;stroke-dashoffset:8;}30%{opacity:1}100%{stroke-dashoffset:-8;}}@keyframes unspin{40%{stroke-width:1px;stroke-linecap:square;stroke-dashoffset:192}100%{stroke-width:0}}#Pzhw5{width:30px;height:30px;display:flex;border-radius:50%;box-shadow:inset 0 0 0 #228b49;stroke-width:1px;fill:#fff;stroke:#fff;stroke-miterlimit:10;animation:scale-up-center .3s cubic-bezier(.55, .085, .68, .53) both;stroke-width:6px}#Pzhw5 .JTfx2{animation:stroke .4s cubic-bezier(.65, 0, .45, 1) forwards;animation-delay:.3s;box-shadow:inset 0 0 0 #228b49;stroke-dasharray:242;stroke-dashoffset:242}.VZBG2{stroke-dashoffset:0;stroke-width:2;stroke-miterlimit:10;stroke:#228b49;fill:#228b49}#qowMS1{width:30px;height:30px}#qowMS1 line{stroke:#228b49;animation:firework .3s 1 ease-out;stroke-width:1;stroke-dasharray:32 32;stroke-dashoffset:-8;}.sHyC8{stroke-width:3px;stroke-linecap:round;stroke:#228b49;stroke-dasharray:0,100,0;stroke-dashoffset:200;stroke-miterlimit:1;stroke-linejoin:round}#uPQGA2,#RboI3{width:30px;height:30px;display:flex;border-radius:50%;box-shadow:inset 0 0 0 #b20f03;stroke-width:1px;fill:#fff;stroke:#fff;stroke-miterlimit:10;animation:scale-up-center .6s cubic-bezier(.55, .085, .68, .53) both}.uwDE0{stroke-dasharray:166;stroke-dashoffset:166;stroke-width:2;stroke-miterlimit:10;stroke:#b20f03;fill:#b20f03;animation:stroke .6s cubic-bezier(.65, 0, .45, 1) forwards}.lbqn3{animation:fade-in-animation .1s .4s cubic-bezier(1, 1, 0, 1) backwards;fill:#f2f2f2;transform-origin:bottom center}@keyframes fade-in-animation{0%{fill:#b20f03;stroke:#b20f03}100%{fill:#f2f2f2;stroke:#f2f2f2}}#RboI3{width:12px;height:12px}#lVspB3,#NVdTb5{display:flex;animation:spin 5s linear infinite;width:30px;height:30px}.ITJo7,.IbIls5{stroke-dasharray:166;stroke-dashoffset:166;stroke-width:2;stroke-miterlimit:10;stroke:#595959;fill:#595959}#SkgzV3,#KcMf3{width:30px;height:30px;display:flex;border-radius:50%;box-shadow:inset 0 0 0 #595959;stroke-width:1px;fill:#fff;stroke:#fff;stroke-miterlimit:10;animation:scale .3s ease-in-out .9s both}#hlUk4{display:inline-flex;flex-direction:column;text-align:righ",
+    "rendered_bytes": 27502
+  },
+  {
+    "index": 2,
+    "requested_url": "https://help.x.com/en/forms/platform",
+    "curl_meta": [
+      "https://help.x.com/en/forms/platform",
+      "403",
+      "text/html; charset=UTF-8"
+    ],
+    "title": "Just a moment...",
+    "forms": [],
+    "inputs": [
+      {
+        "type": "hidden",
+        "name": "cf-turnstile-response",
+        "id": "cf-chl-widget-yllmu_response",
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      }
+    ],
+    "links_matching_policy_or_login": [
+      "https://www.cloudflare.com/privacypolicy/"
+    ],
+    "visible_text_excerpt": "Just a moment... *{box-sizing:border-box;margin:0;padding:0}html{line-height:1.15;-webkit-text-size-adjust:100%;color:#313131;font-family:system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,\"Noto Sans\",sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\",\"Noto Color Emoji\"}body{display:flex;flex-direction:column;height:100vh;min-height:100vh}.main-content{margin:8rem auto;padding-left:1.5rem;max-width:60rem}@media (width @keyframes spin{100%{transform:rotate(360deg)}}@keyframes scale{0%, 100%{transform:none}50%{transform:scale3d(1, 1, 1)}}@keyframes stroke{100%{stroke-dashoffset:0}}@keyframes scale-up-center{0%{transform:scale(.01)}100%{transform:scale(1)}}@keyframes fade-in{0%{opacity:0}100%{opacity:1}}@keyframes fireworks{0%{transform:scale(0);opacity:0}50%{transform:scale(1.5);opacity:1}100%{transform:scale(2);opacity:0}}@keyframes firework{0%{opacity:0;stroke-dashoffset:8;}30%{opacity:1}100%{stroke-dashoffset:-8;}}@keyframes unspin{40%{stroke-width:1px;stroke-linecap:square;stroke-dashoffset:192}100%{stroke-width:0}}#Pzhw5{width:30px;height:30px;display:flex;border-radius:50%;box-shadow:inset 0 0 0 #228b49;stroke-width:1px;fill:#fff;stroke:#fff;stroke-miterlimit:10;animation:scale-up-center .3s cubic-bezier(.55, .085, .68, .53) both;stroke-width:6px}#Pzhw5 .JTfx2{animation:stroke .4s cubic-bezier(.65, 0, .45, 1) forwards;animation-delay:.3s;box-shadow:inset 0 0 0 #228b49;stroke-dasharray:242;stroke-dashoffset:242}.VZBG2{stroke-dashoffset:0;stroke-width:2;stroke-miterlimit:10;stroke:#228b49;fill:#228b49}#qowMS1{width:30px;height:30px}#qowMS1 line{stroke:#228b49;animation:firework .3s 1 ease-out;stroke-width:1;stroke-dasharray:32 32;stroke-dashoffset:-8;}.sHyC8{stroke-width:3px;stroke-linecap:round;stroke:#228b49;stroke-dasharray:0,100,0;stroke-dashoffset:200;stroke-miterlimit:1;stroke-linejoin:round}#uPQGA2,#RboI3{width:30px;height:30px;display:flex;border-radius:50%;box-shadow:inset 0 0 0 #b20f03;stroke-width:1px;fill:#fff;stroke:#fff;stroke-miterlimit:10;animation:scale-up-center .6s cubic-bezier(.55, .085, .68, .53) both}.uwDE0{stroke-dasharray:166;stroke-dashoffset:166;stroke-width:2;stroke-miterlimit:10;stroke:#b20f03;fill:#b20f03;animation:stroke .6s cubic-bezier(.65, 0, .45, 1) forwards}.lbqn3{animation:fade-in-animation .1s .4s cubic-bezier(1, 1, 0, 1) backwards;fill:#f2f2f2;transform-origin:bottom center}@keyframes fade-in-animation{0%{fill:#b20f03;stroke:#b20f03}100%{fill:#f2f2f2;stroke:#f2f2f2}}#RboI3{width:12px;height:12px}#lVspB3,#NVdTb5{display:flex;animation:spin 5s linear infinite;width:30px;height:30px}.ITJo7,.IbIls5{stroke-dasharray:166;stroke-dashoffset:166;stroke-width:2;stroke-miterlimit:10;stroke:#595959;fill:#595959}#SkgzV3,#KcMf3{width:30px;height:30px;display:flex;border-radius:50%;box-shadow:inset 0 0 0 #595959;stroke-width:1px;fill:#fff;stroke:#fff;stroke-miterlimit:10;animation:scale .3s ease-in-out .9s both}#hlUk4{display:inline-flex;flex-direction:column;text-align:righ",
+    "rendered_bytes": 27533
+  },
+  {
+    "index": 3,
+    "requested_url": "https://help.x.com/en/forms",
+    "curl_meta": [
+      "https://help.x.com/en/forms",
+      "403",
+      "text/html; charset=UTF-8"
+    ],
+    "title": "Just a moment...",
+    "forms": [],
+    "inputs": [
+      {
+        "type": "hidden",
+        "name": "cf-turnstile-response",
+        "id": "cf-chl-widget-az256_response",
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      }
+    ],
+    "links_matching_policy_or_login": [
+      "https://www.cloudflare.com/privacypolicy/"
+    ],
+    "visible_text_excerpt": "Just a moment... *{box-sizing:border-box;margin:0;padding:0}html{line-height:1.15;-webkit-text-size-adjust:100%;color:#313131;font-family:system-ui,-apple-system,BlinkMacSystemFont,\"Segoe UI\",Roboto,\"Helvetica Neue\",Arial,\"Noto Sans\",sans-serif,\"Apple Color Emoji\",\"Segoe UI Emoji\",\"Segoe UI Symbol\",\"Noto Color Emoji\"}body{display:flex;flex-direction:column;height:100vh;min-height:100vh}.main-content{margin:8rem auto;padding-left:1.5rem;max-width:60rem}@media (width @keyframes spin{100%{transform:rotate(360deg)}}@keyframes scale{0%, 100%{transform:none}50%{transform:scale3d(1, 1, 1)}}@keyframes stroke{100%{stroke-dashoffset:0}}@keyframes scale-up-center{0%{transform:scale(.01)}100%{transform:scale(1)}}@keyframes fade-in{0%{opacity:0}100%{opacity:1}}@keyframes fireworks{0%{transform:scale(0);opacity:0}50%{transform:scale(1.5);opacity:1}100%{transform:scale(2);opacity:0}}@keyframes firework{0%{opacity:0;stroke-dashoffset:8;}30%{opacity:1}100%{stroke-dashoffset:-8;}}@keyframes unspin{40%{stroke-width:1px;stroke-linecap:square;stroke-dashoffset:192}100%{stroke-width:0}}#Pzhw5{width:30px;height:30px;display:flex;border-radius:50%;box-shadow:inset 0 0 0 #228b49;stroke-width:1px;fill:#fff;stroke:#fff;stroke-miterlimit:10;animation:scale-up-center .3s cubic-bezier(.55, .085, .68, .53) both;stroke-width:6px}#Pzhw5 .JTfx2{animation:stroke .4s cubic-bezier(.65, 0, .45, 1) forwards;animation-delay:.3s;box-shadow:inset 0 0 0 #228b49;stroke-dasharray:242;stroke-dashoffset:242}.VZBG2{stroke-dashoffset:0;stroke-width:2;stroke-miterlimit:10;stroke:#228b49;fill:#228b49}#qowMS1{width:30px;height:30px}#qowMS1 line{stroke:#228b49;animation:firework .3s 1 ease-out;stroke-width:1;stroke-dasharray:32 32;stroke-dashoffset:-8;}.sHyC8{stroke-width:3px;stroke-linecap:round;stroke:#228b49;stroke-dasharray:0,100,0;stroke-dashoffset:200;stroke-miterlimit:1;stroke-linejoin:round}#uPQGA2,#RboI3{width:30px;height:30px;display:flex;border-radius:50%;box-shadow:inset 0 0 0 #b20f03;stroke-width:1px;fill:#fff;stroke:#fff;stroke-miterlimit:10;animation:scale-up-center .6s cubic-bezier(.55, .085, .68, .53) both}.uwDE0{stroke-dasharray:166;stroke-dashoffset:166;stroke-width:2;stroke-miterlimit:10;stroke:#b20f03;fill:#b20f03;animation:stroke .6s cubic-bezier(.65, 0, .45, 1) forwards}.lbqn3{animation:fade-in-animation .1s .4s cubic-bezier(1, 1, 0, 1) backwards;fill:#f2f2f2;transform-origin:bottom center}@keyframes fade-in-animation{0%{fill:#b20f03;stroke:#b20f03}100%{fill:#f2f2f2;stroke:#f2f2f2}}#RboI3{width:12px;height:12px}#lVspB3,#NVdTb5{display:flex;animation:spin 5s linear infinite;width:30px;height:30px}.ITJo7,.IbIls5{stroke-dasharray:166;stroke-dashoffset:166;stroke-width:2;stroke-miterlimit:10;stroke:#595959;fill:#595959}#SkgzV3,#KcMf3{width:30px;height:30px;display:flex;border-radius:50%;box-shadow:inset 0 0 0 #595959;stroke-width:1px;fill:#fff;stroke:#fff;stroke-miterlimit:10;animation:scale .3s ease-in-out .9s both}#hlUk4{display:inline-flex;flex-direction:column;text-align:righ",
+    "rendered_bytes": 27484
+  },
+  {
+    "index": 4,
+    "requested_url": "https://docs.x.com/support",
+    "curl_meta": [
+      "https://docs.x.com/support",
+      "200",
+      "text/html; charset=utf-8"
+    ],
+    "title": "Developer Support - X",
+    "forms": [],
+    "inputs": [
+      {
+        "type": "button",
+        "name": null,
+        "id": "base-ui-_R_3em9bsnlhjiuasnpfiutb_",
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": "search-bar-entry",
+        "value": null,
+        "placeholder": null,
+        "aria-label": "Open search"
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": "More actions"
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": "search-bar-entry-mobile",
+        "value": null,
+        "placeholder": null,
+        "aria-label": "Open search"
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": "More actions"
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": null,
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": null,
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": null,
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": null,
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": null,
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": null,
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": null,
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": null,
+        "name": null,
+        "id": "page-context-menu-button",
+        "value": null,
+        "placeholder": null,
+        "aria-label": "Copy page"
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": "base-ui-_R_1mshbddbsnlhjiuasnpfiutb_",
+        "value": null,
+        "placeholder": null,
+        "aria-label": "More actions"
+      },
+      {
+        "type": null,
+        "name": null,
+        "id": "page-context-menu-button",
+        "value": null,
+        "placeholder": null,
+        "aria-label": "Copy page"
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": "base-ui-_R_3dhbddbsnlhjiuasnpfiutb_",
+        "value": null,
+        "placeholder": null,
+        "aria-label": "More actions"
+      },
+      {
+        "type": null,
+        "name": null,
+        "id": "chat-assistant-textarea",
+        "value": null,
+        "placeholder": "Ask a question...",
+        "aria-label": "Ask a question..."
+      },
+      {
+        "type": null,
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": "Send message"
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": null,
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      }
+    ],
+    "links_matching_policy_or_login": [
+      "https://developer.x.com/en/portal/petition/essential/basic-info",
+      "https://developer.x.com/en/portal/petition/essential/basic-info",
+      "https://devcommunity.x.com",
+      "https://github.com/xdevplatform",
+      "/developer-guidelines",
+      "/fundamentals/developer-apps",
+      "/fundamentals/developer-portal",
+      "/developer-terms",
+      "#community-and-help",
+      "https://devcommunity.x.com",
+      "https://developer.x.com/status",
+      "https://help.x.com/forms/platform",
+      "/developer-guidelines",
+      "/developer-terms/agreement",
+      "/developer-terms/policy",
+      "/developer-terms/restricted-use-cases",
+      "/developer-guidelines",
+      "https://help.x.com/forms/platform",
+      "https://devcommunity.x.com",
+      "https://x.com/XDevelopers",
+      "#community-and-help",
+      "https://x.com/xdevelopers",
+      "https://github.com/xdevplatform",
+      "https://developer.x.com/status",
+      "https://docs.x.com/developer-terms",
+      "https://x.com/xdevelopers",
+      "https://github.com/xdevplatform"
+    ],
+    "visible_text_excerpt": ".base-ui-disable-scrollbar{scrollbar-width:none}.base-ui-disable-scrollbar::-webkit-scrollbar{display:none} Developer Support - X !function(){var b=\"\"; function a(p){if(p==null)return\"/\";p=\"\"+p;if(\"\"===p)return\"/\";return\"/\"===p.charAt(0)?p:\"/\"+p} function u(p){if(p==null)return p;p=\"\"+p;if(!p||p.charAt(p.length-1)===\"/\")return p.slice(0,-1);return p} function i(p){if(p==null)return p;p=\"\"+p;if(6 !function(){ function read(){try{ var e=performance.getEntriesByType?performance.getEntriesByType(\"navigation\"):[]; var st=(e[0]&&e[0].serverTiming)||[]; var g={}; for(var i=0;i !function(){try{ var w=window;w.mintlify=w.mintlify||{}; var q=w.mintlify.__apiPlaygroundInputsQueue; if(!Array.isArray(q)){q=[];w.mintlify.__apiPlaygroundInputsQueue=q;} w.mintlify.api=w.mintlify.api||{}; w.mintlify.api.playground=w.mintlify.api.playground||{}; if(typeof w.mintlify.api.playground.setServerVariables!==\"function\"){ w.mintlify.api.playground.setServerVariables=function(v){q.push({type:\"set\",variables:v});}; } if(typeof w.mintlify.api.playground.clearServerVariables!==\"function\"){ w.mintlify.api.playground.clearServerVariables=function(){q.push({type:\"clear\"});}; } }catch(e){}}(); (function(a,b){try{let c=document.getElementById(\"banner\")?.innerText;if(c){for(let d=0;d (function j(a,b,c,d,e){try{let f,g,h=[];try{h=window.location.pathname.split(\"/\").filter(a=>\"\"!==a&&\"global\"!==a).slice(0,2)}catch{h=[]}let i=h.find(a=>c.includes(a)),j=[];for(let c of(i?j.push(i):j.push(b),j.push(\"global\"),j)){if(!c)continue;let b=a[c];if(b?.content){f=b.content,g=c;break}}if(!f)return void document.documentElement.setAttribute(d,\"hidden\");let k=!0,l=0;for(;l (function(a){let b,c=(b=\"navbar-transition\",\"maple\"===a&&(b+=\"-maple\"),b),d=function(){let a=document.createElement(\"style\");return a.appendChild(document.createTextNode(\"*,*::before,*::after{-webkit-transition:none!important;-moz-transition:none!important;-o-transition:none!important;-ms-transition:none!important;transition:none!important}\")),document.head.appendChild(a),function(){window.getComputedStyle(document.body),setTimeout(()=>{document.head.removeChild(a)},1)}}();(\"requestAnimationFrame\"in globalThis?requestAnimationFrame:setTimeout)(()=>{let a;a=!1,a=window.scrollY>50,document.getElementById(c)?.setAttribute(\"data-is-opaque\",`${!!a}`),d()})})(\"luma\") (function () { var measure = function(){let a=document.querySelectorAll(\"[id='navbar'], [data-top-chrome]\"),b=0;a.forEach(a=>{let c=a.getBoundingClientRect();c.height>0&&(b=Math.max(b,c.bottom))});let c=0,d=document.getElementById(\"content-container\");if(d){let{overflowY:a}=getComputedStyle(d);(\"auto\"===a||\"scroll\"===a)&&(c=Math.max(0,d.getBoundingClientRect().top))}let e=Math.round(Math.max(0,b-c))+40;document.documentElement.style.setProperty(\"--scroll-mt\",`${e}px`)}; (function(a){let b=[],c=0,d=\"undefined\"==typeof ResizeObserver?null:new ResizeObserver(f);function e(){let c=Array.from(document.querySelectorAll(\"[id='navbar'], [data-top-chrome]\"));(c.length!==b.length||c",
+    "rendered_bytes": 921044
+  },
+  {
+    "index": 5,
+    "requested_url": "https://devcommunity.x.com/",
+    "curl_meta": [
+      "https://devcommunity.x.com/",
+      "200",
+      "text/html; charset=utf-8"
+    ],
+    "title": "X Developers",
+    "forms": [
+      {
+        "action": "/login",
+        "method": "post",
+        "id": "hidden-login-form",
+        "class": null
+      }
+    ],
+    "inputs": [
+      {
+        "type": null,
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": "search-button",
+        "value": null,
+        "placeholder": null,
+        "aria-label": "Search"
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": "ember34",
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": "Keyboard Shortcuts"
+      },
+      {
+        "type": null,
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": null,
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": null,
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "text",
+        "name": "username",
+        "id": "signin_username",
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "password",
+        "name": "password",
+        "id": "signin_password",
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "hidden",
+        "name": "redirect",
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "submit",
+        "name": null,
+        "id": "signin-button",
+        "value": "Log In",
+        "placeholder": null,
+        "aria-label": null
+      }
+    ],
+    "links_matching_policy_or_login": [
+      "https://developer.x.com/en/portal/dashboard",
+      "https://github.com/xdevplatform",
+      "/c/developer-portal/50",
+      "/c/oauth/12",
+      "/tag/oauth/34",
+      "/u/xdevelopers",
+      "/t/pay-per-use-app-oauth-1-0a-user-context-returns-401-unauthorized-on-get-2-users-id-timelines-reverse-chronological-app-id-33308961/273499",
+      "/t/pay-per-use-app-oauth-1-0a-user-context-returns-401-unauthorized-on-get-2-users-id-timelines-reverse-chronological-app-id-33308961/273499",
+      "/t/pay-per-use-app-oauth-1-0a-user-context-returns-401-unauthorized-on-get-2-users-id-timelines-reverse-chronological-app-id-33308961/273499/1",
+      "/t/pay-per-use-app-oauth-1-0a-user-context-returns-401-unauthorized-on-get-2-users-id-timelines-reverse-chronological-app-id-33308961/273499/2",
+      "/t/unlinking-a-username-on-x-developer-console/273352",
+      "/c/developer-portal/x-apps/51",
+      "/t/unlinking-a-username-on-x-developer-console/273352",
+      "/t/unlinking-a-username-on-x-developer-console/273352/1",
+      "/t/unlinking-a-username-on-x-developer-console/273352/3",
+      "/t/post-2-tweets-returns-403-you-are-not-permitted-to-perform-this-action-on-both-oauth-2-0-and-oauth-1-0a/273194",
+      "/tag/oauth/34",
+      "/t/post-2-tweets-returns-403-you-are-not-permitted-to-perform-this-action-on-both-oauth-2-0-and-oauth-1-0a/273194",
+      "/t/post-2-tweets-returns-403-you-are-not-permitted-to-perform-this-action-on-both-oauth-2-0-and-oauth-1-0a/273194/1",
+      "/t/post-2-tweets-returns-403-you-are-not-permitted-to-perform-this-action-on-both-oauth-2-0-and-oauth-1-0a/273194/4",
+      "/c/oauth/12",
+      "/tag/oauth/34",
+      "/t/account-has-been-flagged-and-cannot-proceed-on-developer-program-signup-and-the-x-support-route-staff-point-to-refuses-non-suspended-accounts/273401",
+      "/c/developer-portal/50",
+      "/t/account-has-been-flagged-and-cannot-proceed-on-developer-program-signup-and-the-x-support-route-staff-point-to-refuses-non-suspended-accounts/273401",
+      "/t/account-has-been-flagged-and-cannot-proceed-on-developer-program-signup-and-the-x-support-route-staff-point-to-refuses-non-suspended-accounts/273401/1",
+      "/t/account-has-been-flagged-and-cannot-proceed-on-developer-program-signup-and-the-x-support-route-staff-point-to-refuses-non-suspended-accounts/273401/2",
+      "/c/developer-portal/x-apps/51",
+      "/c/developer-portal/50",
+      "/tag/oauth/34"
+    ],
+    "visible_text_excerpt": "X Developers {\"@context\":\"http://schema.org\",\"@type\":\"WebSite\",\"url\":\"https://devcommunity.x.com\",\"name\":\"X Developers\",\"potentialAction\":{\"@type\":\"SearchAction\",\"target\":\"https://devcommunity.x.com/search?q={search_term_string}\",\"query-input\":\"required name=search_term_string\"}} { \"imports\": { \"discourse/plugins/checklist\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/checklist_main.Dnck2r-82sxtd83.digested.js\", \"discourse/plugins/discourse-ai\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-ai_main.DxC0we-bmj9kzli.digested.js\", \"discourse/plugins/discourse-akismet\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-akismet_main.CfkKPX-pctu82q7.digested.js\", \"discourse/plugins/discourse-chat-integration\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-chat-integration_main.ByruDk-th4ln6sz.digested.js\", \"discourse/plugins/discourse-data-explorer\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-data-explorer_main.Bz4D12-ymnd1o4i.digested.js\", \"discourse/plugins/discourse-deprecation-collector\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-deprecation-collector_main.BACzJ8-i3940h5u.digested.js\", \"discourse/plugins/discourse-details\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-details_main.DBAmVR-5loiggfu.digested.js\", \"discourse/plugins/discourse-github\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-github_main.CHR2S2-gf96g25h.digested.js\", \"discourse/plugins/discourse-lazy-videos\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-lazy-videos_main.CECGJj-au8ttevq.digested.js\", \"discourse/plugins/discourse-local-dates\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-local-dates_main.Bs8DnV-8pj61krq.digested.js\", \"discourse/plugins/discourse-narrative-bot\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-narrative-bot_main.CFI-zw-mv0458b8.digested.js\", \"discourse/plugins/discourse-openid-connect\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-openid-connect_main.DhuQg6-h1o2qo0k.digested.js\", \"discourse/plugins/discourse-policy\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-policy_main.CB-7TN-f052n77h.digested.js\", \"discourse/plugins/discourse-presence\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-presence_main.CBkyxg-mqkd019l.digested.js\", \"discourse/plugins/discourse-reactions\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-reactions_main.BNTWZa-cvr15iuy.digested.js\", \"discourse/plugins/discourse-rss-polling\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-rss-polling_main.GASXhk-nais35kb.digested.js\", \"discourse/plugins/discourse-solved\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-solved_main.c0CSSu-pq7p97kh.digested.js\", \"discourse/plugins/discourse-templates",
+    "rendered_bytes": 605248
+  },
+  {
+    "index": 6,
+    "requested_url": "https://twittercommunity.com/c/dev-rules-and-policies/rules-and-policies",
+    "curl_meta": [
+      "https://devcommunity.x.com/c/dev-rules-and-policies/rules-and-policies/13",
+      "200",
+      "text/html; charset=utf-8"
+    ],
+    "title": "Latest Rules and Policies/Rules and Policies topics - X Developers",
+    "forms": [
+      {
+        "action": "/login",
+        "method": "post",
+        "id": "hidden-login-form",
+        "class": null
+      }
+    ],
+    "inputs": [
+      {
+        "type": null,
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": "search-button",
+        "value": null,
+        "placeholder": null,
+        "aria-label": "Search"
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": "ember35",
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "button",
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": "Keyboard Shortcuts"
+      },
+      {
+        "type": null,
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": null,
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": null,
+        "name": null,
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "text",
+        "name": "username",
+        "id": "signin_username",
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "password",
+        "name": "password",
+        "id": "signin_password",
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "hidden",
+        "name": "redirect",
+        "id": null,
+        "value": null,
+        "placeholder": null,
+        "aria-label": null
+      },
+      {
+        "type": "submit",
+        "name": null,
+        "id": "signin-button",
+        "value": "Log In",
+        "placeholder": null,
+        "aria-label": null
+      }
+    ],
+    "links_matching_policy_or_login": [
+      "https://developer.x.com/en/portal/dashboard",
+      "https://github.com/xdevplatform",
+      "/c/developer-portal/50",
+      "/c/oauth/12",
+      "/tag/oauth/34",
+      "/t/need-help-cant-login-because-of-a-qr-code/271217",
+      "/t/need-help-cant-login-because-of-a-qr-code/271217",
+      "/t/need-help-cant-login-because-of-a-qr-code/271217/1",
+      "/t/need-help-cant-login-because-of-a-qr-code/271217/2",
+      "/tag/oauth/34",
+      "/t/request-to-reinstate-suspended-developer-app-halstate-app-id-32388440-compliance-now-in-place/268143",
+      "/t/request-to-reinstate-suspended-developer-app-halstate-app-id-32388440-compliance-now-in-place/268143",
+      "/t/request-to-reinstate-suspended-developer-app-halstate-app-id-32388440-compliance-now-in-place/268143/1",
+      "/t/request-to-reinstate-suspended-developer-app-halstate-app-id-32388440-compliance-now-in-place/268143/2",
+      "/t/our-platforms-website-is-blocked-from-posts-after-our-x-account-got-suspended/268052",
+      "/t/our-platforms-website-is-blocked-from-posts-after-our-x-account-got-suspended/268052",
+      "/t/our-platforms-website-is-blocked-from-posts-after-our-x-account-got-suspended/268052/1",
+      "/t/our-platforms-website-is-blocked-from-posts-after-our-x-account-got-suspended/268052/1",
+      "/t/my-platforms-account-that-our-paid-api-is-also-being-used-has-just-been-banned-for-no-reason/267982",
+      "/t/my-platforms-account-that-our-paid-api-is-also-being-used-has-just-been-banned-for-no-reason/267982",
+      "/t/my-platforms-account-that-our-paid-api-is-also-being-used-has-just-been-banned-for-no-reason/267982/1",
+      "/t/my-platforms-account-that-our-paid-api-is-also-being-used-has-just-been-banned-for-no-reason/267982/2",
+      "/t/untrusted-developer-badge/265544",
+      "/tag/oauth/34",
+      "/t/untrusted-developer-badge/265544",
+      "/t/untrusted-developer-badge/265544/1",
+      "/t/untrusted-developer-badge/265544/2"
+    ],
+    "visible_text_excerpt": "Latest Rules and Policies/Rules and Policies topics - X Developers { \"imports\": { \"discourse/plugins/checklist\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/checklist_main.Dnck2r-82sxtd83.digested.js\", \"discourse/plugins/discourse-ai\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-ai_main.DxC0we-bmj9kzli.digested.js\", \"discourse/plugins/discourse-akismet\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-akismet_main.CfkKPX-pctu82q7.digested.js\", \"discourse/plugins/discourse-chat-integration\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-chat-integration_main.ByruDk-th4ln6sz.digested.js\", \"discourse/plugins/discourse-data-explorer\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-data-explorer_main.Bz4D12-ymnd1o4i.digested.js\", \"discourse/plugins/discourse-deprecation-collector\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-deprecation-collector_main.BACzJ8-i3940h5u.digested.js\", \"discourse/plugins/discourse-details\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-details_main.DBAmVR-5loiggfu.digested.js\", \"discourse/plugins/discourse-github\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-github_main.CHR2S2-gf96g25h.digested.js\", \"discourse/plugins/discourse-lazy-videos\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-lazy-videos_main.CECGJj-au8ttevq.digested.js\", \"discourse/plugins/discourse-local-dates\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-local-dates_main.Bs8DnV-8pj61krq.digested.js\", \"discourse/plugins/discourse-narrative-bot\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-narrative-bot_main.CFI-zw-mv0458b8.digested.js\", \"discourse/plugins/discourse-openid-connect\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-openid-connect_main.DhuQg6-h1o2qo0k.digested.js\", \"discourse/plugins/discourse-policy\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-policy_main.CB-7TN-f052n77h.digested.js\", \"discourse/plugins/discourse-presence\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-presence_main.CBkyxg-mqkd019l.digested.js\", \"discourse/plugins/discourse-reactions\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-reactions_main.BNTWZa-cvr15iuy.digested.js\", \"discourse/plugins/discourse-rss-polling\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-rss-polling_main.GASXhk-nais35kb.digested.js\", \"discourse/plugins/discourse-solved\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-solved_main.c0CSSu-pq7p97kh.digested.js\", \"discourse/plugins/discourse-templates\": \"https://global.discourse-cdn.com/twitter/assets/br/plugins/discourse-templates_main.CoGQ1f-1u0cvu0t.digested.js\", \"discourse/plugins/discourse-topic-voting\": \"https://global.discourse-cdn.com/twitter/assets/br/",
+    "rendered_bytes": 605264
+  }
+]
