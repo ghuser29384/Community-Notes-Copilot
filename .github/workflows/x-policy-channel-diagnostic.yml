@@ -1,0 +1,135 @@
+name: Diagnose X policy support channel
+
+on:
+  push:
+    branches:
+      - ops/x-policy-support-channel-diagnostic-20260818
+    paths:
+      - .github/workflows/x-policy-channel-diagnostic.yml
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Inspect official X support routes without user data
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p artifacts/x-policy-channel-diagnostic
+          CHROME="$(command -v google-chrome || command -v google-chrome-stable || command -v chromium || command -v chromium-browser || true)"
+          if [[ -z "$CHROME" ]]; then
+            echo "No Chrome-family browser found" >&2
+            exit 1
+          fi
+          "$CHROME" --version | tee artifacts/x-policy-channel-diagnostic/browser-version.txt
+
+          cat > /tmp/urls.txt <<'EOF'
+          https://help.x.com/forms/platform
+          https://help.x.com/en/forms/platform
+          https://help.x.com/en/forms
+          https://docs.x.com/support
+          https://devcommunity.x.com/
+          https://twittercommunity.com/c/dev-rules-and-policies/rules-and-policies
+          EOF
+
+          index=0
+          while IFS= read -r url; do
+            [[ -n "$url" ]] || continue
+            index=$((index + 1))
+            prefix="artifacts/x-policy-channel-diagnostic/${index}"
+            printf '%s\n' "$url" > "${prefix}-requested-url.txt"
+            curl --silent --show-error --location --max-time 30 \
+              --dump-header "${prefix}-headers.txt" \
+              --output "${prefix}-curl-body.html" \
+              --write-out '%{url_effective}\n%{http_code}\n%{content_type}\n' \
+              "$url" > "${prefix}-curl-meta.txt" || true
+            timeout 45 "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage \
+              --disable-background-networking --disable-component-update \
+              --virtual-time-budget=12000 --window-size=1440,1200 \
+              --dump-dom "$url" > "${prefix}-rendered.html" 2> "${prefix}-chrome-stderr.txt" || true
+            timeout 45 "$CHROME" --headless=new --no-sandbox --disable-dev-shm-usage \
+              --disable-background-networking --disable-component-update \
+              --virtual-time-budget=12000 --window-size=1440,1200 \
+              --screenshot="${prefix}-screenshot.png" "$url" >> "${prefix}-chrome-stderr.txt" 2>&1 || true
+          done < /tmp/urls.txt
+
+          python3 - <<'PY'
+          from __future__ import annotations
+          from html.parser import HTMLParser
+          from pathlib import Path
+          import json
+          import re
+
+          root = Path('artifacts/x-policy-channel-diagnostic')
+
+          class Inspector(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.forms = []
+                  self.inputs = []
+                  self.links = []
+                  self.title_parts = []
+                  self.in_title = False
+              def handle_starttag(self, tag, attrs):
+                  data = dict(attrs)
+                  if tag == 'form':
+                      self.forms.append({k: data.get(k) for k in ('action','method','id','class')})
+                  elif tag in {'input','textarea','select','button'}:
+                      self.inputs.append({k: data.get(k) for k in ('type','name','id','value','placeholder','aria-label')})
+                  elif tag == 'a':
+                      href = data.get('href')
+                      if href:
+                          self.links.append(href)
+                  elif tag == 'title':
+                      self.in_title = True
+              def handle_endtag(self, tag):
+                  if tag == 'title':
+                      self.in_title = False
+              def handle_data(self, data):
+                  if self.in_title:
+                      self.title_parts.append(data)
+
+          summary = []
+          for requested in sorted(root.glob('*-requested-url.txt')):
+              prefix = requested.name.split('-', 1)[0]
+              rendered_path = root / f'{prefix}-rendered.html'
+              curl_path = root / f'{prefix}-curl-body.html'
+              html = rendered_path.read_text(errors='replace') if rendered_path.exists() else ''
+              if not html and curl_path.exists():
+                  html = curl_path.read_text(errors='replace')
+              parser = Inspector()
+              try:
+                  parser.feed(html)
+              except Exception:
+                  pass
+              text = re.sub(r'<[^>]+>', ' ', html)
+              text = re.sub(r'\s+', ' ', text).strip()
+              summary.append({
+                  'index': int(prefix),
+                  'requested_url': requested.read_text().strip(),
+                  'curl_meta': (root / f'{prefix}-curl-meta.txt').read_text(errors='replace').splitlines() if (root / f'{prefix}-curl-meta.txt').exists() else [],
+                  'title': ''.join(parser.title_parts).strip(),
+                  'forms': parser.forms[:20],
+                  'inputs': parser.inputs[:100],
+                  'links_matching_policy_or_login': [u for u in parser.links if any(k in u.lower() for k in ('policy','platform','login','signin','oauth','developer','community'))][:100],
+                  'visible_text_excerpt': text[:3000],
+                  'rendered_bytes': len(html.encode('utf-8', errors='replace')),
+              })
+          (root / 'summary.json').write_text(json.dumps(summary, indent=2, ensure_ascii=False))
+          PY
+
+          cat artifacts/x-policy-channel-diagnostic/summary.json
+
+      - name: Upload sanitized diagnostic evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: x-policy-channel-diagnostic
+          path: artifacts/x-policy-channel-diagnostic
+          retention-days: 1
+          if-no-files-found: error
