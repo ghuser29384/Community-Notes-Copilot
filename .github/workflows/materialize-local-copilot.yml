@@ -7,6 +7,9 @@ on:
       - agent/local-ephemeral-community-notes-copilot-ready
     paths:
       - .github/workflows/materialize-local-copilot.yml
+  pull_request:
+    paths:
+      - .github/workflows/materialize-local-copilot.yml
 
 permissions:
   contents: write
