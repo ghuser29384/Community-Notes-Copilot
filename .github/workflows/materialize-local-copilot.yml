@@ -1,4 +1,4 @@
-name: Inspect incomplete local copilot bundle
+name: Recover complete members from incomplete local copilot bundle
 
 on:
   push:
@@ -6,27 +6,26 @@ on:
       - agent/local-ephemeral-community-notes-copilot-ready
     paths:
       - .github/workflows/materialize-local-copilot.yml
-  pull_request:
-    paths:
-      - .github/workflows/materialize-local-copilot.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  inspect:
+  recover:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
           ref: agent/local-ephemeral-community-notes-copilot-ready
-      - name: Stream-validate complete archive members without materializing the branch
+          fetch-depth: 0
+      - name: Stream-validate and recover complete archive members
         shell: bash
         run: |
           set -euo pipefail
           base64 --decode .bootstrap/local-copilot.part00 > /tmp/local-copilot.tar.gz
-          echo "decoded_bundle_sha256=$(sha256sum /tmp/local-copilot.tar.gz | awk '{print $1}')"
+          bundle_sha="$(sha256sum /tmp/local-copilot.tar.gz | awk '{print $1}')"
+          echo "decoded_bundle_sha256=${bundle_sha}"
           rm -rf /tmp/salvage && mkdir -p /tmp/salvage
           python3 - <<'PY'
           import pathlib
@@ -40,50 +39,55 @@ jobs:
           }
           recovered = []
           failure = None
-          try:
-              with tarfile.open(archive, mode='r|gz') as tf:
-                  while True:
-                      try:
-                          member = tf.next()
-                      except (EOFError, tarfile.ReadError) as exc:
-                          failure = f'{type(exc).__name__}: {exc}'
-                          break
-                      if member is None:
-                          break
-                      p = pathlib.PurePosixPath(member.name)
-                      if p.is_absolute() or '..' in p.parts:
-                          raise SystemExit(f'unsafe archive path: {member.name}')
-                      if not p.parts or p.parts[0] not in allowed_roots:
-                          raise SystemExit(f'unexpected archive root: {member.name}')
-                      if member.issym() or member.islnk() or member.isdev():
-                          raise SystemExit(f'unsupported archive member: {member.name}')
+          with tarfile.open(archive, mode='r|gz') as tf:
+              while True:
+                  try:
+                      member = tf.next()
+                  except (EOFError, tarfile.ReadError) as exc:
+                      failure = f'{type(exc).__name__}: {exc}'
+                      break
+                  if member is None:
+                      break
+                  p = pathlib.PurePosixPath(member.name)
+                  if p.is_absolute() or '..' in p.parts:
+                      raise SystemExit(f'unsafe archive path: {member.name}')
+                  if not p.parts or p.parts[0] not in allowed_roots:
+                      raise SystemExit(f'unexpected archive root: {member.name}')
+                  if member.issym() or member.islnk() or member.isdev():
+                      raise SystemExit(f'unsupported archive member: {member.name}')
+                  try:
                       tf.extract(member, path=out, filter='data')
-                      recovered.append(member.name)
-          finally:
-              print(f'RECOVERED_COUNT={len(recovered)}')
-              print(f'STREAM_FAILURE={failure or "none"}')
-              print('RECOVERED_MEMBERS_BEGIN')
-              print('\n'.join(recovered))
-              print('RECOVERED_MEMBERS_END')
+                  except (EOFError, tarfile.ReadError) as exc:
+                      failure = f'{type(exc).__name__}: {exc}'
+                      partial = out / p
+                      if partial.is_file():
+                          partial.unlink()
+                      break
+                  recovered.append(member.name)
+          report = out / 'RECOVERY_REPORT.txt'
+          report.write_text(
+              f'RECOVERED_COUNT={len(recovered)}\n'
+              f'STREAM_FAILURE={failure or "none"}\n'
+              + '\n'.join(recovered)
+              + '\n',
+              encoding='utf-8',
+          )
+          print(report.read_text(encoding='utf-8'))
           PY
-          echo 'KEY_SOURCE_DUMP_BEGIN'
-          for f in \
-            /tmp/salvage/apps/extension/manifest.json \
-            /tmp/salvage/apps/extension/background.js \
-            /tmp/salvage/apps/extension/content.js \
-            /tmp/salvage/apps/extension/sidepanel.js \
-            /tmp/salvage/local_copilot/*.py \
-            /tmp/salvage/tests/test_*.py; do
-            if [ -f "$f" ]; then
-              echo "===== ${f#/tmp/salvage/} ====="
-              sed -n '1,240p' "$f"
-            fi
-          done
-          echo 'KEY_SOURCE_DUMP_END'
-      - name: Upload recovered complete members for bounded inspection
-        uses: actions/upload-artifact@v4
-        with:
-          name: incomplete-bundle-recovered-members
-          path: /tmp/salvage
-          if-no-files-found: error
-          retention-days: 7
+      - name: Commit temporary recovery namespace for inspection
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .recovered-incomplete
+          mkdir -p .recovered-incomplete
+          cp -a /tmp/salvage/. .recovered-incomplete/
+          cat > .recovered-incomplete/README.md <<'EOF'
+          # Temporary recovery namespace
+
+          These are only the complete members recoverable from a previously staged, truncated gzip archive. They are untrusted historical reference material, not the release candidate. The namespace must be deleted before final review.
+          EOF
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .recovered-incomplete
+          git commit -m "Recover inspectable members from truncated copilot archive"
+          git push origin HEAD:agent/local-ephemeral-community-notes-copilot-ready
