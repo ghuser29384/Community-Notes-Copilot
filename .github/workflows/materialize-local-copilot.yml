@@ -1,4 +1,5 @@
 name: Materialize reviewed local copilot bundle
+# Re-triggered 2026-08-23 to materialize the reviewed X extension before the Context Notes expansion.
 
 on:
   push:
