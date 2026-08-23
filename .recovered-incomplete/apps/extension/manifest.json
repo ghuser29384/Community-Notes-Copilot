@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Community Notes Copilot — Local Ephemeral",
+  "version": "1.0.0",
+  "description": "Local-first manual analysis of user-supplied public X post content. No X access or automated interaction.",
+  "permissions": ["sidePanel"],
+  "host_permissions": ["http://127.0.0.1:8765/*"],
+  "background": {"service_worker": "service-worker.js"},
+  "action": {"default_title": "Open Community Notes Copilot"},
+  "side_panel": {"default_path": "sidepanel.html"},
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; connect-src http://127.0.0.1:8765; img-src 'self' data: blob:; style-src 'self'; script-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'"
+  }
+}

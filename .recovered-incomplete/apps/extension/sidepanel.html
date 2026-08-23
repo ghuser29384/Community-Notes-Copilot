@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>Community Notes Copilot</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div>
+      <p class="eyebrow">LOCAL • EPHEMERAL • MANUAL REVIEW</p>
+      <h1>Community Notes Copilot</h1>
+    </div>
+    <span id="capture-indicator" class="pill stopped">Stopped</span>
+  </header>
+
+  <section class="notice">
+    <strong>No X access.</strong> This build cannot read tabs, scroll, click, submit, or use X credentials. Paste only public material you are authorized to analyze.
+  </section>
+
+  <section class="card" aria-labelledby="connection-title">
+    <h2 id="connection-title">1. Start a volatile session</h2>
+    <label for="token">Companion token</label>
+    <input id="token" type="password" autocomplete="off" spellcheck="false" placeholder="Paste token printed by the local companion">
+    <div class="row">
+      <button id="start" class="primary">Start</button>
+      <button id="pause" disabled>Pause</button>
+      <button id="resume" disabled>Resume</button>
+      <button id="stop" class="danger" disabled>Stop & erase</button>
+    </div>
+    <p id="connection-status" class="status" role="status">No session.</p>
+  </section>
+
+  <main id="workspace" inert>
+    <section class="card" aria-labelledby="input-title">
+      <h2 id="input-title">2. Supply the public post</h2>
+      <label for="post-type">Input scope</label>
+      <select id="post-type">
+        <option value="public_post">Public X post — manually supplied</option>
+        <option value="fixture">Synthetic test fixture</option>
+        <option value="direct_message">Direct message — rejected</option>
+        <option value="protected_post">Protected/private post — rejected</option>
+        <option value="ambiguous">Ambiguous surface — rejected</option>
+      </select>
+      <label for="post-text">Visible post text</label>
+      <textarea id="post-text" rows="6" maxlength="12000" autocomplete="off" spellcheck="true"></textarea>
+      <label for="context">Visible quoted/reply context</label>
+      <textarea id="context" rows="3" maxlength="8000" autocomplete="off"></textarea>
+      <label for="post-url">Post URL (display only; never fetched)</label>
+      <input id="post-url" type="url" maxlength="2048" autocomplete="off" placeholder="https://x.com/...">
+      <label for="media-description">Visible media description</label>
+      <textarea id="media-description" rows="3" maxlength="4000" autocomplete="off" placeholder="Describe only claim-relevant visible details, or use the optional local image model below."></textarea>
+      <label for="media-file">Optional image for local Ollama analysis</label>
+      <input id="media-file" type="file" accept="image/png,image/jpeg,image/webp">
+      <button id="analyze-media" disabled>Analyze image locally</button>
+      <div class="checks">
+        <label><input id="high-risk" type="checkbox"> Apply high-stakes two-source gate</label>
+        <label><input id="identifiable" type="checkbox"> Claim concerns an identifiable person</label>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="research-title">
+      <h2 id="research-title">3. Add evidence</h2>
+      <p class="hint">Use sources you opened yourself, or explicitly fetch a single supplied URL. No automatic search occurs.</p>
+      <details>
+        <summary>Explicit source fetch</summary>
+        <label for="fetch-url">HTTPS source URL</label>
+        <input id="fetch-url" type="url" maxlength="2048" autocomplete="off">
+        <button id="fetch-source">Fetch this source only</button>
+        <p id="fetch-status" class="status" role="status"></p>
+      </details>
+      <div class="source-grid">
+        <label for="source-url">URL</label><input id="source-url" type="url" maxlength="2048" autocomplete="off">
+        <label for="source-title">Title</label><input id="source-title" maxlength="300" autocomplete="off">
+        <label for="source-publisher">Publisher</label><input id="source-publisher" maxlength="200" autocomplete="off">
+        <label for="source-type">Type</label>
+        <select id="source-type">
+          <option value="official">Official</option>
+          <option value="primary">Primary</option>
+          <option value="institutional">Institutional</option>
+          <option value="peer_reviewed">Peer reviewed</option>
+          <option value="reputable_secondary">Reputable secondary</option>
+          <option value="weak_secondary">Weak secondary</option>
+        </select>
+        <label for="source-date">Date</label><input id="source-date" type="date">
+        <label for="source-relation">Relation</label>
+        <select id="source-relation">
+          <option value="contradicts">Contradicts</option>
+          <option value="contextualizes">Adds essential context</option>
+          <option value="disputes">Disputes</option>
+          <option value="supports">Supports post</option>
+        </select>
+        <label for="source-fact">Exact supported fact</label><textarea id="source-fact" rows="2" maxlength="700" autocomplete="off"></textarea>
+        <label for="source-excerpt">Source excerpt containing that exact fact</label><textarea id="source-excerpt" rows="5" maxlength="30000" autocomplete="off"></textarea>
+        <label for="source-group">Independent source group</label><input id="source-group" maxlength="200" autocomplete="off" placeholder="Agency or original publisher">
+        <label class="span"><input id="source-verified" type="checkbox"> I opened or explicitly fetched this source and verified it is accessible.</label>
+      </div>
+      <button id="add-source">Add source to volatile session</button>
+      <ul id="source-list" class="source-list"></ul>
+    </section>
+
+    <section class="card action-card">
+      <h2>4. Run conservative analysis</h2>
+      <button id="analyze" class="primary wide">Analyze</button>
+      <p class="hint">The system abstains when evidence, scope, format, or safety checks fail.</p>
+    </section>
+
+    <section id="result-card" class="card result" hidden aria-live="polite">
+      <div class="result-head">
+        <div><p class="eyebrow">EPHEMERAL RESULT</p><h2 id="result-status">—</h2></div>
+        <button id="close-result">Close & erase</button>
+      </div>
+      <p id="result-why"></p>
+      <div id="draft-wrap" hidden>
+        <label for="draft">Exact draft</label>
+        <textarea id="draft" rows="6" readonly></textarea>
+        <div class="row between"><span id="character-count"></span><button id="copy">Copy with warning</button></div>
+      </div>
+      <dl>
+        <dt>Classification</dt><dd id="classification">—</dd>
+        <dt>Tags</dt><dd id="tags">—</dd>
+        <dt>Confidence</dt><dd id="confidence">—</dd>
+        <dt>Uncertainty</dt><dd id="uncertainty">—</dd>
+        <dt>Processing</dt><dd id="processing">—</dd>
+        <dt>Transmission</dt><dd id="transmission">—</dd>
+        <dt>Rolling cost</dt><dd id="cost">—</dd>
+      </dl>
+      <h3>Sources</h3><ul id="result-sources"></ul>
+      <h3>Claim-to-source support</h3><ul id="evidence-map"></ul>
+      <h3>Blockers / critique</h3><ul id="blockers"></ul>
+    </section>
+  </main>
+
+  <footer>
+    <label><input id="strict-copy" type="checkbox" checked> Strict privacy mode: disable clipboard copy</label>
+    <p>Clipboard, OS swap, browser internals, and source-server logs are outside the Copilot’s application-level persistence guarantee.</p>
+  </footer>
+  <script src="sidepanel.js"></script>
+</body>
+</html>
