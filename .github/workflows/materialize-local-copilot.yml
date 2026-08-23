@@ -1,5 +1,4 @@
-name: Materialize reviewed local copilot bundle
-# Re-triggered 2026-08-23 to materialize the reviewed X extension before the Context Notes expansion.
+name: Inspect incomplete local copilot bundle
 
 on:
   push:
@@ -12,63 +11,79 @@ on:
       - .github/workflows/materialize-local-copilot.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  materialize:
+  inspect:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
           ref: agent/local-ephemeral-community-notes-copilot-ready
-          fetch-depth: 0
-      - name: Validate and extract implementation bundle
+      - name: Stream-validate complete archive members without materializing the branch
         shell: bash
         run: |
           set -euo pipefail
           base64 --decode .bootstrap/local-copilot.part00 > /tmp/local-copilot.tar.gz
           echo "decoded_bundle_sha256=$(sha256sum /tmp/local-copilot.tar.gz | awk '{print $1}')"
+          rm -rf /tmp/salvage && mkdir -p /tmp/salvage
           python3 - <<'PY'
           import pathlib
           import tarfile
 
           archive = pathlib.Path('/tmp/local-copilot.tar.gz')
+          out = pathlib.Path('/tmp/salvage')
           allowed_roots = {
               'local_copilot', 'apps', 'tests', 'scripts', 'docs',
               'requirements-dev.txt', '.github'
           }
-          with tarfile.open(archive, 'r:gz') as tf:
-              members = tf.getmembers()
-              if not members:
-                  raise SystemExit('empty bundle')
-              for member in members:
-                  p = pathlib.PurePosixPath(member.name)
-                  if p.is_absolute() or '..' in p.parts:
-                      raise SystemExit(f'unsafe archive path: {member.name}')
-                  if not p.parts or p.parts[0] not in allowed_roots:
-                      raise SystemExit(f'unexpected archive root: {member.name}')
-                  if member.issym() or member.islnk() or member.isdev():
-                      raise SystemExit(f'unsupported archive member: {member.name}')
-              tf.extractall('.', members=members, filter='data')
+          recovered = []
+          failure = None
+          try:
+              with tarfile.open(archive, mode='r|gz') as tf:
+                  while True:
+                      try:
+                          member = tf.next()
+                      except (EOFError, tarfile.ReadError) as exc:
+                          failure = f'{type(exc).__name__}: {exc}'
+                          break
+                      if member is None:
+                          break
+                      p = pathlib.PurePosixPath(member.name)
+                      if p.is_absolute() or '..' in p.parts:
+                          raise SystemExit(f'unsafe archive path: {member.name}')
+                      if not p.parts or p.parts[0] not in allowed_roots:
+                          raise SystemExit(f'unexpected archive root: {member.name}')
+                      if member.issym() or member.islnk() or member.isdev():
+                          raise SystemExit(f'unsupported archive member: {member.name}')
+                      tf.extract(member, path=out, filter='data')
+                      recovered.append(member.name)
+          finally:
+              print(f'RECOVERED_COUNT={len(recovered)}')
+              print(f'STREAM_FAILURE={failure or "none"}')
+              print('RECOVERED_MEMBERS_BEGIN')
+              print('\n'.join(recovered))
+              print('RECOVERED_MEMBERS_END')
           PY
-          rm -f /tmp/local-copilot.tar.gz
-          git rm -r .bootstrap .github/workflows/materialize-local-copilot.yml
-      - name: Run bundle-controlled local checks before commit
-        shell: bash
-        run: |
-          set -euo pipefail
-          python3 -m compileall local_copilot tests scripts
-          python3 -m unittest discover -s tests -p 'test_*.py'
-          node --check apps/extension/background.js
-          node --check apps/extension/content.js
-          node --check apps/extension/sidepanel.js
-      - name: Commit materialized implementation
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Build local ephemeral Community Notes Copilot"
-          git push origin HEAD:agent/local-ephemeral-community-notes-copilot-ready
+          echo 'KEY_SOURCE_DUMP_BEGIN'
+          for f in \
+            /tmp/salvage/apps/extension/manifest.json \
+            /tmp/salvage/apps/extension/background.js \
+            /tmp/salvage/apps/extension/content.js \
+            /tmp/salvage/apps/extension/sidepanel.js \
+            /tmp/salvage/local_copilot/*.py \
+            /tmp/salvage/tests/test_*.py; do
+            if [ -f "$f" ]; then
+              echo "===== ${f#/tmp/salvage/} ====="
+              sed -n '1,240p' "$f"
+            fi
+          done
+          echo 'KEY_SOURCE_DUMP_END'
+      - name: Upload recovered complete members for bounded inspection
+        uses: actions/upload-artifact@v4
+        with:
+          name: incomplete-bundle-recovered-members
+          path: /tmp/salvage
+          if-no-files-found: error
+          retention-days: 7
