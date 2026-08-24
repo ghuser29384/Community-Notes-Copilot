@@ -1,0 +1,139 @@
+name: Materialize and verify Context Notes candidate
+
+on:
+  push:
+    branches:
+      - agent/local-ephemeral-community-notes-copilot-ready
+    paths:
+      - .bootstrap/context-notes.part*
+      - .github/workflows/materialize-context-notes.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: context-notes-materialization
+  cancel-in-progress: false
+
+jobs:
+  materialize:
+    if: ${{ !contains(github.event.head_commit.message || '', '[context-materialized]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/local-ephemeral-community-notes-copilot-ready
+          fetch-depth: 0
+
+      - name: Decode and validate staged archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          chunks=(.bootstrap/context-notes.part*)
+          if [ "${#chunks[@]}" -lt 1 ]; then
+            echo "No staged archive chunks found" >&2
+            exit 1
+          fi
+          printf '%s\n' "${chunks[@]}" | sort > /tmp/context-chunks.txt
+          while IFS= read -r chunk; do cat "$chunk"; done < /tmp/context-chunks.txt \
+            | base64 --decode > /tmp/context-notes-candidate.tar.gz
+          sha256sum /tmp/context-notes-candidate.tar.gz
+          gzip -t /tmp/context-notes-candidate.tar.gz
+          tar -tzf /tmp/context-notes-candidate.tar.gz > /tmp/context-members.txt
+          python3 - <<'PY'
+          from pathlib import PurePosixPath
+          allowed = {
+              '.github', 'README.md', 'apps', 'docs', 'evidence',
+              'scripts', 'tests', 'dist'
+          }
+          members = [line.rstrip('\n') for line in open('/tmp/context-members.txt', encoding='utf-8')]
+          if not members:
+              raise SystemExit('candidate archive is empty')
+          for name in members:
+              p = PurePosixPath(name)
+              if p.is_absolute() or '..' in p.parts:
+                  raise SystemExit(f'unsafe archive path: {name}')
+              if not p.parts or p.parts[0] not in allowed:
+                  raise SystemExit(f'unexpected archive root: {name}')
+          required = {
+              'apps/extension/manifest.json',
+              'apps/extension/content-script.js',
+              'apps/extension/service-worker.js',
+              'apps/extension/lib/adapters.js',
+              'apps/extension/lib/core.js',
+              'apps/extension/lib/pipeline.js',
+              'tests/context-copilot/adapters.test.cjs',
+              'tests/context-copilot/service-worker.test.cjs',
+              'scripts/build-context-extension.mjs',
+              'scripts/verify-context-copilot.mjs',
+              '.github/workflows/context-notes-copilot-ci.yml',
+          }
+          missing = sorted(required - set(members))
+          if missing:
+              raise SystemExit('candidate archive missing required members: ' + ', '.join(missing))
+          print(f'validated {len(members)} safe archive members')
+          PY
+
+      - name: Materialize candidate over exact PR branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/context-candidate
+          mkdir -p /tmp/context-candidate
+          tar -xzf /tmp/context-notes-candidate.tar.gz -C /tmp/context-candidate
+          cp -a /tmp/context-candidate/. .
+
+          # Remove transfer/recovery scaffolding. These files are not part of the candidate.
+          rm -rf .bootstrap .recovered-incomplete
+          rm -f \
+            .github/workflows/export-context-copilot-source.yml \
+            .github/workflows/local-copilot-ci.yml \
+            .github/workflows/materialize-local-copilot.yml \
+            .github/workflows/materialize-context-notes.yml
+
+          test -f apps/extension/manifest.json
+          test -f tests/context-copilot/service-worker.test.cjs
+          test -f .github/workflows/context-notes-copilot-ci.yml
+
+      - name: Execute candidate behavioral suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --test tests/context-copilot/*.test.cjs
+
+      - name: Execute static and independent verification
+        shell: bash
+        run: |
+          set -euo pipefail
+          node scripts/verify-context-copilot.mjs
+          node scripts/build-context-extension.mjs
+          node scripts/independent-context-review.mjs
+
+      - name: Verify deterministic extension package
+        shell: bash
+        run: |
+          set -euo pipefail
+          first="$(sha256sum dist/context-notes-copilot.zip | awk '{print $1}')"
+          cp dist/context-notes-copilot.zip /tmp/context-notes-first.zip
+          node scripts/build-context-extension.mjs
+          second="$(sha256sum dist/context-notes-copilot.zip | awk '{print $1}')"
+          test "$first" = "$second"
+          cmp /tmp/context-notes-first.zip dist/context-notes-copilot.zip
+          echo "deterministic_zip_sha256=$second"
+
+      - name: Commit materialized, verified source atomically
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No materialized changes to commit"
+            exit 1
+          fi
+          git commit -m "Materialize verified Context Notes Copilot [context-materialized]"
+          git push origin HEAD:agent/local-ephemeral-community-notes-copilot-ready
