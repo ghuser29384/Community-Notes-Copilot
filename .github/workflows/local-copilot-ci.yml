@@ -7,7 +7,7 @@ on:
   pull_request:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   baseline:
@@ -30,23 +30,18 @@ jobs:
       - name: Check existing browser JavaScript
         run: node --check apps/web/app/app.js
 
-  materialize-context-notes:
+  recover-context-archive:
     if: >-
       github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.full_name == github.repository &&
       github.event.pull_request.head.ref == 'agent/local-ephemeral-community-notes-copilot-ready'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
         with:
           ref: agent/local-ephemeral-community-notes-copilot-ready
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
-
-      - name: Decode and validate complete staged archive
+      - name: Recover every complete member from the truncated transfer
         shell: bash
         run: |
           set -euo pipefail
@@ -56,86 +51,57 @@ jobs:
           printf '%s\n' "${chunks[@]}" | sort > /tmp/context-chunks.txt
           while IFS= read -r chunk; do cat "$chunk"; done < /tmp/context-chunks.txt \
             | base64 --decode > /tmp/context-notes-candidate.tar.gz
-          gzip -t /tmp/context-notes-candidate.tar.gz
-          tar -tzf /tmp/context-notes-candidate.tar.gz > /tmp/context-members.txt
+          rm -rf /tmp/recovered-context && mkdir -p /tmp/recovered-context
           python3 - <<'PY'
-          from pathlib import PurePosixPath
+          import pathlib
+          import tarfile
+
+          archive = pathlib.Path('/tmp/context-notes-candidate.tar.gz')
+          out = pathlib.Path('/tmp/recovered-context')
           allowed = {'.github', 'README.md', 'apps', 'docs', 'evidence', 'scripts', 'tests', 'dist'}
-          members = [line.rstrip('\n') for line in open('/tmp/context-members.txt', encoding='utf-8')]
-          if not members:
-              raise SystemExit('candidate archive is empty')
-          for name in members:
-              p = PurePosixPath(name)
-              if p.is_absolute() or '..' in p.parts:
-                  raise SystemExit(f'unsafe archive path: {name}')
-              if not p.parts or p.parts[0] not in allowed:
-                  raise SystemExit(f'unexpected archive root: {name}')
-          required = {
-              'apps/extension/manifest.json',
-              'apps/extension/content-script.js',
-              'apps/extension/service-worker.js',
-              'apps/extension/lib/adapters.js',
-              'apps/extension/lib/core.js',
-              'apps/extension/lib/pipeline.js',
-              'tests/context-copilot/adapters.test.cjs',
-              'tests/context-copilot/service-worker.test.cjs',
-              'scripts/build-context-extension.mjs',
-              'scripts/verify-context-copilot.mjs',
-              '.github/workflows/context-notes-copilot-ci.yml',
-          }
-          missing = sorted(required - set(members))
-          if missing:
-              raise SystemExit('candidate archive missing required members: ' + ', '.join(missing))
-          print(f'validated {len(members)} safe archive members')
+          recovered = []
+          failure = None
+          with tarfile.open(archive, mode='r|gz') as tf:
+              while True:
+                  try:
+                      member = tf.next()
+                  except (EOFError, tarfile.ReadError) as exc:
+                      failure = f'{type(exc).__name__}: {exc}'
+                      break
+                  if member is None:
+                      break
+                  p = pathlib.PurePosixPath(member.name)
+                  if p.is_absolute() or '..' in p.parts or not p.parts or p.parts[0] not in allowed:
+                      raise SystemExit(f'unsafe archive member: {member.name}')
+                  if member.issym() or member.islnk() or member.isdev():
+                      raise SystemExit(f'unsupported archive member: {member.name}')
+                  try:
+                      tf.extract(member, path=out, filter='data')
+                  except (EOFError, tarfile.ReadError) as exc:
+                      failure = f'{type(exc).__name__}: {exc}'
+                      partial = out / p
+                      if partial.is_file():
+                          partial.unlink()
+                      break
+                  recovered.append(member.name)
+          report = out / 'RECOVERY_REPORT.txt'
+          report.write_text(
+              f'RECOVERED_COUNT={len(recovered)}\n'
+              f'STREAM_FAILURE={failure or "none"}\n'
+              + '\n'.join(recovered) + '\n',
+              encoding='utf-8',
+          )
+          print(report.read_text(encoding='utf-8'))
+          if not recovered:
+              raise SystemExit('no complete members recovered')
           PY
-          sha256sum /tmp/context-notes-candidate.tar.gz
-
-      - name: Materialize candidate and remove transfer scaffolding
-        shell: bash
-        run: |
-          set -euo pipefail
-          rm -rf /tmp/context-candidate
-          mkdir -p /tmp/context-candidate
-          tar -xzf /tmp/context-notes-candidate.tar.gz -C /tmp/context-candidate
-          cp -a /tmp/context-candidate/. .
-          rm -rf .bootstrap .recovered-incomplete
-          rm -f \
-            .github/workflows/export-context-copilot-source.yml \
-            .github/workflows/local-copilot-ci.yml \
-            .github/workflows/materialize-local-copilot.yml \
-            .github/workflows/materialize-context-notes.yml
-          test -f apps/extension/manifest.json
-          test -f tests/context-copilot/service-worker.test.cjs
-          test -f .github/workflows/context-notes-copilot-ci.yml
-
-      - name: Execute behavioral, static, build, and independent gates
-        shell: bash
-        run: |
-          set -euo pipefail
-          node --test tests/context-copilot/*.test.cjs
-          node scripts/verify-context-copilot.mjs
-          node scripts/build-context-extension.mjs
-          node scripts/independent-context-review.mjs
-
-      - name: Verify deterministic package
-        shell: bash
-        run: |
-          set -euo pipefail
-          first="$(sha256sum dist/context-notes-copilot.zip | awk '{print $1}')"
-          cp dist/context-notes-copilot.zip /tmp/context-notes-first.zip
-          node scripts/build-context-extension.mjs
-          second="$(sha256sum dist/context-notes-copilot.zip | awk '{print $1}')"
-          test "$first" = "$second"
-          cmp /tmp/context-notes-first.zip dist/context-notes-copilot.zip
-          echo "deterministic_zip_sha256=$second"
-
-      - name: Commit verified source to the PR branch
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git diff --cached --quiet && { echo 'No materialized changes' >&2; exit 1; }
-          git commit -m "Materialize verified Context Notes Copilot [context-materialized]"
-          git push origin HEAD:agent/local-ephemeral-community-notes-copilot-ready
+          tar -C /tmp/recovered-context -czf /tmp/recovered-context.tar.gz .
+          sha256sum /tmp/recovered-context.tar.gz > /tmp/recovered-context.tar.gz.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: recovered-context-source
+          path: |
+            /tmp/recovered-context.tar.gz
+            /tmp/recovered-context.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 1
