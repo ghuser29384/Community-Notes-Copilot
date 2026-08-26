@@ -1,0 +1,10 @@
+{
+  "X_TAB_CAPTURE": false,
+  "X_DOM_EXTRACTION": false,
+  "X_API_INGESTION": false,
+  "X_AUTOMATED_INTERACTION": false,
+  "X_LIVE_WRITE": false,
+  "CLOUD_PROCESSING": false,
+  "CONTENT_TELEMETRY": false,
+  "PERSISTENT_CONTENT_STORAGE": false
+}

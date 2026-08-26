@@ -1,0 +1,6 @@
+RECOVERED_COUNT=4
+STREAM_FAILURE=ReadError: unexpected end of data
+apps/extension/build-flags.json
+apps/extension/manifest.json
+apps/extension/service-worker.js
+apps/extension/sidepanel.html

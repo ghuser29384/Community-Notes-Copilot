@@ -1,0 +1,32 @@
+name: Export Context Copilot source snapshot
+
+on:
+  push:
+    branches:
+      - agent/local-ephemeral-community-notes-copilot-ready
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Package checked-out source
+        shell: bash
+        run: |
+          set -euo pipefail
+          tar --exclude=.git -czf /tmp/context-notes-copilot-source.tar.gz .
+          sha256sum /tmp/context-notes-copilot-source.tar.gz | tee /tmp/context-notes-copilot-source.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: context-notes-copilot-source
+          path: |
+            /tmp/context-notes-copilot-source.tar.gz
+            /tmp/context-notes-copilot-source.sha256
+          if-no-files-found: error
+          retention-days: 1

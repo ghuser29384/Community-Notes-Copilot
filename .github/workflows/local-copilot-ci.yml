@@ -1,0 +1,107 @@
+name: Local ephemeral copilot CI
+
+on:
+  push:
+    branches:
+      - agent/local-ephemeral-community-notes-copilot
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Compile baseline Python
+        run: make lint
+      - name: Run existing unit tests
+        run: make test
+      - name: Run existing fixture E2E
+        run: make e2e
+      - name: Check existing browser JavaScript
+        run: node --check apps/web/app/app.js
+
+  recover-context-archive:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'agent/local-ephemeral-community-notes-copilot-ready'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/local-ephemeral-community-notes-copilot-ready
+      - name: Recover every complete member from the truncated transfer
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s nullglob
+          chunks=(.bootstrap/context-notes.part*)
+          test "${#chunks[@]}" -ge 1
+          printf '%s\n' "${chunks[@]}" | sort > /tmp/context-chunks.txt
+          while IFS= read -r chunk; do cat "$chunk"; done < /tmp/context-chunks.txt \
+            | base64 --decode > /tmp/context-notes-candidate.tar.gz
+          rm -rf /tmp/recovered-context && mkdir -p /tmp/recovered-context
+          python3 - <<'PY'
+          import pathlib
+          import tarfile
+
+          archive = pathlib.Path('/tmp/context-notes-candidate.tar.gz')
+          out = pathlib.Path('/tmp/recovered-context')
+          allowed = {'.github', 'README.md', 'apps', 'docs', 'evidence', 'scripts', 'tests', 'dist'}
+          recovered = []
+          failure = None
+          with tarfile.open(archive, mode='r|gz') as tf:
+              while True:
+                  try:
+                      member = tf.next()
+                  except (EOFError, tarfile.ReadError) as exc:
+                      failure = f'{type(exc).__name__}: {exc}'
+                      break
+                  if member is None:
+                      break
+                  p = pathlib.PurePosixPath(member.name)
+                  if p.is_absolute() or '..' in p.parts or not p.parts or p.parts[0] not in allowed:
+                      raise SystemExit(f'unsafe archive member: {member.name}')
+                  if member.issym() or member.islnk() or member.isdev():
+                      raise SystemExit(f'unsupported archive member: {member.name}')
+                  try:
+                      tf.extract(member, path=out, filter='data')
+                  except (EOFError, tarfile.ReadError) as exc:
+                      failure = f'{type(exc).__name__}: {exc}'
+                      partial = out / p
+                      if partial.is_file():
+                          partial.unlink()
+                      break
+                  recovered.append(member.name)
+          report = out / 'RECOVERY_REPORT.txt'
+          report.write_text(
+              f'RECOVERED_COUNT={len(recovered)}\n'
+              f'STREAM_FAILURE={failure or "none"}\n'
+              + '\n'.join(recovered) + '\n',
+              encoding='utf-8',
+          )
+          print(report.read_text(encoding='utf-8'))
+          if not recovered:
+              raise SystemExit('no complete members recovered')
+          PY
+          tar -C /tmp/recovered-context -czf /tmp/recovered-context.tar.gz .
+          sha256sum /tmp/recovered-context.tar.gz > /tmp/recovered-context.tar.gz.sha256
+      - uses: actions/upload-artifact@v4
+        with:
+          name: recovered-context-source
+          path: |
+            /tmp/recovered-context.tar.gz
+            /tmp/recovered-context.tar.gz.sha256
+          if-no-files-found: error
+          retention-days: 1
