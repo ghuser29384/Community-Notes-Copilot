@@ -1,12 +1,11 @@
-name: Materialize and verify Context Notes candidate
+name: Materialize verified Context Notes source
 
 on:
   push:
     branches:
       - agent/local-ephemeral-community-notes-copilot-ready
     paths:
-      - .bootstrap/context-notes.part*
-      - .github/workflows/materialize-context-notes.yml
+      - '.bootstrap/context-full.ready'
   workflow_dispatch:
 
 permissions:
@@ -18,122 +17,111 @@ concurrency:
 
 jobs:
   materialize:
-    if: ${{ !contains(github.event.head_commit.message || '', '[context-materialized]') }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
           ref: agent/local-ephemeral-community-notes-copilot-ready
           fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
 
-      - name: Decode and validate staged archive
+      - name: Decode and validate the immutable candidate archive
         shell: bash
         run: |
           set -euo pipefail
+          test -f .bootstrap/context-full.ready
+          read -r expected_sha expected_parts < .bootstrap/context-full.ready
+          test "${#expected_sha}" -eq 64
+          test "$expected_parts" -ge 1
           shopt -s nullglob
-          chunks=(.bootstrap/context-notes.part*)
-          if [ "${#chunks[@]}" -lt 1 ]; then
-            echo "No staged archive chunks found" >&2
-            exit 1
-          fi
-          printf '%s\n' "${chunks[@]}" | sort > /tmp/context-chunks.txt
-          while IFS= read -r chunk; do cat "$chunk"; done < /tmp/context-chunks.txt \
-            | base64 --decode > /tmp/context-notes-candidate.tar.gz
-          sha256sum /tmp/context-notes-candidate.tar.gz
-          gzip -t /tmp/context-notes-candidate.tar.gz
-          tar -tzf /tmp/context-notes-candidate.tar.gz > /tmp/context-members.txt
+          chunks=(.bootstrap/context-full.part[0-9][0-9])
+          test "${#chunks[@]}" -eq "$expected_parts"
+          printf '%s\n' "${chunks[@]}" | sort > /tmp/context-parts.txt
+          while IFS= read -r chunk; do cat "$chunk"; done < /tmp/context-parts.txt \
+            | base64 --decode > /tmp/context-notes-final.tar.gz
+          actual_sha="$(sha256sum /tmp/context-notes-final.tar.gz | awk '{print $1}')"
+          test "$actual_sha" = "$expected_sha"
+          gzip -t /tmp/context-notes-final.tar.gz
+          tar -tzf /tmp/context-notes-final.tar.gz > /tmp/context-members.txt
           python3 - <<'PY'
           from pathlib import PurePosixPath
-          allowed = {
-              '.github', 'README.md', 'apps', 'docs', 'evidence',
-              'scripts', 'tests', 'dist'
-          }
+          allowed = {'.github', '.gitignore', 'README.md', 'apps', 'docs', 'package.json', 'scripts', 'tests'}
           members = [line.rstrip('\n') for line in open('/tmp/context-members.txt', encoding='utf-8')]
           if not members:
-              raise SystemExit('candidate archive is empty')
+              raise SystemExit('archive is empty')
           for name in members:
-              p = PurePosixPath(name)
-              if p.is_absolute() or '..' in p.parts:
+              path = PurePosixPath(name)
+              if path.is_absolute() or '..' in path.parts or not path.parts:
                   raise SystemExit(f'unsafe archive path: {name}')
-              if not p.parts or p.parts[0] not in allowed:
+              if path.parts[0] not in allowed:
                   raise SystemExit(f'unexpected archive root: {name}')
           required = {
+              '.github/workflows/context-notes-copilot-ci.yml',
+              'apps/companion/openai-provider.mjs',
+              'apps/companion/server.mjs',
               'apps/extension/manifest.json',
               'apps/extension/content-script.js',
               'apps/extension/service-worker.js',
               'apps/extension/lib/adapters.js',
               'apps/extension/lib/core.js',
               'apps/extension/lib/pipeline.js',
-              'tests/context-copilot/adapters.test.cjs',
-              'tests/context-copilot/service-worker.test.cjs',
+              'scripts/browser-extension-smoke.py',
               'scripts/build-context-extension.mjs',
               'scripts/verify-context-copilot.mjs',
-              '.github/workflows/context-notes-copilot-ci.yml',
+              'tests/context-copilot/openai-provider.test.mjs',
+              'tests/context-copilot/companion.test.mjs',
+              'docs/CONTEXT_NOTES_COMPLETION_GATES.md',
+              'docs/SUBSTACK_POLICY_RELEASE_BLOCKER.md',
           }
           missing = sorted(required - set(members))
           if missing:
-              raise SystemExit('candidate archive missing required members: ' + ', '.join(missing))
-          print(f'validated {len(members)} safe archive members')
+              raise SystemExit('missing required members: ' + ', '.join(missing))
+          print(f'validated {len(members)} candidate members')
           PY
 
-      - name: Materialize candidate over exact PR branch
+      - name: Materialize source and remove transfer/recovery scaffolding
         shell: bash
         run: |
           set -euo pipefail
-          rm -rf /tmp/context-candidate
-          mkdir -p /tmp/context-candidate
-          tar -xzf /tmp/context-notes-candidate.tar.gz -C /tmp/context-candidate
-          cp -a /tmp/context-candidate/. .
-
-          # Remove transfer/recovery scaffolding. These files are not part of the candidate.
-          rm -rf .bootstrap .recovered-incomplete
+          rm -rf /tmp/context-notes-final
+          mkdir -p /tmp/context-notes-final
+          tar -xzf /tmp/context-notes-final.tar.gz -C /tmp/context-notes-final
+          cp -a /tmp/context-notes-final/. .
+          rm -rf .bootstrap .recovered-incomplete evaluation
           rm -f \
             .github/workflows/export-context-copilot-source.yml \
             .github/workflows/local-copilot-ci.yml \
             .github/workflows/materialize-local-copilot.yml \
             .github/workflows/materialize-context-notes.yml
-
           test -f apps/extension/manifest.json
-          test -f tests/context-copilot/service-worker.test.cjs
+          test -f apps/companion/openai-provider.mjs
           test -f .github/workflows/context-notes-copilot-ci.yml
 
-      - name: Execute candidate behavioral suite
+      - name: Execute unit, privacy, cost, build, and independent gates
         shell: bash
         run: |
           set -euo pipefail
-          node --test tests/context-copilot/*.test.cjs
-
-      - name: Execute static and independent verification
-        shell: bash
-        run: |
-          set -euo pipefail
+          node --test tests/context-copilot/*.test.cjs tests/context-copilot/*.test.mjs
           node scripts/verify-context-copilot.mjs
           node scripts/build-context-extension.mjs
-          node scripts/independent-context-review.mjs
-
-      - name: Verify deterministic extension package
-        shell: bash
-        run: |
-          set -euo pipefail
-          first="$(sha256sum dist/context-notes-copilot.zip | awk '{print $1}')"
           cp dist/context-notes-copilot.zip /tmp/context-notes-first.zip
-          node scripts/build-context-extension.mjs
-          second="$(sha256sum dist/context-notes-copilot.zip | awk '{print $1}')"
-          test "$first" = "$second"
+          node scripts/build-context-extension.mjs > /tmp/context-notes-second-build.json
           cmp /tmp/context-notes-first.zip dist/context-notes-copilot.zip
-          echo "deterministic_zip_sha256=$second"
+          node scripts/independent-context-review.mjs dist/context-notes-copilot
 
-      - name: Commit materialized, verified source atomically
+      - name: Commit exact verified source atomically
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
           if git diff --cached --quiet; then
-            echo "No materialized changes to commit"
+            echo 'No materialized changes found' >&2
             exit 1
           fi
-          git commit -m "Materialize verified Context Notes Copilot [context-materialized]"
+          git commit -m 'Materialize verified Context Notes Copilot source'
           git push origin HEAD:agent/local-ephemeral-community-notes-copilot-ready
