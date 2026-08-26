@@ -1,0 +1,131 @@
+name: Repair Context Notes CI definition
+
+on:
+  push:
+    branches:
+      - agent/local-ephemeral-community-notes-copilot-ready
+    paths:
+      - '.context-notes-ci-fix-ready'
+
+permissions:
+  contents: write
+
+jobs:
+  repair:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/local-ephemeral-community-notes-copilot-ready
+          fetch-depth: 0
+      - name: Install minimal, reproducible CI definition
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > .github/workflows/context-notes-copilot-ci.yml <<'CI'
+          name: Context Notes Copilot CI
+
+          on:
+            pull_request:
+              paths:
+                - 'apps/extension/**'
+                - 'apps/companion/**'
+                - 'tests/context-copilot/**'
+                - 'scripts/**'
+                - 'docs/CONTEXT_NOTES_*'
+                - 'docs/SUBSTACK_POLICY_*'
+                - '.github/workflows/context-notes-copilot-ci.yml'
+                - 'package.json'
+                - 'README.md'
+                - '.gitignore'
+            push:
+              branches:
+                - agent/local-ephemeral-community-notes-copilot-ready
+              paths:
+                - 'apps/extension/**'
+                - 'apps/companion/**'
+                - 'tests/context-copilot/**'
+                - 'scripts/**'
+                - 'docs/CONTEXT_NOTES_*'
+                - 'docs/SUBSTACK_POLICY_*'
+                - '.github/workflows/context-notes-copilot-ci.yml'
+                - 'package.json'
+                - 'README.md'
+                - '.gitignore'
+
+          permissions:
+            contents: read
+
+          jobs:
+            unit-static-build:
+              runs-on: ubuntu-latest
+              timeout-minutes: 20
+              steps:
+                - uses: actions/checkout@v4
+                  with:
+                    fetch-depth: 0
+                - uses: actions/setup-node@v4
+                  with:
+                    node-version: '22'
+                - name: Unit and integration tests
+                  run: node --test tests/context-copilot/*.test.cjs tests/context-copilot/*.test.mjs
+                - name: Static privacy, policy, and cost gates
+                  run: node scripts/verify-context-copilot.mjs
+                - name: Deterministic extension build
+                  run: |
+                    set -euo pipefail
+                    node scripts/build-context-extension.mjs
+                    cp dist/context-notes-copilot.zip /tmp/context-notes-first.zip
+                    node scripts/build-context-extension.mjs > /tmp/context-notes-second-build.json
+                    cmp /tmp/context-notes-first.zip dist/context-notes-copilot.zip
+                    sha256sum dist/context-notes-copilot.zip
+                - name: Independent built-package verification
+                  run: node scripts/independent-context-review.mjs dist/context-notes-copilot
+
+            chromium-extension:
+              runs-on: ubuntu-latest
+              timeout-minutes: 25
+              env:
+                TERM: xterm
+                CONTEXT_NOTES_CHROMIUM: /usr/bin/google-chrome
+              steps:
+                - uses: actions/checkout@v4
+                - uses: actions/setup-node@v4
+                  with:
+                    node-version: '22'
+                - uses: actions/setup-python@v5
+                  with:
+                    python-version: '3.12'
+                - name: Install browser harness
+                  run: |
+                    set -euo pipefail
+                    python -m pip install --disable-pip-version-check playwright==1.56.0 pyautogui==0.9.54
+                    sudo apt-get update
+                    sudo apt-get install -y --no-install-recommends xvfb scrot python3-tk
+                    test -x /usr/bin/google-chrome
+                - name: Build unpacked extension
+                  run: node scripts/build-context-extension.mjs
+                - name: Execute Chromium toolbar, activeTab, side-panel, and lifecycle gate
+                  run: xvfb-run -a python3 scripts/browser-extension-smoke.py
+                - uses: actions/upload-artifact@v4
+                  with:
+                    name: context-notes-chromium-evidence
+                    path: |
+                      evidence/context-copilot-browser-extension-smoke.json
+                      evidence/context-copilot-browser-extension.png
+                      evidence/context-copilot-sidepanel.png
+                      evidence/context-copilot-chrome-action-menu.png
+                    if-no-files-found: error
+                    retention-days: 14
+          CI
+          rm -f .context-notes-ci-fix-ready .github/workflows/fix-context-notes-ci.yml
+      - name: Commit repaired workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Repair Context Notes CI workflow'
+          git push origin HEAD:agent/local-ephemeral-community-notes-copilot-ready
