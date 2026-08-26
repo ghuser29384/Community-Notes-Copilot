@@ -1,0 +1,102 @@
+name: Finalize Context Notes evidence status
+
+on:
+  push:
+    branches:
+      - agent/local-ephemeral-community-notes-copilot-ready
+    paths:
+      - '.context-notes-status-ready'
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/local-ephemeral-community-notes-copilot-ready
+          fetch-depth: 0
+      - name: Bind successful CI evidence into repository documentation
+        shell: bash
+        run: |
+          set -euo pipefail
+          implementation_head="$(git rev-parse HEAD)"
+          runs_json="$(gh api "repos/$GITHUB_REPOSITORY/actions/runs?head_sha=$implementation_head&per_page=30")"
+          successful_runs="$(jq -r '[.workflow_runs[] | select(.name == "Context Notes Copilot CI" and .conclusion == "success") | (.id|tostring)] | unique | join(", ")' <<<"$runs_json")"
+          test -n "$successful_runs"
+          IMPLEMENTATION_HEAD="$implementation_head" SUCCESSFUL_RUNS="$successful_runs" python3 - <<'PY'
+          import os
+          from pathlib import Path
+
+          head = os.environ['IMPLEMENTATION_HEAD']
+          runs = os.environ['SUCCESSFUL_RUNS']
+
+          completion = Path('docs/CONTEXT_NOTES_COMPLETION_GATES.md')
+          text = completion.read_text(encoding='utf-8')
+          old = "3. **GitHub CI:** becomes binding after the source commit is published to PR #16; run IDs and artifacts must be recorded before merge."
+          new = (
+              "3. **GitHub CI:** resolved for implementation head `" + head + "`. "
+              "Successful `Context Notes Copilot CI` workflow run ID(s): `" + runs + "`. "
+              "The closure commit that records this evidence changes documentation only and reruns the same gates."
+          )
+          if old not in text:
+              raise SystemExit('completion-gate placeholder not found')
+          completion.write_text(text.replace(old, new), encoding='utf-8')
+
+          evidence = Path('docs/CONTEXT_NOTES_TEST_AND_BUILD_EVIDENCE.md')
+          text = evidence.read_text(encoding='utf-8')
+          anchor = "## Evidence files\n"
+          insert = (
+              "## GitHub-bound verification\n\n"
+              f"Implementation head `{head}` passed `Context Notes Copilot CI` run ID(s) `{runs}`. "
+              "The workflow independently reran unit/integration tests, static gates, deterministic packaging, "
+              "the built-package review, and the headed Chromium toolbar/activeTab/side-panel lifecycle.\n\n"
+          )
+          if anchor not in text:
+              raise SystemExit('test-evidence anchor not found')
+          evidence.write_text(text.replace(anchor, insert + anchor), encoding='utf-8')
+          PY
+          rm -f .context-notes-status-ready .github/workflows/finalize-context-notes-status.yml
+      - name: Commit documentation-only closure
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'Bind Context Notes CI evidence'
+          git push origin HEAD:agent/local-ephemeral-community-notes-copilot-ready
+      - name: Refresh pull-request summary
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat > /tmp/pr-body.md <<'EOF'
+          ## Context Notes Copilot
+
+          This draft PR now contains the materialized, reviewable source for the desktop Chrome Context Notes Copilot.
+
+          Implemented:
+          - explicit toolbar action plus separate Start control
+          - active-tab-only X extraction
+          - Substack Notes and article adapters behind a disabled release flag
+          - private side-panel/overlay results; no posting or platform actions
+          - transient per-tab content state and lifecycle erasure
+          - OpenAI Responses API companion with `store: false`, bounded web search, strict source provenance, and no committed key
+          - deterministic rolling external-cost ceiling of $0.50/hour with a $0.05 reserve
+          - fixture, privacy, network, failure, lifecycle, deterministic-build, independent-review, and real Chromium gates
+
+          The implementation head passed both CI jobs. The latest commit records that evidence in documentation and reruns the unchanged implementation gates.
+
+          External release conditions remain explicit:
+          1. Substack remains disabled pending written authorization.
+          2. One user-local live OpenAI credential smoke is required; the raw key is intentionally unavailable to GitHub, CI, and chat.
+
+          Do not enable Substack or commit an API key. Keep this PR draft until the user-local live provider smoke is recorded.
+          EOF
+          gh api "repos/$GITHUB_REPOSITORY/pulls/16" -X PATCH --raw-field body="$(cat /tmp/pr-body.md)" >/dev/null
